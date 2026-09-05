@@ -1,0 +1,314 @@
+{
+  "clientName": "Thunder Client",
+  "collectionName": "ArogyaGrid API Suite",
+  "collectionId": "arogyagrid-collection",
+  "dateExported": "2026-09-06",
+  "version": "1.1",
+  "folders": [
+    {
+      "_id": "fld-auth",
+      "name": "1. Authentication & Users"
+    },
+    {
+      "_id": "fld-telemetry",
+      "name": "2. Tri-Resource Telemetry & Sync"
+    },
+    {
+      "_id": "fld-geospatial",
+      "name": "3. Geospatial & District Map"
+    },
+    {
+      "_id": "fld-transfers",
+      "name": "4. Inter-District Logistics"
+    },
+    {
+      "_id": "fld-ml",
+      "name": "5. Predictive AI & Federated ML"
+    }
+  ],
+  "requests": [
+    {
+      "_id": "req-health",
+      "colId": "arogyagrid-collection",
+      "name": "Backend Health Check",
+      "url": "http://localhost:5000/api/v1/health",
+      "method": "GET"
+    },
+    {
+      "_id": "req-login-admin",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-auth",
+      "name": "Login as Admin",
+      "url": "http://localhost:5000/api/v1/auth/login",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"email\": \"admin@arogyagrid.gov.in\",\n  \"password\": \"password123\"\n}"
+      }
+    },
+    {
+      "_id": "req-login-district",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-auth",
+      "name": "Login as District Officer",
+      "url": "http://localhost:5000/api/v1/auth/login",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"email\": \"district.ranchi@arogyagrid.gov.in\",\n  \"password\": \"password123\"\n}"
+      }
+    },
+    {
+      "_id": "req-get-stock",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-telemetry",
+      "name": "Get PHC Medicine Stock",
+      "url": "http://localhost:5000/api/v1/stock/phc/PHC-RAN-01",
+      "method": "GET",
+      "auth": {
+        "type": "bearer",
+        "bearer": "{{token}}"
+      }
+    },
+    {
+      "_id": "req-stock-tx",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-telemetry",
+      "name": "Submit Stock Intake (Idempotent)",
+      "url": "http://localhost:5000/api/v1/stock/transaction",
+      "method": "POST",
+      "auth": {
+        "type": "bearer",
+        "bearer": "{{token}}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"transaction_uuid\": \"UUID-INTAKE-TEST-001\",\n  \"phc_id\": \"PHC-RAN-01\",\n  \"medicine_id\": \"MED-001\",\n  \"quantity\": 100,\n  \"transaction_type\": \"INTAKE\"\n}"
+      }
+    },
+    {
+      "_id": "req-get-beds",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-telemetry",
+      "name": "Get Bed Availability Matrix",
+      "url": "http://localhost:5000/api/v1/beds/phc/PHC-RAN-01",
+      "method": "GET",
+      "auth": {
+        "type": "bearer",
+        "bearer": "{{token}}"
+      }
+    },
+    {
+      "_id": "req-update-beds",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-telemetry",
+      "name": "Update Bed Occupancy (Triggers Alert)",
+      "url": "http://localhost:5000/api/v1/beds/update",
+      "method": "POST",
+      "auth": {
+        "type": "bearer",
+        "bearer": "{{token}}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"phc_id\": \"PHC-RAN-01\",\n  \"bed_type\": \"OXYGEN\",\n  \"total_beds\": 20,\n  \"occupied_beds\": 19\n}"
+      }
+    },
+    {
+      "_id": "req-staff-log",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-telemetry",
+      "name": "Log Staff Attendance",
+      "url": "http://localhost:5000/api/v1/staff/attendance",
+      "method": "POST",
+      "auth": {
+        "type": "bearer",
+        "bearer": "{{token}}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"phc_id\": \"PHC-RAN-01\",\n  \"staff_name\": \"Dr. Priya Sharma\",\n  \"role\": \"DOCTOR\",\n  \"shift\": \"MORNING\"\n}"
+      }
+    },
+    {
+      "_id": "req-batch-sync",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-telemetry",
+      "name": "Batch Telemetry Intake (Offline PWA Sync)",
+      "url": "http://localhost:5000/api/v1/telemetry/intake",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"transactions\": [\n    {\n      \"transaction_uuid\": \"BATCH-PWA-UUID-101\",\n      \"phc_id\": \"PHC-RAN-01\",\n      \"medicine_id\": \"MED-002\",\n      \"quantity\": 50,\n      \"type\": \"STOCK_IN\"\n    },\n    {\n      \"transaction_uuid\": \"BATCH-PWA-UUID-102\",\n      \"phc_id\": \"PHC-RAN-01\",\n      \"bed_type\": \"ICU\",\n      \"occupied_beds\": 4,\n      \"total_beds\": 5,\n      \"type\": \"BED_UPDATE\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req-districts",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-geospatial",
+      "name": "List All Districts",
+      "url": "http://localhost:5000/api/v1/districts",
+      "method": "GET",
+      "auth": {
+        "type": "bearer",
+        "bearer": "{{token}}"
+      }
+    },
+    {
+      "_id": "req-map-telemetry",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-geospatial",
+      "name": "Get District Map Telemetry (GeoJSON for Ola Maps)",
+      "url": "http://localhost:5000/api/v1/districts/DIST-JH-01/map-telemetry",
+      "method": "GET",
+      "auth": {
+        "type": "bearer",
+        "bearer": "{{token}}"
+      }
+    },
+    {
+      "_id": "req-transfers-list",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-transfers",
+      "name": "List Inter-District Transfers",
+      "url": "http://localhost:5000/api/v1/transfers",
+      "method": "GET",
+      "auth": {
+        "type": "bearer",
+        "bearer": "{{token}}"
+      }
+    },
+    {
+      "_id": "req-transfers-req",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-transfers",
+      "name": "Create Transfer Requisition",
+      "url": "http://localhost:5000/api/v1/transfers/request",
+      "method": "POST",
+      "auth": {
+        "type": "bearer",
+        "bearer": "{{token}}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"source_phc_id\": \"PHC-RAN-01\",\n  \"destination_phc_id\": \"PHC-RAN-03\",\n  \"medicine_id\": \"MED-001\",\n  \"quantity\": 100\n}"
+      }
+    },
+    {
+      "_id": "req-ml-predict",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-ml",
+      "name": "Predict Stockout Risk (AI Regressor & Classifier)",
+      "url": "http://localhost:5000/api/v1/ml/predict",
+      "method": "POST",
+      "auth": {
+        "type": "bearer",
+        "bearer": "{{token}}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"phc_id\": \"PHC-RAN-03\",\n  \"medicine_id\": \"MED-001\",\n  \"current_stock\": 35,\n  \"daily_consumption\": 40.0,\n  \"population_served\": 15000,\n  \"weather_risk\": 0.5,\n  \"footfall_surge_factor\": 1.4\n}"
+      }
+    },
+    {
+      "_id": "req-fed-status",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-ml",
+      "name": "Get Federated Learning Status",
+      "url": "http://localhost:5000/api/v1/ml/federated/status",
+      "method": "GET",
+      "auth": {
+        "type": "bearer",
+        "bearer": "{{token}}"
+      }
+    },
+    {
+      "_id": "req-fed-round",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-ml",
+      "name": "Trigger Nationwide FedAvg Training Round",
+      "url": "http://localhost:5000/api/v1/ml/federated/round",
+      "method": "POST",
+      "auth": {
+        "type": "bearer",
+        "bearer": "{{token}}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"nodes\": [\n    \"Bihar\",\n    \"Jharkhand\",\n    \"Odisha\",\n    \"West Bengal\"\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req-direct-ml-redistribute",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-ml",
+      "name": "Direct ML Logistics Optimizer (FastAPI :8000)",
+      "url": "http://localhost:8000/redistribute/recommend",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"target_phc\": {\n    \"phc_id\": \"PHC-RAN-03\",\n    \"name\": \"Namkum PHC\",\n    \"district_id\": \"DIST-JH-01\",\n    \"state\": \"Jharkhand\",\n    \"latitude\": 23.32,\n    \"longitude\": 85.38,\n    \"current_stock\": 35,\n    \"daily_consumption\": 40.0\n  },\n  \"medicine_id\": \"MED-001\",\n  \"required_quantity\": 200,\n  \"candidate_phcs\": [\n    {\n      \"phc_id\": \"PHC-RAN-01\",\n      \"name\": \"Ranchi Sadar PHC\",\n      \"district_id\": \"DIST-JH-01\",\n      \"state\": \"Jharkhand\",\n      \"latitude\": 23.35,\n      \"longitude\": 85.32,\n      \"current_stock\": 650,\n      \"daily_consumption\": 35.0\n    },\n    {\n      \"phc_id\": \"PHC-RAN-02\",\n      \"name\": \"Kanke Rural PHC\",\n      \"district_id\": \"DIST-JH-01\",\n      \"state\": \"Jharkhand\",\n      \"latitude\": 23.435,\n      \"longitude\": 85.32,\n      \"current_stock\": 720,\n      \"daily_consumption\": 20.0\n    }\n  ],\n  \"max_radius_km\": 50.0\n}"
+      }
+    }
+  ]
+}
