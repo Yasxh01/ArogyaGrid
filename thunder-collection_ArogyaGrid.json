@@ -24,6 +24,10 @@
     {
       "_id": "fld-ml",
       "name": "5. Predictive AI & Federated ML"
+    },
+    {
+      "_id": "fld-genai",
+      "name": "6. GenAI & Vernacular Intelligence"
     }
   ],
   "requests": [
@@ -308,6 +312,58 @@
       "body": {
         "type": "json",
         "raw": "{\n  \"target_phc\": {\n    \"phc_id\": \"PHC-RAN-03\",\n    \"name\": \"Namkum PHC\",\n    \"district_id\": \"DIST-JH-01\",\n    \"state\": \"Jharkhand\",\n    \"latitude\": 23.32,\n    \"longitude\": 85.38,\n    \"current_stock\": 35,\n    \"daily_consumption\": 40.0\n  },\n  \"medicine_id\": \"MED-001\",\n  \"required_quantity\": 200,\n  \"candidate_phcs\": [\n    {\n      \"phc_id\": \"PHC-RAN-01\",\n      \"name\": \"Ranchi Sadar PHC\",\n      \"district_id\": \"DIST-JH-01\",\n      \"state\": \"Jharkhand\",\n      \"latitude\": 23.35,\n      \"longitude\": 85.32,\n      \"current_stock\": 650,\n      \"daily_consumption\": 35.0\n    },\n    {\n      \"phc_id\": \"PHC-RAN-02\",\n      \"name\": \"Kanke Rural PHC\",\n      \"district_id\": \"DIST-JH-01\",\n      \"state\": \"Jharkhand\",\n      \"latitude\": 23.435,\n      \"longitude\": 85.32,\n      \"current_stock\": 720,\n      \"daily_consumption\": 20.0\n    }\n  ],\n  \"max_radius_km\": 50.0\n}"
+      }
+    },
+    {
+      "_id": "req-ai-voice-hindi",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-genai",
+      "name": "Vernacular Voice Intake (Hindi)",
+      "url": "http://localhost:5000/api/v1/ai/voice-intake",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"text\": \"\\u0906\\u091c \\u0938\\u0926\\u0930 \\u092a\\u0940\\u090f\\u091a\\u0938\\u0940 \\u092e\\u0947\\u0902 50 \\u092a\\u0948\\u0930\\u093e\\u0938\\u093f\\u091f\\u093e\\u092e\\u094b\\u0932 \\u0914\\u0930 20 \\u090f\\u092e\\u094b\\u0915\\u094d\\u0938\\u093f\\u0938\\u093f\\u0932\\u093f\\u0928 \\u092c\\u093e\\u0902\\u091f\\u0940 \\u0917\\u0908\",\n  \"phc_id\": \"PHC-RAN-01\",\n  \"language\": \"hi\"\n}"
+      }
+    },
+    {
+      "_id": "req-ai-situation-report",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-genai",
+      "name": "Generate State Health Situation Report",
+      "url": "http://localhost:5000/api/v1/ai/situation-report?district_id=DIST-JH-01&state=Jharkhand",
+      "method": "GET",
+      "auth": {
+        "type": "bearer",
+        "bearer": "{{token}}"
+      }
+    },
+    {
+      "_id": "req-ai-copilot",
+      "colId": "arogyagrid-collection",
+      "containerId": "fld-genai",
+      "name": "District Officer AI Copilot Query",
+      "url": "http://localhost:5000/api/v1/ai/copilot",
+      "method": "POST",
+      "auth": {
+        "type": "bearer",
+        "bearer": "{{token}}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"query\": \"Which PHCs in Ranchi have critical medicine shortages and what should we transfer?\"\n}"
       }
     }
   ]
