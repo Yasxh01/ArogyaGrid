@@ -1,0 +1,40 @@
+asyncapi: 3.0.0
+info:
+  title: ArogyaGrid Real-Time Event Gateway
+  version: 1.0.0
+  description: WebSocket & Socket.io event schemas for ArogyaGrid.
+channels:
+  criticalAlert:
+    address: alert:critical
+    messages:
+      criticalStockoutWarning:
+        payload:
+          type: object
+          properties:
+            phc_id: { type: string }
+            resource_type: { type: string, enum: [MEDICINE, BED, STAFF] }
+            resource_name: { type: string }
+            risk_level: { type: string, enum: [CRITICAL, HIGH] }
+            days_to_stockout: { type: number }
+            timestamp: { type: string, format: date-time }
+  stockUpdated:
+    address: stock:updated
+    messages:
+      stockUpdateEvent:
+        payload:
+          type: object
+          properties:
+            phc_id: { type: string }
+            medicine_id: { type: string }
+            new_quantity: { type: integer }
+  transferApproved:
+    address: transfer:approved
+    messages:
+      transferApprovedEvent:
+        payload:
+          type: object
+          properties:
+            transfer_id: { type: string }
+            source_phc_id: { type: string }
+            destination_phc_id: { type: string }
+            status: { type: string, enum: [APPROVED, DISPATCHED, DELIVERED] }

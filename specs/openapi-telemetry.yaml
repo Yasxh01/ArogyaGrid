@@ -1,0 +1,57 @@
+openapi: 3.1.0
+info:
+  title: ArogyaGrid Core API
+  version: 1.0.0
+  description: National-scale healthcare supply chain and resource management API.
+paths:
+  /api/v1/auth/login:
+    post:
+      summary: User Login & JWT Generation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: Login successful
+  /api/v1/telemetry/intake:
+    post:
+      summary: Batch idempotent sync for offline PWA queues
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [transactions]
+              properties:
+                transactions:
+                  type: array
+                  items:
+                    type: object
+                    required: [transaction_uuid, phc_id, type]
+                    properties:
+                      transaction_uuid: { type: string, format: uuid }
+                      phc_id: { type: string }
+                      type: { type: string, enum: [STOCK_IN, STOCK_OUT, BED_UPDATE, STAFF_LOG] }
+                      payload: { type: object }
+      responses:
+        '200':
+          description: Batch processed with idempotency receipts
+  /api/v1/districts/{districtId}/map-telemetry:
+    get:
+      summary: GeoJSON FeatureCollection with live PHC health status
+      parameters:
+        - name: districtId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: GeoJSON feature collection

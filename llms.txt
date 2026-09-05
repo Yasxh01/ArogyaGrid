@@ -1,0 +1,22 @@
+# ArogyaGrid Documentation for AI Models
+
+> ArogyaGrid is a federated AI & real-time public healthcare supply chain and resource management system for India\'s Primary Health Centres (PHCs).
+
+## Architecture Highlights
+- **Backend API**: Node.js & Express at http://localhost:5000/api/v1
+- **Predictive ML Microservice**: Python FastAPI at http://localhost:8000
+- **MCP Server**: Stdio/SSE Model Context Protocol server exposing PHC diagnostics and emergency rebalancing tools.
+- **Database**: PostgreSQL 16 (with integrated in-memory SQLite support for zero-dependency local dev).
+- **Real-Time Layer**: Socket.io on events: lert:critical, stock:updated, eds:updated, 	ransfer:approved.
+
+## Key Endpoints
+- POST /api/v1/auth/login: Issue JWT for ADMIN, DISTRICT_OFFICER, PHC_STAFF.
+- POST /api/v1/telemetry/intake: Idempotent batch sync for offline transactions.
+- GET /api/v1/districts/:districtId/map-telemetry: GeoJSON FeatureCollection of PHCs, stock, beds, and staff.
+- POST /api/v1/transfers/recommend: Geospatial multi-PHC supply rebalancing recommendation.
+- POST /predict: ML microservice Random Forest inference for days-to-stockout and risk classification.
+- POST /federated/round: Simulate FedAvg across state nodes (Bihar, Jharkhand, Odisha).
+
+## Specs & Skills
+- Specs: specs/openapi-telemetry.yaml, specs/asyncapi-events.yaml
+- Skills: skills/supply-forecasting/SKILL.md, skills/disaster-rebalance/SKILL.md, skills/federated-node-audit/SKILL.md
