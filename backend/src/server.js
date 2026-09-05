@@ -26,6 +26,10 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/v1', apiRoutes);
 
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', service: 'ArogyaGrid Backend', timestamp: new Date().toISOString() });
+});
+
 app.get('/', (req, res) => {
   res.json({
     name: 'ArogyaGrid Core Backend',
@@ -42,11 +46,11 @@ async function startServer() {
   await seedDatabase();
 
   return new Promise((resolve) => {
-    server.listen(PORT, () => {
+    server.listen(PORT, '0.0.0.0', () => {
       console.log(`====================================================`);
       console.log(` ArogyaGrid Backend Server listening on port ${PORT}`);
       console.log(` Environment: ${NODE_ENV}`);
-      console.log(` REST Gateway: http://localhost:${PORT}/api/v1`);
+      console.log(` REST Gateway: http://0.0.0.0:${PORT}/api/v1`);
       console.log(` Real-Time WebSocket Gateway attached.`);
       console.log(`====================================================`);
       resolve(server);
