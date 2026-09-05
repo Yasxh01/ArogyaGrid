@@ -1,0 +1,60 @@
+﻿services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: arogyagrid_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: arogyagrid
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/src/db/schema.sql:/docker-entrypoint-initdb.d/init.sql
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: arogyagrid_backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgrespassword@postgres:5432/arogyagrid
+      USE_POSTGRES: "true"
+      ML_SERVICE_URL: http://ml_service:8000
+      JWT_SECRET: arogyagrid_prod_jwt_secret_2026
+    depends_on:
+      - postgres
+      - ml_service
+
+  ml_service:
+    build:
+      context: ./ml_service
+      dockerfile: Dockerfile
+    container_name: arogyagrid_ml_service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      PORT: 8000
+
+  mcp_server:
+    build:
+      context: ./mcp_server
+      dockerfile: Dockerfile
+    container_name: arogyagrid_mcp_server
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:5000/api/v1
+      ML_SERVICE_URL: http://ml_service:8000
+    depends_on:
+      - backend
+      - ml_service
+
+volumes:
+  postgres_data:
