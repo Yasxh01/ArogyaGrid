@@ -3,8 +3,10 @@ import { apiRequest } from '../api/client';
 import StatsBanner from '../components/StatsBanner';
 import FederatedCenter from '../components/FederatedCenter';
 import { Pill, PlusCircle, Building2, ShieldCheck, Database, Layers, Check, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function AdminDashboardView({ activeTab }) {
+  const { user } = useAuth();
   const [medicines, setMedicines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -75,13 +77,18 @@ export default function AdminDashboardView({ activeTab }) {
       {/* Top Action Bar */}
       <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="font-black text-lg text-slate-900">National Healthcare Formulary & Supply Catalog</h2>
-          <p className="text-xs text-slate-500 font-medium">Add and provision essential medicines across all 150,000+ PHCs in India</p>
+          <div className="flex items-center space-x-2 flex-wrap mb-1">
+            <h2 className="font-black text-lg text-slate-900">National Healthcare Formulary & Supply Catalog</h2>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              👤 {user?.name || 'National AI Director'}
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 font-medium">Logged in: <span className="font-semibold text-slate-700">{user?.email || 'admin@arogyagrid.gov.in'}</span> &bull; Provision essential medicines across all 150,000+ PHCs</p>
         </div>
 
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-sm flex items-center space-x-2 shrink-0"
+          className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-sm flex items-center space-x-2 shrink-0 self-start sm:self-auto"
         >
           <PlusCircle className="w-4 h-4" />
           <span>+ Add Custom Medicine</span>

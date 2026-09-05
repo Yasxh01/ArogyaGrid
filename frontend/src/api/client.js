@@ -1,4 +1,9 @@
-const API_BASE = '/api/v1';
+// Determine best backend endpoint
+const API_ENDPOINTS = [
+  'http://localhost:5000/api/v1',
+  'http://127.0.0.1:5000/api/v1',
+  '/api/v1'
+];
 
 export async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem('arogya_token');
@@ -8,15 +13,42 @@ export async function apiRequest(endpoint, options = {}) {
     ...options.headers
   };
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers
-  });
+  let lastError = null;
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `HTTP Error ${response.status}`);
+  for (const baseUrl of API_ENDPOINTS) {
+    try {
+      const response = await fetch(`${baseUrl}${endpoint}`, {
+        ...options,
+        headers
+      });
+
+      const text = await response.text();
+      
+      // If server returned an HTML error page (e.g. <!doctype or <html>)
+      if (!text || text.trim().startsWith('<')) {
+        continue;
+      }
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        continue;
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.error || `HTTP Error ${response.status}`);
+      }
+
+      return data;
+    } catch (err) {
+      if (err.message && !err.message.includes('Failed to fetch') && !err.message.includes('NetworkError')) {
+        // If it was a deliberate backend validation error (e.g. "Email is already registered" or "Invalid password")
+        throw err;
+      }
+      lastError = err;
+    }
   }
 
-  return await response.json();
+  throw new Error(lastError?.message || 'Backend server is unreachable on port 5000. Please start the backend.');
 }

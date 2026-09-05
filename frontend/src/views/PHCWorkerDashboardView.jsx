@@ -55,11 +55,16 @@ export default function PHCWorkerDashboardView({ activeTab, onOpenVoice, pending
       {/* Big Kiosk Action Banner */}
       <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-3xl p-6 sm:p-8 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-sm inline-block mb-2">
-            🏥 {phcId} Frontline Touch Kiosk
-          </span>
+          <div className="flex items-center space-x-2 mb-2 flex-wrap gap-y-1">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-sm inline-block">
+              🏥 {phcId} Frontline Touch Kiosk
+            </span>
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-900/40 text-emerald-100 border border-emerald-400/30">
+              👤 {user?.name || 'Frontline Staff'}
+            </span>
+          </div>
           <h2 className="text-2xl sm:text-3xl font-black">Daily Medicine & Patient Intake</h2>
-          <p className="text-emerald-100 text-xs sm:text-sm mt-1">Tap the microphone to record in Hindi or log manual transactions below.</p>
+          <p className="text-emerald-100 text-xs sm:text-sm mt-1">Logged in as <span className="font-semibold text-white">{user?.email || 'staff@arogyagrid.gov.in'}</span> &bull; Tap the microphone to record in Hindi or log manual transactions below.</p>
         </div>
 
         <button

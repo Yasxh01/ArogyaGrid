@@ -55,8 +55,10 @@ export default function Navbar({ onOpenCopilot, onOpenVoice, onOpenExplainer, ac
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 hidden sm:flex items-center font-semibold">
+                <span className="text-emerald-700 font-bold mr-1.5">👤 {user?.name || 'Healthcare Member'}</span>
+                <span className="text-slate-300 mr-1.5">&bull;</span>
                 <MapPin className="w-3 h-3 mr-0.5 text-emerald-600" />
-                {user?.phc_id ? `Assigned: ${user.phc_id}` : user?.district_id ? `Assigned: Ranchi District` : `National Network`}
+                {user?.phc_id ? user.phc_id : user?.district_id ? `Ranchi District` : `National Network`}
               </p>
             </div>
           </div>
@@ -110,16 +112,6 @@ export default function Navbar({ onOpenCopilot, onOpenVoice, onOpenExplainer, ac
               >
                 <Cpu className="w-3.5 h-3.5" />
                 <span>AI Info</span>
-              </button>
-            )}
-
-            {(user?.role === 'PHC_STAFF' || user?.role === 'DOCTOR') && (
-              <button
-                onClick={onOpenVoice}
-                className="flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-sm transition-all"
-                title="Speak in Hindi/English for quick voice intake"
-              >
-                <span>🎙️ Voice</span>
               </button>
             )}
 

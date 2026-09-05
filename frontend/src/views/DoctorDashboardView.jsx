@@ -102,17 +102,22 @@ export default function DoctorDashboardView({ activeTab }) {
     <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* Header */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+      <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center space-x-3">
-          <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600">
+          <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 shrink-0">
             <HeartPulse className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="font-black text-lg text-slate-900">Medical Officer Clinical Console</h2>
-            <p className="text-xs text-slate-500 font-medium">{phcId} &bull; Live Bed Admitting & Clinical Capacity</p>
+            <div className="flex items-center space-x-2 flex-wrap">
+              <h2 className="font-black text-lg text-slate-900">Medical Officer Clinical Console</h2>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                👤 {user?.name || 'Dr. Priya Sharma'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium">Facility: {phcId} &bull; Logged in as <span className="font-semibold text-slate-700">{user?.email || 'doctor.ranchi@arogyagrid.gov.in'}</span></p>
           </div>
         </div>
-        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-auto">
           ● Clinical Duty Active
         </span>
       </div>
