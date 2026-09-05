@@ -9,7 +9,8 @@ export function SocketProvider({ children }) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
-    const s = io('http://localhost:5000', {
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+    const s = io(socketUrl, {
       transports: ['websocket', 'polling']
     });
 
