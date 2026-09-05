@@ -1,0 +1,16 @@
+{
+  "name": "arogyagrid",
+  "version": "1.0.0",
+  "description": "Offline-First & Federated AI Healthcare Supply Chain Platform for India's PHC Network",
+  "scripts": {
+    "dev": "concurrently \"npm --prefix backend start\" \"npm --prefix frontend run dev\"",
+    "dev:all": "concurrently \"npm --prefix backend start\" \"npm --prefix frontend run dev\" \"py -3.11 -m uvicorn app.main:app --app-dir ml_service --port 8000 --reload\"",
+    "start": "npm --prefix backend start",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "test": "npm --prefix backend test"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
