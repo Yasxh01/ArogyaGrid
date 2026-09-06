@@ -1,10 +1,13 @@
 # ArogyaGrid 🏥🇮🇳
 ### Resilient, Offline-First & Federated AI Healthcare Supply Chain Platform for India's PHC Network
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-arogya--grid.vercel.app-0070F3?style=flat&logo=vercel&logoColor=white)](https://arogya-grid.vercel.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
 [![Architecture: New Developer Stack](https://img.shields.io/badge/Stack-AGENTS.md%20|%20MCP%20|%20OpenAPI-indigo.svg)](AGENTS.md)
 [![Privacy: DPDP Act 2023](https://img.shields.io/badge/Privacy-FedAvg%20%2B%20DiffPrivacy-blue.svg)](specs/)
 [![Offline: IndexedDB Sync](https://img.shields.io/badge/Offline-PWA%20Idempotent-teal.svg)](frontend/)
+
+🌐 **Live Deployment**: [https://arogya-grid.vercel.app/](https://arogya-grid.vercel.app/)
 
 ArogyaGrid is an offline-capable, resilient, and federated AI-driven healthcare supply chain and hospital resource orchestration platform designed specifically for India's **150,000+ Primary Health Centres (PHCs)**, Community Health Centres (CHCs), and Sub-Centres.
 
