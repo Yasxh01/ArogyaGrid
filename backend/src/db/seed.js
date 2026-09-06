@@ -33,7 +33,9 @@ async function seedDatabase() {
     { id: 'MED-002', name: 'Amoxicillin 250mg Capsules', category: 'Antibiotic', unit: 'strips', minimum_stock: 100, daily_base_consumption: 25.0 },
     { id: 'MED-003', name: 'Oral Rehydration Salts (ORS)', category: 'Essential', unit: 'sachets', minimum_stock: 200, daily_base_consumption: 40.0 },
     { id: 'MED-004', name: 'Insulin Glargine 100IU/ml', category: 'Cold-Chain / Diabetes', unit: 'vials', minimum_stock: 30, daily_base_consumption: 5.0 },
-    { id: 'MED-005', name: 'Anti-Rabies Vaccine (ARV)', category: 'Emergency / Cold-Chain', unit: 'vials', minimum_stock: 25, daily_base_consumption: 4.0 }
+    { id: 'MED-005', name: 'Anti-Rabies Vaccine (ARV)', category: 'Emergency / Cold-Chain', unit: 'vials', minimum_stock: 25, daily_base_consumption: 4.0 },
+    { id: 'MED-006', name: 'Azithromycin 500mg Tablets', category: 'Antibiotic', unit: 'strips', minimum_stock: 50, daily_base_consumption: 15.0 },
+    { id: 'MED-007', name: 'Cetirizine 10mg Tablets', category: 'Antihistamine', unit: 'strips', minimum_stock: 80, daily_base_consumption: 20.0 }
   ];
 
   // 4. Initial Stock

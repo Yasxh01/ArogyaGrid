@@ -4,9 +4,11 @@ import StatsBanner from '../components/StatsBanner';
 import FederatedCenter from '../components/FederatedCenter';
 import { Pill, PlusCircle, Building2, ShieldCheck, Database, Layers, Check, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 
 export default function AdminDashboardView({ activeTab }) {
   const { user } = useAuth();
+  const { on, off } = useSocket();
   const [medicines, setMedicines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -21,7 +23,19 @@ export default function AdminDashboardView({ activeTab }) {
 
   useEffect(() => {
     fetchMedicines();
-  }, []);
+
+    const handleMedicineUpdate = () => {
+      fetchMedicines();
+    };
+
+    on('medicine:created', handleMedicineUpdate);
+    on('stock:updated', handleMedicineUpdate);
+
+    return () => {
+      off('medicine:created', handleMedicineUpdate);
+      off('stock:updated', handleMedicineUpdate);
+    };
+  }, [on, off]);
 
   async function fetchMedicines() {
     try {

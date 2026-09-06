@@ -163,7 +163,7 @@ export default function VoiceIntakeModal({ isOpen, onClose, onTransactionParsed 
             </div>
             <div className="text-slate-700 space-y-1">
               <div><span className="font-semibold">Action:</span> {result.type}</div>
-              {result.medicine_id && <div><span className="font-semibold">Medicine:</span> {result.medicine_id} ({result.quantity} units)</div>}
+              {result.medicine_id && <div><span className="font-semibold">Medicine:</span> <span className="font-bold text-emerald-800">{result.medicine_name || result.medicine_id}</span> ({result.quantity} units)</div>}
               {result.bed_type && <div><span className="font-semibold">Beds:</span> {result.bed_type} ({result.occupied_beds} occupied)</div>}
             </div>
 

@@ -4,9 +4,11 @@ import { HeartPulse, Bed, UserPlus, UserMinus, PlusCircle, AlertTriangle, Shield
 import StaffRoster from '../components/StaffRoster';
 import StockManager from '../components/StockManager';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 
 export default function DoctorDashboardView({ activeTab }) {
   const { user } = useAuth();
+  const { socket } = useSocket();
   const [beds, setBeds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState(null);
@@ -15,6 +17,17 @@ export default function DoctorDashboardView({ activeTab }) {
   useEffect(() => {
     fetchBeds();
   }, [phcId]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleBedUpdate = () => {
+      fetchBeds();
+    };
+    socket.on('beds:updated', handleBedUpdate);
+    return () => {
+      socket.off('beds:updated', handleBedUpdate);
+    };
+  }, [socket, phcId]);
 
   async function fetchBeds() {
     try {

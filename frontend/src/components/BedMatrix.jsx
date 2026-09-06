@@ -1,14 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
 import { Bed, AlertTriangle, ShieldCheck, HeartPulse } from 'lucide-react';
+import { useSocket } from '../context/SocketContext';
 
 export default function BedMatrix({ selectedPHC }) {
+  const { socket } = useSocket();
   const [beds, setBeds] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchBeds();
   }, [selectedPHC]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleUpdate = () => {
+      fetchBeds();
+    };
+    socket.on('beds:updated', handleUpdate);
+    return () => {
+      socket.off('beds:updated', handleUpdate);
+    };
+  }, [socket, selectedPHC]);
 
   async function fetchBeds() {
     try {

@@ -1,4 +1,4 @@
-﻿const { GEMINI_API_KEY } = process.env;
+const { GEMINI_API_KEY } = process.env;
 const db = require('../config/db');
 
 class AIService {
@@ -52,38 +52,83 @@ Return strictly JSON with schema:
 
     // High-precision Local Heuristic & Vernacular NLP Parser (Zero-dependency Fallback)
     const lower = text.toLowerCase();
+    const store = db.memoryStore;
     let type = 'STOCK_OUT';
-    let medicine_id = 'MED-001';
-    let quantity = 50;
+    let medicine_id = null;
+    let quantity = 10;
 
     // Detect intent (Hindi & English keywords)
-    if (lower.includes('बांटी') || lower.includes('dispense') || lower.includes('given') || lower.includes('out') || lower.includes('दिए')) {
+    if (lower.includes('बांटी') || lower.includes('dispense') || lower.includes('distribut') || lower.includes('given') || lower.includes('out') || lower.includes('दिए') || lower.includes('दी') || lower.includes('वितरित')) {
       type = 'STOCK_OUT';
-    } else if (lower.includes('प्राप्त') || lower.includes('received') || lower.includes('intake') || lower.includes('in') || lower.includes('आए')) {
+    } else if (lower.includes('प्राप्त') || lower.includes('received') || lower.includes('receive') || lower.includes('intake') || lower.includes('in') || lower.includes('आए') || lower.includes('स्टॉक') || lower.includes('जमा')) {
       type = 'STOCK_IN';
-    } else if (lower.includes('bed') || lower.includes('बेड') || lower.includes('मरीज') || lower.includes('icu') || lower.includes('oxygen')) {
+    } else if (lower.includes('bed') || lower.includes('बेड') || lower.includes('मरीज') || lower.includes('icu') || lower.includes('oxygen') || lower.includes('भर्ती')) {
       type = 'BED_UPDATE';
     }
 
-    // Extract medicine
-    if (lower.includes('amoxicillin') || lower.includes('एमोक्सिसिलिन')) medicine_id = 'MED-002';
-    else if (lower.includes('ors') || lower.includes('ओआरएस') || lower.includes('घोल')) medicine_id = 'MED-003';
-    else if (lower.includes('insulin') || lower.includes('इंसुलिन')) medicine_id = 'MED-004';
-    else if (lower.includes('rabies') || lower.includes('रेबीज')) medicine_id = 'MED-005';
+    // Comprehensive Medicine Matching (Hindi Phonetics + English)
+    if (lower.includes('amox') || lower.includes('एमोक्सि') || lower.includes('इमोक्सी') || lower.includes('अमोक्सी') || lower.includes('सिलिन') || lower.includes('amoxicillin')) {
+      medicine_id = 'MED-002'; // Amoxicillin 250mg
+    } else if (lower.includes('ors') || lower.includes('ओआरएस') || lower.includes('ओ.आर.एस') || lower.includes('घोल') || lower.includes('इलेक्ट्रोलाइट')) {
+      medicine_id = 'MED-003'; // ORS Sachets
+    } else if (lower.includes('insulin') || lower.includes('इंसुलिन') || lower.includes('शुगर')) {
+      medicine_id = 'MED-004'; // Insulin Glargine
+    } else if (lower.includes('rabies') || lower.includes('रेबीज') || lower.includes('कुत्ता') || lower.includes('antirabies')) {
+      medicine_id = 'MED-005'; // Anti-Rabies Vaccine
+    } else if (lower.includes('para') || lower.includes('पैरासिटामोल') || lower.includes('डोलो') || lower.includes('क्रोसिन') || lower.includes('बुखार') || lower.includes('pcm')) {
+      medicine_id = 'MED-001'; // Paracetamol 500mg
+    } else if (lower.includes('azithro') || lower.includes('एजिथ्रो') || lower.includes('एज़िथ्रो')) {
+      medicine_id = 'MED-006';
+    } else if (lower.includes('cetirizine') || lower.includes('सिट्रीजिन')) {
+      medicine_id = 'MED-007';
+    } else {
+      // Dynamic fuzzy match against active catalog in database
+      const matchedMed = store.medicines.find(m => lower.includes(m.name.toLowerCase()) || lower.includes(m.id.toLowerCase()));
+      if (matchedMed) {
+        medicine_id = matchedMed.id;
+      } else {
+        medicine_id = 'MED-001';
+      }
+    }
 
-    // Extract numbers
-    const match = text.match(/\d+/);
-    if (match) quantity = parseInt(match[0], 10);
+    // Hindi number words mapping
+    const hindiNumbers = {
+      'एक': 1, 'दो': 2, 'तीन': 3, 'चार': 4, 'पांच': 5, 'पाँच': 5, 'छह': 6, 'सात': 7, 'आठ': 8, 'नौ': 9, 'दस': 10,
+      'पंद्रह': 15, 'बीस': 20, 'पच्चीस': 25, 'तीस': 30, 'चालीस': 40, 'पचास': 50, 'साठ': 60, 'सत्तर': 70, 'अस्सी': 80, 'नब्बे': 90, 'सौ': 100
+    };
+
+    // Extract Hindi word numbers
+    for (const [word, val] of Object.entries(hindiNumbers)) {
+      if (lower.includes(word)) {
+        quantity = val;
+        break;
+      }
+    }
+
+    // Extract Western numbers (e.g. 50, 100) or Devanagari numerals (e.g. ५०, १००)
+    const devanagariDigits = { '०': 0, '१': 1, '२': 2, '३': 3, '४': 4, '५': 5, '६': 6, '७': 7, '८': 8, '९': 9 };
+    const devMatch = text.match(/[०-९]+/);
+    if (devMatch) {
+      const converted = devMatch[0].split('').map(d => devanagariDigits[d] ?? d).join('');
+      quantity = parseInt(converted, 10);
+    } else {
+      const match = text.match(/\d+/);
+      if (match) quantity = parseInt(match[0], 10);
+    }
+
+    const matchedMedObj = store.medicines.find(m => m.id === medicine_id);
+    const medDisplayName = matchedMedObj ? matchedMedObj.name : medicine_id;
 
     return {
       type,
       phc_id: phc_id || 'PHC-RAN-01',
       medicine_id: type.startsWith('STOCK') ? medicine_id : null,
+      medicine_name: medDisplayName,
       quantity: type.startsWith('STOCK') ? quantity : null,
       bed_type: type === 'BED_UPDATE' ? 'OXYGEN' : null,
       occupied_beds: type === 'BED_UPDATE' ? quantity : null,
-      confidence: 0.92,
-      detected_intent: `Processed ${quantity} units for ${medicine_id} (${type})`,
+      confidence: 0.94,
+      detected_intent: `Processed ${quantity} units for ${medDisplayName} (${type})`,
       source: 'LOCAL_NLP_ENGINE'
     };
   }

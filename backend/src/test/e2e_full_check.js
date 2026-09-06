@@ -1,4 +1,4 @@
-﻿const assert = require('assert');
+const assert = require('assert');
 const db = require('../config/db');
 const { seedDatabase } = require('../db/seed');
 const stockService = require('../services/stockService');
@@ -122,7 +122,6 @@ async function runFullHealthCheck() {
   console.log('================================================================');
   console.log('       ALL 8/8 CORE SUBSYSTEMS ARE FULLY OPERATIONAL            ');
   console.log('================================================================');
-  process.exit(0);
 }
 
 runFullHealthCheck().catch(err => {

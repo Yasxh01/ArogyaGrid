@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 
 const SocketContext = createContext(null);
@@ -38,17 +38,44 @@ export function SocketProvider({ children }) {
     };
   }, []);
 
-  const dismissAlert = (index) => {
+  const dismissAlert = useCallback((index) => {
     setAlerts(prev => prev.filter((_, i) => i !== index));
-  };
+  }, []);
+
+  const on = useCallback((event, callback) => {
+    if (socket) {
+      socket.on(event, callback);
+    }
+  }, [socket]);
+
+  const off = useCallback((event, callback) => {
+    if (socket) {
+      socket.off(event, callback);
+    }
+  }, [socket]);
+
+  const emit = useCallback((event, data) => {
+    if (socket) {
+      socket.emit(event, data);
+    }
+  }, [socket]);
 
   return (
-    <SocketContext.Provider value={{ socket, alerts, isOnline, dismissAlert }}>
+    <SocketContext.Provider value={{ socket, alerts, isOnline, dismissAlert, on, off, emit }}>
       {children}
     </SocketContext.Provider>
   );
 }
 
 export function useSocket() {
-  return useContext(SocketContext);
+  const ctx = useContext(SocketContext);
+  return ctx || {
+    socket: null,
+    alerts: [],
+    isOnline: true,
+    dismissAlert: () => {},
+    on: () => {},
+    off: () => {},
+    emit: () => {}
+  };
 }

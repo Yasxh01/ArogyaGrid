@@ -1,8 +1,10 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
 import { Pill, PlusCircle, AlertCircle, TrendingUp, CheckCircle, RefreshCw } from 'lucide-react';
+import { useSocket } from '../context/SocketContext';
 
 export default function StockManager({ selectedPHC, onTransactionLogged }) {
+  const { socket } = useSocket();
   const [stock, setStock] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -16,6 +18,21 @@ export default function StockManager({ selectedPHC, onTransactionLogged }) {
   useEffect(() => {
     fetchStock();
   }, [selectedPHC]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleUpdate = () => {
+      fetchStock();
+    };
+    socket.on('stock:updated', handleUpdate);
+    socket.on('medicine:created', handleUpdate);
+    socket.on('transfer:approved', handleUpdate);
+    return () => {
+      socket.off('stock:updated', handleUpdate);
+      socket.off('medicine:created', handleUpdate);
+      socket.off('transfer:approved', handleUpdate);
+    };
+  }, [socket, selectedPHC]);
 
   async function fetchStock() {
     try {
@@ -135,18 +152,26 @@ export default function StockManager({ selectedPHC, onTransactionLogged }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-3">
           <div>
-            <label className="text-[11px] font-semibold text-slate-600 block mb-1">Medicine</label>
-            <select
+            <label className="text-[11px] font-semibold text-slate-600 block mb-1">Medicine (Select or Type)</label>
+            <input
+              type="text"
+              list="stock-med-options"
               value={medicineId}
               onChange={(e) => setMedicineId(e.target.value)}
+              placeholder="e.g. Paracetamol, MED-001"
               className="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
-            >
+              required
+            />
+            <datalist id="stock-med-options">
+              {stock.map(s => (
+                <option key={s.id} value={s.medicine_id}>{s.name || s.medicine_id}</option>
+              ))}
               <option value="MED-001">Paracetamol 500mg</option>
               <option value="MED-002">Amoxicillin 250mg</option>
               <option value="MED-003">ORS Sachets</option>
               <option value="MED-004">Insulin Glargine</option>
               <option value="MED-005">Anti-Rabies Vaccine</option>
-            </select>
+            </datalist>
           </div>
 
           <div>

@@ -285,30 +285,41 @@ export default function AuthPortalView() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="font-bold text-slate-700 block mb-1">District</label>
-                    <select
+                    <input
+                      type="text"
+                      list="district-options"
                       value={regDistrict}
                       onChange={(e) => setRegDistrict(e.target.value)}
-                      className="w-full font-semibold bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 outline-none"
-                    >
+                      placeholder="e.g. Ranchi, Patna, Mumbai"
+                      className="w-full font-semibold bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-emerald-500"
+                      required
+                    />
+                    <datalist id="district-options">
                       <option value="DIST-JH-01">Ranchi (Jharkhand)</option>
                       <option value="DIST-JH-02">Dhanbad (Jharkhand)</option>
                       <option value="DIST-BR-01">Patna (Bihar)</option>
                       <option value="DIST-OD-01">Khordha (Odisha)</option>
-                    </select>
+                      <option value="DIST-UP-01">Varanasi (Uttar Pradesh)</option>
+                    </datalist>
                   </div>
 
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Assigned PHC</label>
-                    <select
+                    <label className="font-bold text-slate-700 block mb-1">Assigned PHC / Hospital</label>
+                    <input
+                      type="text"
+                      list="phc-options"
                       value={regPHC}
                       onChange={(e) => setRegPHC(e.target.value)}
-                      className="w-full font-semibold bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 outline-none"
-                    >
+                      placeholder="e.g. Sadar PHC, Shivpur CHC"
+                      className="w-full font-semibold bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-emerald-500"
+                      required
+                    />
+                    <datalist id="phc-options">
                       <option value="PHC-RAN-01">Ranchi Sadar PHC</option>
                       <option value="PHC-RAN-02">Kanke Rural PHC</option>
                       <option value="PHC-RAN-03">Namkum PHC</option>
                       <option value="PHC-PAT-01">Patna City PHC</option>
-                    </select>
+                    </datalist>
                   </div>
                 </div>
               )}

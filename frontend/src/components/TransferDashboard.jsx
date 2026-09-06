@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { Truck, ArrowRight, CheckCircle, Clock, ShieldCheck, MapPin } from 'lucide-react';
 
 export default function TransferDashboard() {
   const { user } = useAuth();
+  const { on, off } = useSocket();
   const [transfers, setTransfers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -16,7 +18,21 @@ export default function TransferDashboard() {
 
   useEffect(() => {
     fetchTransfers();
-  }, []);
+
+    const handleTransferUpdate = () => {
+      fetchTransfers();
+    };
+
+    on('transfer:requested', handleTransferUpdate);
+    on('transfer:approved', handleTransferUpdate);
+    on('transfer:dispatched', handleTransferUpdate);
+
+    return () => {
+      off('transfer:requested', handleTransferUpdate);
+      off('transfer:approved', handleTransferUpdate);
+      off('transfer:dispatched', handleTransferUpdate);
+    };
+  }, [on, off]);
 
   async function fetchTransfers() {
     try {
@@ -79,41 +95,60 @@ export default function TransferDashboard() {
 
         <form onSubmit={handleCreateTransfer} className="space-y-3 text-xs">
           <div>
-            <label className="font-semibold text-slate-600 block mb-1">Donor PHC (Surplus)</label>
-            <select
+            <label className="font-semibold text-slate-600 block mb-1">Donor PHC (Select or Type)</label>
+            <input
+              type="text"
+              list="donor-phc-options"
               value={sourcePHC}
               onChange={(e) => setSourcePHC(e.target.value)}
+              placeholder="e.g. PHC-RAN-02, Sadar PHC"
               className="w-full font-semibold bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
-            >
+              required
+            />
+            <datalist id="donor-phc-options">
               <option value="PHC-RAN-01">Ranchi Sadar PHC</option>
               <option value="PHC-RAN-02">Kanke Rural PHC (Surplus)</option>
               <option value="PHC-PAT-01">Patna City PHC</option>
-            </select>
+            </datalist>
           </div>
 
           <div>
-            <label className="font-semibold text-slate-600 block mb-1">Destination PHC (Critical)</label>
-            <select
+            <label className="font-semibold text-slate-600 block mb-1">Destination PHC (Select or Type)</label>
+            <input
+              type="text"
+              list="dest-phc-options"
               value={destPHC}
               onChange={(e) => setDestPHC(e.target.value)}
+              placeholder="e.g. PHC-RAN-03, Namkum PHC"
               className="w-full font-semibold bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
-            >
+              required
+            />
+            <datalist id="dest-phc-options">
               <option value="PHC-RAN-03">Namkum PHC (Critical Shortage)</option>
               <option value="PHC-DHN-01">Jharia Coalfield PHC</option>
-            </select>
+              <option value="PHC-PAT-01">Patna City PHC</option>
+            </datalist>
           </div>
 
           <div>
             <label className="font-semibold text-slate-600 block mb-1">Medicine & Quantity</label>
             <div className="grid grid-cols-2 gap-2">
-              <select
+              <input
+                type="text"
+                list="transfer-med-options"
                 value={medicineId}
                 onChange={(e) => setMedicineId(e.target.value)}
-                className="font-semibold bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-800 outline-none"
-              >
+                placeholder="e.g. MED-001, Paracetamol"
+                className="font-semibold bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
+                required
+              />
+              <datalist id="transfer-med-options">
                 <option value="MED-001">Paracetamol 500mg</option>
+                <option value="MED-002">Amoxicillin 250mg</option>
+                <option value="MED-003">ORS Sachets</option>
                 <option value="MED-004">Insulin Glargine</option>
-              </select>
+                <option value="MED-005">Anti-Rabies Vaccine</option>
+              </datalist>
               <input
                 type="number"
                 value={quantity}

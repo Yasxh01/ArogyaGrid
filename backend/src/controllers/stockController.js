@@ -1,6 +1,7 @@
 const stockService = require('../services/stockService');
 const db = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
+const { broadcastEvent } = require('../services/socketService');
 
 exports.getStock = async (req, res, next) => {
   try {
@@ -46,6 +47,8 @@ exports.createMedicine = (req, res) => {
       updated_at: new Date()
     });
   });
+
+  broadcastEvent('medicine:created', { medicine: newMed });
 
   res.status(201).json({ success: true, medicine: newMed });
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { apiRequest } from '../api/client';
+import { useSocket } from '../context/SocketContext';
 import { AlertTriangle, Bed, Users, Pill, ShieldAlert, ArrowRight, Activity } from 'lucide-react';
 
 function createCustomPin(status) {
@@ -47,35 +48,63 @@ function createCustomPin(status) {
   });
 }
 
+const DISTRICT_CENTERS = {
+  'DIST-JH-01': [23.35, 85.33], // Ranchi, Jharkhand
+  'DIST-JH-02': [23.79, 86.43], // Dhanbad, Jharkhand
+  'DIST-BR-01': [25.59, 85.13], // Patna, Bihar
+  'DIST-BR-02': [24.79, 85.00], // Gaya, Bihar
+  'DIST-OD-01': [20.18, 85.61]  // Khordha, Odisha
+};
+
 function RecenterMap({ center }) {
   const map = useMap();
   useEffect(() => {
-    if (center) map.setView(center, 11);
+    if (center) {
+      map.flyTo(center, 11, { duration: 1.0 });
+    }
   }, [center]);
   return null;
 }
 
 export default function MapView({ onSelectPHC, onQuickTransfer }) {
+  const { on, off } = useSocket();
   const [districtData, setDistrictData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedDistrict, setSelectedDistrict] = useState('DIST-JH-01');
 
-  useEffect(() => {
-    async function fetchMap() {
-      try {
-        setLoading(true);
-        const data = await apiRequest(`/districts/${selectedDistrict}/map-telemetry`);
-        setDistrictData(data);
-      } catch (err) {
-        console.error('Failed to load map data:', err);
-      } finally {
-        setLoading(false);
-      }
+  async function fetchMap() {
+    try {
+      setLoading(true);
+      const data = await apiRequest(`/districts/${selectedDistrict}/map-telemetry`);
+      setDistrictData(data);
+    } catch (err) {
+      console.error('Failed to load map data:', err);
+    } finally {
+      setLoading(false);
     }
-    fetchMap();
-  }, [selectedDistrict]);
+  }
 
-  const defaultCenter = [23.35, 85.33]; // Ranchi, Jharkhand
+  useEffect(() => {
+    fetchMap();
+
+    const handleUpdate = () => {
+      fetchMap();
+    };
+
+    on('stock:updated', handleUpdate);
+    on('beds:updated', handleUpdate);
+    on('staff:updated', handleUpdate);
+    on('alert:critical', handleUpdate);
+
+    return () => {
+      off('stock:updated', handleUpdate);
+      off('beds:updated', handleUpdate);
+      off('staff:updated', handleUpdate);
+      off('alert:critical', handleUpdate);
+    };
+  }, [selectedDistrict, on, off]);
+
+  const currentCenter = DISTRICT_CENTERS[selectedDistrict] || [23.35, 85.33];
 
   return (
     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col h-[520px]">
@@ -114,12 +143,12 @@ export default function MapView({ onSelectPHC, onQuickTransfer }) {
 
       {/* Map Body */}
       <div className="flex-1 w-full rounded-xl overflow-hidden relative">
-        <MapContainer center={defaultCenter} zoom={11} scrollWheelZoom={true} className="w-full h-full">
+        <MapContainer center={currentCenter} zoom={11} scrollWheelZoom={true} className="w-full h-full">
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <RecenterMap center={defaultCenter} />
+          <RecenterMap center={currentCenter} />
 
           {districtData?.features?.map((feat) => {
             const props = feat.properties;
