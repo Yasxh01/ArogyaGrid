@@ -9,7 +9,7 @@ import { Map, ShieldCheck } from 'lucide-react';
 
 export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }) {
   const { user } = useAuth();
-  const [selectedPHC, setSelectedPHC] = useState('PHC-RAN-03');
+  const [selectedPHC, setSelectedPHC] = useState('PHC-RAN-01');
 
   function handleQuickTransfer(phcId) {
     setSelectedPHC(phcId);

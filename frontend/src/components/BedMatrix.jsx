@@ -3,14 +3,19 @@ import { apiRequest } from '../api/client';
 import { Bed, AlertTriangle, ShieldCheck, HeartPulse } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 
-export default function BedMatrix({ selectedPHC }) {
+export default function BedMatrix({ selectedPHC: initialPHC }) {
   const { socket } = useSocket();
+  const [currentPHC, setCurrentPHC] = useState(initialPHC || 'PHC-RAN-01');
   const [beds, setBeds] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (initialPHC) setCurrentPHC(initialPHC);
+  }, [initialPHC]);
+
+  useEffect(() => {
     fetchBeds();
-  }, [selectedPHC]);
+  }, [currentPHC]);
 
   useEffect(() => {
     if (!socket) return;
@@ -21,12 +26,12 @@ export default function BedMatrix({ selectedPHC }) {
     return () => {
       socket.off('beds:updated', handleUpdate);
     };
-  }, [socket, selectedPHC]);
+  }, [socket, currentPHC]);
 
   async function fetchBeds() {
     try {
       setLoading(true);
-      const data = await apiRequest(`/beds/phc/${selectedPHC || 'PHC-RAN-01'}`);
+      const data = await apiRequest(`/beds/phc/${currentPHC || 'PHC-RAN-01'}`);
       setBeds(data.beds || []);
     } catch (err) {
       console.error('Error fetching beds:', err);
@@ -37,13 +42,31 @@ export default function BedMatrix({ selectedPHC }) {
 
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-      <div className="flex items-center space-x-2.5 pb-4 mb-4 border-b border-slate-100">
-        <div className="p-2 rounded-xl bg-indigo-50 text-indigo-700">
-          <HeartPulse className="w-5 h-5" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-slate-100 gap-2">
+        <div className="flex items-center space-x-2.5">
+          <div className="p-2 rounded-xl bg-indigo-50 text-indigo-700">
+            <HeartPulse className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-900 text-sm sm:text-base">Bed Availability & Occupancy</h3>
+            <p className="text-xs text-slate-500">Live Telemetry for {currentPHC}</p>
+          </div>
         </div>
-        <div>
-          <h3 className="font-bold text-slate-900 text-sm sm:text-base">Bed Availability & Occupancy</h3>
-          <p className="text-xs text-slate-500">Live Telemetry for {selectedPHC || 'PHC-RAN-01'}</p>
+
+        {/* Facility Selector */}
+        <div className="flex items-center space-x-2 self-start sm:self-auto">
+          <label className="text-xs font-semibold text-slate-500">Facility:</label>
+          <select
+            value={currentPHC}
+            onChange={(e) => setCurrentPHC(e.target.value)}
+            className="text-xs font-bold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="PHC-RAN-01">PHC-RAN-01 (Ranchi Sadar)</option>
+            <option value="PHC-RAN-02">PHC-RAN-02 (Kanke Rural)</option>
+            <option value="PHC-RAN-03">PHC-RAN-03 (Namkum PHC)</option>
+            <option value="PHC-PAT-01">PHC-PAT-01 (Patna City)</option>
+            <option value="PHC-DHN-01">PHC-DHN-01 (Jharia Coalfield)</option>
+          </select>
         </div>
       </div>
 

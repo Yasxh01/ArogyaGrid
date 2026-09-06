@@ -3,8 +3,9 @@ import { apiRequest } from '../api/client';
 import { Pill, PlusCircle, AlertCircle, TrendingUp, CheckCircle, RefreshCw } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 
-export default function StockManager({ selectedPHC, onTransactionLogged }) {
+export default function StockManager({ selectedPHC: initialPHC, onTransactionLogged }) {
   const { socket } = useSocket();
+  const [currentPHC, setCurrentPHC] = useState(initialPHC || 'PHC-RAN-01');
   const [stock, setStock] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -16,8 +17,12 @@ export default function StockManager({ selectedPHC, onTransactionLogged }) {
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
+    if (initialPHC) setCurrentPHC(initialPHC);
+  }, [initialPHC]);
+
+  useEffect(() => {
     fetchStock();
-  }, [selectedPHC]);
+  }, [currentPHC]);
 
   useEffect(() => {
     if (!socket) return;
@@ -32,12 +37,12 @@ export default function StockManager({ selectedPHC, onTransactionLogged }) {
       socket.off('medicine:created', handleUpdate);
       socket.off('transfer:approved', handleUpdate);
     };
-  }, [socket, selectedPHC]);
+  }, [socket, currentPHC]);
 
   async function fetchStock() {
     try {
       setLoading(true);
-      const data = await apiRequest(`/stock/phc/${selectedPHC || 'PHC-RAN-01'}`);
+      const data = await apiRequest(`/stock/phc/${currentPHC || 'PHC-RAN-01'}`);
       setStock(data.stock || []);
     } catch (err) {
       console.error('Error fetching stock:', err);
@@ -60,7 +65,7 @@ export default function StockManager({ selectedPHC, onTransactionLogged }) {
         method: 'POST',
         body: JSON.stringify({
           transaction_uuid: txUuid,
-          phc_id: selectedPHC || 'PHC-RAN-01',
+          phc_id: currentPHC || 'PHC-RAN-01',
           medicine_id: medicineId,
           quantity: parseInt(quantity, 10),
           transaction_type: transactionType
@@ -85,23 +90,40 @@ export default function StockManager({ selectedPHC, onTransactionLogged }) {
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
       
       {/* Title */}
-      <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-slate-100 gap-2">
         <div className="flex items-center space-x-2.5">
           <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700">
             <Pill className="w-5 h-5" />
           </div>
           <div>
             <h3 className="font-bold text-slate-900 text-sm sm:text-base">Medicine Stock & Consumption</h3>
-            <p className="text-xs text-slate-500">Live Inventory for {selectedPHC || 'PHC-RAN-01'}</p>
+            <p className="text-xs text-slate-500">Live Inventory for {currentPHC}</p>
           </div>
         </div>
-        <button
-          onClick={fetchStock}
-          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition"
-          title="Refresh Stock"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+
+        {/* Facility Selector & Refresh */}
+        <div className="flex items-center space-x-2 self-start sm:self-auto">
+          <label className="text-xs font-semibold text-slate-500">Facility:</label>
+          <select
+            value={currentPHC}
+            onChange={(e) => setCurrentPHC(e.target.value)}
+            className="text-xs font-bold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value="PHC-RAN-01">PHC-RAN-01 (Ranchi Sadar)</option>
+            <option value="PHC-RAN-02">PHC-RAN-02 (Kanke Rural)</option>
+            <option value="PHC-RAN-03">PHC-RAN-03 (Namkum PHC)</option>
+            <option value="PHC-PAT-01">PHC-PAT-01 (Patna City)</option>
+            <option value="PHC-DHN-01">PHC-DHN-01 (Jharia Coalfield)</option>
+          </select>
+
+          <button
+            onClick={fetchStock}
+            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition"
+            title="Refresh Stock"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </div>
 
       {/* Stock Cards Grid */}
