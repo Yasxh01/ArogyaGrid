@@ -4,6 +4,63 @@ exports.getDistricts = (req, res) => {
   res.json({ districts: db.memoryStore.districts });
 };
 
+exports.createDistrict = (req, res) => {
+  const { id, name, state, latitude, longitude } = req.body;
+  if (!name || !state) {
+    return res.status(400).json({ error: 'name and state are required', code: 'INVALID_INPUT' });
+  }
+
+  const store = db.memoryStore;
+  const districtId = id || `DIST-${state.substring(0, 2).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+
+  const newDistrict = {
+    id: districtId,
+    name,
+    state,
+    latitude: latitude ? parseFloat(latitude) : 23.3441,
+    longitude: longitude ? parseFloat(longitude) : 85.3096,
+    created_at: new Date()
+  };
+
+  store.districts.push(newDistrict);
+  res.status(201).json({ success: true, district: newDistrict });
+};
+
+exports.createFacility = (req, res) => {
+  const { districtId } = req.params;
+  const { id, name, facility_type, latitude, longitude, capacity, population_served } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: 'facility name is required', code: 'INVALID_INPUT' });
+  }
+
+  const store = db.memoryStore;
+  const facilityId = id || `FAC-${Date.now().toString(36).toUpperCase()}`;
+
+  const newFacility = {
+    id: facilityId,
+    name,
+    facility_type: facility_type || 'PHC',
+    district_id: districtId,
+    latitude: latitude ? parseFloat(latitude) : 23.3500,
+    longitude: longitude ? parseFloat(longitude) : 85.3200,
+    capacity: capacity ? parseInt(capacity, 10) : 50,
+    status: 'HEALTHY',
+    population_served: population_served ? parseInt(population_served, 10) : 15000,
+    created_at: new Date()
+  };
+
+  store.phcs.push(newFacility);
+
+  // Initialize baseline beds
+  store.beds.push(
+    { id: `BED-${facilityId}-GEN`, phc_id: facilityId, bed_type: 'GENERAL', total_beds: 20, occupied_beds: 0, updated_at: new Date() },
+    { id: `BED-${facilityId}-OXY`, phc_id: facilityId, bed_type: 'OXYGEN', total_beds: 5, occupied_beds: 0, updated_at: new Date() }
+  );
+
+  res.status(201).json({ success: true, facility: newFacility });
+};
+
 exports.getDistrictMapTelemetry = (req, res) => {
   const { districtId } = req.params;
   const store = db.memoryStore;
@@ -30,6 +87,7 @@ exports.getDistrictMapTelemetry = (req, res) => {
       properties: {
         id: phc.id,
         name: phc.name,
+        facility_type: phc.facility_type || 'PHC',
         district_id: phc.district_id,
         status: criticalStocks.length > 0 ? 'CRITICAL' : (bedOccupancyRate > 80 ? 'WARNING' : 'HEALTHY'),
         capacity: phc.capacity,

@@ -15,7 +15,10 @@ class ResilientDB {
       beds: [],
       staff_attendance: [],
       predictions: [],
-      transfers: []
+      transfers: [],
+      cold_chain_units: [],
+      cold_chain_telemetry_logs: [],
+      batches: []
     };
   }
 

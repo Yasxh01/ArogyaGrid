@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 
 const authRoutes = require('./authRoutes');
@@ -10,11 +10,13 @@ const transferRoutes = require('./transferRoutes');
 const districtRoutes = require('./districtRoutes');
 const mlRoutes = require('./mlRoutes');
 const aiRoutes = require('./aiRoutes');
+const coldChainRoutes = require('./coldChainRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/stock', stockRoutes);
 router.use('/beds', bedRoutes);
 router.use('/staff', staffRoutes);
+router.use('/telemetry/cold-chain', coldChainRoutes);
 router.use('/telemetry', telemetryRoutes);
 router.use('/transfers', transferRoutes);
 router.use('/districts', districtRoutes);
