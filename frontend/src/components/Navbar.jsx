@@ -20,7 +20,8 @@ export default function Navbar({ onOpenCopilot, onOpenVoice, onOpenExplainer, ac
         { id: 'coldchain', label: 'Cold-Chain IoT' },
         { id: 'transfers', label: 'Logistics & Escrow' },
         { id: 'stock', label: 'District Stock & FEFO' },
-        { id: 'beds', label: 'Bed Matrix' }
+        { id: 'beds', label: 'Bed Matrix' },
+        { id: 'abdm', label: 'ABDM & e-Aushadhi' }
       ];
     }
     if (role === 'DOCTOR') {
