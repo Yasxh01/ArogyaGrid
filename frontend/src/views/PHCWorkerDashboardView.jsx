@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import StockManager from '../components/StockManager';
 import BedMatrix from '../components/BedMatrix';
-import { Pill, Mic, Wifi, WifiOff, RefreshCw, Sparkles, Bed } from 'lucide-react';
+import ChallanScannerModal from '../components/ChallanScannerModal';
+import { Pill, Mic, Wifi, WifiOff, RefreshCw, Sparkles, Bed, Camera } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -9,6 +10,7 @@ export default function PHCWorkerDashboardView({ activeTab, onOpenVoice, pending
   const { isOnline } = useSocket();
   const { user } = useAuth();
   const phcId = user?.phc_id || 'PHC-RAN-01';
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   if (activeTab === 'stock') {
     return (
@@ -53,7 +55,7 @@ export default function PHCWorkerDashboardView({ activeTab, onOpenVoice, pending
     <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* Big Kiosk Action Banner */}
-      <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-3xl p-6 sm:p-8 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-3xl p-6 sm:p-8 text-white shadow-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div>
           <div className="flex items-center space-x-2 mb-2 flex-wrap gap-y-1">
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-sm inline-block">
@@ -64,16 +66,29 @@ export default function PHCWorkerDashboardView({ activeTab, onOpenVoice, pending
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-black">Daily Medicine & Patient Intake</h2>
-          <p className="text-emerald-100 text-xs sm:text-sm mt-1">Logged in as <span className="font-semibold text-white">{user?.email || 'staff@arogyagrid.gov.in'}</span> &bull; Tap the microphone to record in Hindi or log manual transactions below.</p>
+          <p className="text-emerald-100 text-xs sm:text-sm mt-1">
+            Logged in as <span className="font-semibold text-white">{user?.email || 'staff@arogyagrid.gov.in'}</span> &bull; Tap Hindi voice or scan paper challans below.
+          </p>
         </div>
 
-        <button
-          onClick={onOpenVoice}
-          className="px-6 py-3.5 bg-white hover:bg-emerald-50 text-emerald-800 font-black rounded-2xl text-sm transition shadow-md flex items-center space-x-2 shrink-0 transform active:scale-95"
-        >
-          <Mic className="w-5 h-5 text-emerald-600" />
-          <span>🎙️ बोलकर दर्ज करें (Hindi Voice)</span>
-        </button>
+        {/* Quick Kiosk Actions: Gemini Vision Scan + Hindi Voice */}
+        <div className="flex items-center space-x-3 flex-wrap gap-y-2 shrink-0">
+          <button
+            onClick={() => setIsScannerOpen(true)}
+            className="px-5 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-2xl text-xs sm:text-sm transition shadow-md flex items-center space-x-2 transform active:scale-95"
+          >
+            <Camera className="w-5 h-5 text-indigo-200" />
+            <span>📷 Scan Delivery Challan</span>
+          </button>
+
+          <button
+            onClick={onOpenVoice}
+            className="px-5 py-3.5 bg-white hover:bg-emerald-50 text-emerald-800 font-black rounded-2xl text-xs sm:text-sm transition shadow-md flex items-center space-x-2 transform active:scale-95"
+          >
+            <Mic className="w-5 h-5 text-emerald-600" />
+            <span>🎙️ बोलकर दर्ज करें (Hindi)</span>
+          </button>
+        </div>
       </div>
 
       {/* Offline Status Card */}
@@ -100,6 +115,12 @@ export default function PHCWorkerDashboardView({ activeTab, onOpenVoice, pending
         <BedMatrix selectedPHC={phcId} />
       </div>
 
+      {/* Challan Scanner Modal */}
+      <ChallanScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        phcId={phcId}
+      />
     </div>
   );
 }

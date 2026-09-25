@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
-import { Pill, PlusCircle, AlertCircle, TrendingUp, CheckCircle, RefreshCw } from 'lucide-react';
+import { Pill, PlusCircle, AlertCircle, TrendingUp, CheckCircle, RefreshCw, Camera } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
+import ChallanScannerModal from './ChallanScannerModal';
 
 export default function StockManager({ selectedPHC: initialPHC, onTransactionLogged }) {
   const { socket } = useSocket();
@@ -9,6 +10,7 @@ export default function StockManager({ selectedPHC: initialPHC, onTransactionLog
   const [stock, setStock] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   
   // Intake Form State
   const [medicineId, setMedicineId] = useState('MED-001');
@@ -58,60 +60,66 @@ export default function StockManager({ selectedPHC: initialPHC, onTransactionLog
     setSubmitting(true);
     setMessage(null);
 
-    const txUuid = 'TX-WEB-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
+    const clientTxId = 'TX-MANUAL-' + Date.now();
 
     try {
       const res = await apiRequest('/stock/transaction', {
         method: 'POST',
         body: JSON.stringify({
-          transaction_uuid: txUuid,
-          phc_id: currentPHC || 'PHC-RAN-01',
+          transaction_uuid: clientTxId,
+          phc_id: currentPHC,
           medicine_id: medicineId,
-          quantity: parseInt(quantity, 10),
+          quantity: Number(quantity),
           transaction_type: transactionType
         })
       });
 
-      setMessage({
-        type: 'success',
-        text: `Transaction recorded! New quantity: ${res.current_stock}. Risk: ${res.prediction?.risk_level || 'LOW'}`
-      });
+      setMessage({ type: 'success', text: `Success: ${transactionType} processed. New quantity: ${res.new_quantity}` });
       setQuantity('');
       fetchStock();
       if (onTransactionLogged) onTransactionLogged();
     } catch (err) {
-      setMessage({ type: 'error', text: err.message });
+      setMessage({ type: 'error', text: err.message || 'Transaction failed' });
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+    <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
       
-      {/* Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-slate-100 gap-2">
-        <div className="flex items-center space-x-2.5">
-          <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700">
+      {/* Header with Title and Challan Scanner Button */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 mb-4 border-b border-slate-100 gap-3">
+        <div className="flex items-center space-x-3">
+          <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600">
             <Pill className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-slate-900 text-sm sm:text-base">Medicine Stock & Consumption</h3>
-            <p className="text-xs text-slate-500">Live Inventory for {currentPHC}</p>
+            <h3 className="font-extrabold text-base text-slate-900">Essential Medicines & Formulary</h3>
+            <p className="text-xs text-slate-500 font-medium">National List of Essential Medicines (NLEM-2022) &bull; {currentPHC}</p>
           </div>
         </div>
 
-        {/* Facility Selector & Refresh */}
-        <div className="flex items-center space-x-2 self-start sm:self-auto">
+        {/* Action Controls */}
+        <div className="flex items-center space-x-2.5 self-start sm:self-auto flex-wrap gap-y-2">
+          <button
+            onClick={() => setIsScannerOpen(true)}
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs rounded-xl shadow-sm transition"
+          >
+            <Camera className="w-3.5 h-3.5" />
+            <span>Scan Delivery Challan</span>
+          </button>
+
           <label className="text-xs font-semibold text-slate-500">Facility:</label>
           <select
             value={currentPHC}
             onChange={(e) => setCurrentPHC(e.target.value)}
-            className="text-xs font-bold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
+            className="text-xs font-bold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
           >
             <option value="PHC-RAN-01">PHC-RAN-01 (Ranchi Sadar)</option>
-            <option value="PHC-RAN-02">PHC-RAN-02 (Kanke Rural)</option>
+            <option value="PHC-RAN-02">PHC-RAN-02 (Kanke Rural CHC)</option>
             <option value="PHC-RAN-03">PHC-RAN-03 (Namkum PHC)</option>
+            <option value="DH-RAN-01">DH-RAN-01 (Ranchi Civil Hospital)</option>
             <option value="PHC-PAT-01">PHC-PAT-01 (Patna City)</option>
             <option value="PHC-DHN-01">PHC-DHN-01 (Jharia Coalfield)</option>
           </select>
@@ -127,10 +135,12 @@ export default function StockManager({ selectedPHC: initialPHC, onTransactionLog
       </div>
 
       {/* Stock Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
         {stock.map((item) => {
           const isCritical = item.quantity < 50;
           const isWarning = item.quantity >= 50 && item.quantity < 150;
+          const isColdChain = item.storage_type === 'COLD_CHAIN_2_8C' || item.name?.toLowerCase().includes('vaccine') || item.name?.toLowerCase().includes('insulin');
+
           return (
             <div
               key={item.id}
@@ -142,8 +152,16 @@ export default function StockManager({ selectedPHC: initialPHC, onTransactionLog
                   : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50'
               }`}
             >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="font-bold text-xs text-slate-900">{item.medicine_name || item.medicine_id}</span>
+              <div className="flex items-start justify-between mb-1.5">
+                <div>
+                  <span className="font-extrabold text-xs text-slate-900 block">{item.medicine_name || item.medicine_id}</span>
+                  {isColdChain && (
+                    <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                      ❄️ Cold-Chain (2°C–8°C)
+                    </span>
+                  )}
+                </div>
+
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
                   isCritical ? 'bg-rose-200 text-rose-900 animate-pulse' :
                   isWarning ? 'bg-amber-200 text-amber-900' : 'bg-emerald-100 text-emerald-800'
@@ -152,12 +170,12 @@ export default function StockManager({ selectedPHC: initialPHC, onTransactionLog
                 </span>
               </div>
 
-              <div className="flex items-baseline justify-between mt-2">
+              <div className="flex items-baseline justify-between mt-2 pt-2 border-t border-slate-100">
                 <div>
-                  <span className="text-2xl font-extrabold text-slate-900">{item.quantity}</span>
+                  <span className="text-2xl font-black text-slate-900">{item.quantity}</span>
                   <span className="text-xs text-slate-500 ml-1">{item.unit || 'units'}</span>
                 </div>
-                <div className="text-right text-[11px] text-slate-500">
+                <div className="text-right text-[11px] text-slate-500 font-medium">
                   <span>Burn: ~{item.daily_consumption || 15}/day</span>
                 </div>
               </div>
@@ -180,19 +198,19 @@ export default function StockManager({ selectedPHC: initialPHC, onTransactionLog
               list="stock-med-options"
               value={medicineId}
               onChange={(e) => setMedicineId(e.target.value)}
-              placeholder="e.g. Paracetamol, MED-001"
               className="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="MED-001"
               required
             />
             <datalist id="stock-med-options">
-              {stock.map(s => (
-                <option key={s.id} value={s.medicine_id}>{s.name || s.medicine_id}</option>
-              ))}
-              <option value="MED-001">Paracetamol 500mg</option>
-              <option value="MED-002">Amoxicillin 250mg</option>
-              <option value="MED-003">ORS Sachets</option>
-              <option value="MED-004">Insulin Glargine</option>
-              <option value="MED-005">Anti-Rabies Vaccine</option>
+              <option value="MED-001">Paracetamol 500mg Tablets</option>
+              <option value="MED-002">Amoxicillin 250mg Capsules</option>
+              <option value="MED-003">Oral Rehydration Salts (ORS)</option>
+              <option value="MED-004">Insulin Glargine 100IU/ml</option>
+              <option value="MED-005">Anti-Rabies Vaccine (ARV)</option>
+              <option value="MED-006">Azithromycin 500mg Tablets</option>
+              <option value="MED-007">Cetirizine 10mg Tablets</option>
+              <option value="MED-008">Rotavirus Oral Vaccine</option>
             </datalist>
           </div>
 
@@ -201,7 +219,7 @@ export default function StockManager({ selectedPHC: initialPHC, onTransactionLog
             <select
               value={transactionType}
               onChange={(e) => setTransactionType(e.target.value)}
-              className="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
             >
               <option value="INTAKE">📦 Restock / Intake</option>
               <option value="DISPENSE">💊 Dispense to Patients</option>
@@ -238,6 +256,13 @@ export default function StockManager({ selectedPHC: initialPHC, onTransactionLog
         </button>
       </form>
 
+      {/* Challan Scanner Modal */}
+      <ChallanScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        phcId={currentPHC}
+        onStockIngested={fetchStock}
+      />
     </div>
   );
 }

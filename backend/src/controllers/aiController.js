@@ -1,4 +1,4 @@
-﻿const aiService = require('../services/aiService');
+const aiService = require('../services/aiService');
 
 exports.parseVoiceIntake = async (req, res, next) => {
   try {
@@ -8,6 +8,20 @@ exports.parseVoiceIntake = async (req, res, next) => {
     }
     const result = await aiService.parseNaturalLanguageIntake({ text, phc_id, language });
     res.json({ success: true, parsed: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.digitizeChallan = async (req, res, next) => {
+  try {
+    const { imageBase64, mimeType, phc_id } = req.body;
+    const result = await aiService.digitizeStockChallan({
+      imageBase64,
+      mimeType,
+      phc_id: phc_id || (req.user ? req.user.phc_id : 'PHC-RAN-01')
+    });
+    res.json({ success: true, challan: result });
   } catch (err) {
     next(err);
   }
