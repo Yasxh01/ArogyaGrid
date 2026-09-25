@@ -77,9 +77,9 @@ export default function BedMatrix({ selectedPHC: initialPHC, districtId = 'DIST-
             <HeartPulse className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-slate-900 text-sm sm:text-base">Bed Availability & Occupancy</h3>
+            <h3 className="font-bold text-slate-900 text-sm sm:text-base">Hospital Bed Availability</h3>
             <p className="text-xs text-slate-500">
-              Live Telemetry for <span className="font-bold text-slate-800">{activeFacilityObj ? activeFacilityObj.name : currentPHC}</span> ({currentPHC})
+              Live beds for <span className="font-bold text-slate-800">{activeFacilityObj ? activeFacilityObj.name : currentPHC}</span> ({currentPHC})
             </p>
           </div>
         </div>
@@ -106,24 +106,25 @@ export default function BedMatrix({ selectedPHC: initialPHC, districtId = 'DIST-
       </div>
 
       {loading ? (
-        <div className="py-8 text-center text-xs text-slate-400">Loading live clinical bed data...</div>
+        <div className="py-8 text-center text-xs text-slate-400">Loading hospital bed data...</div>
       ) : beds.length === 0 ? (
-        <div className="py-8 text-center text-xs text-slate-400">No bed telemetry reported for this facility.</div>
+        <div className="py-8 text-center text-xs text-slate-400">No beds recorded for this facility yet.</div>
       ) : (
         <div className="space-y-3.5">
           {beds.map((b) => {
             const rate = Math.round((b.occupied_beds / Math.max(1, b.total_beds)) * 100);
             const isCritical = rate >= 90;
             const isWarning = rate >= 75 && rate < 90;
+            const label = b.bed_type === 'ICU' ? 'ICU Beds (Critical Care)' : b.bed_type === 'OXYGEN' ? 'Oxygen Supported Beds' : 'General Ward Beds';
 
             return (
               <div key={b.id} className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-800 mb-1.5">
                   <span className="flex items-center">
-                    <Bed className="w-4 h-4 mr-1.5 text-slate-400" /> {b.bed_type} BEDS
+                    <Bed className="w-4 h-4 mr-1.5 text-slate-400" /> {label}
                   </span>
                   <span className={`${isCritical ? 'text-rose-600' : isWarning ? 'text-amber-600' : 'text-emerald-700'}`}>
-                    {b.occupied_beds} / {b.total_beds} ({rate}%)
+                    {b.occupied_beds} occupied of {b.total_beds} total ({rate}%)
                   </span>
                 </div>
 

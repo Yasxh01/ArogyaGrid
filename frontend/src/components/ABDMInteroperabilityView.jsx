@@ -122,13 +122,13 @@ export default function ABDMInteroperabilityView({ districtId = 'DIST-JH-01' }) 
           </div>
           <div>
             <div className="flex items-center space-x-2 flex-wrap">
-              <h2 className="text-lg font-black text-slate-900">ABDM & e-Aushadhi National Interoperability Hub</h2>
+              <h2 className="text-lg font-black text-slate-900">Government Portals & Patient ID (ABDM & e-Aushadhi)</h2>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-teal-50 text-teal-700 border border-teal-200">
-                MoHFW & NHA Compliant
+                Official Standards (MoHFW)
               </span>
             </div>
             <p className="text-xs text-slate-500 font-medium">
-              HL7 FHIR Release 4 &bull; CDAC e-Aushadhi (DVDMS) &bull; Health Facility Registry (HFR) &bull; ABHA Sandbox
+              Direct connection with Central Government Warehouses, National Health Records, and Ayushman Bharat ID cards
             </p>
           </div>
         </div>
@@ -137,11 +137,11 @@ export default function ABDMInteroperabilityView({ districtId = 'DIST-JH-01' }) 
         <div className="flex items-center space-x-2 flex-wrap gap-y-2">
           <span className="px-3 py-1 bg-indigo-50 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 flex items-center space-x-1.5">
             <Layers className="w-3.5 h-3.5" />
-            <span>FHIR R4 Schema</span>
+            <span>Standard Health Records (FHIR R4)</span>
           </span>
           <span className="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-xl border border-emerald-200 flex items-center space-x-1.5">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>DPDP Consent M3</span>
+            <span>Patient Privacy Protected</span>
           </span>
         </div>
       </div>
@@ -157,7 +157,7 @@ export default function ABDMInteroperabilityView({ districtId = 'DIST-JH-01' }) 
           }`}
         >
           <Database className="w-3.5 h-3.5" />
-          <span>e-Aushadhi / DVDMS Sync</span>
+          <span>Central Warehouse (e-Aushadhi)</span>
         </button>
 
         <button
@@ -169,7 +169,7 @@ export default function ABDMInteroperabilityView({ districtId = 'DIST-JH-01' }) 
           }`}
         >
           <FileCode className="w-3.5 h-3.5" />
-          <span>HL7 FHIR R4 Bundle ({fhirBundle?.total || 0})</span>
+          <span>Health Records Export ({fhirBundle?.total || 0})</span>
         </button>
 
         <button
@@ -181,7 +181,7 @@ export default function ABDMInteroperabilityView({ districtId = 'DIST-JH-01' }) 
           }`}
         >
           <UserCheck className="w-3.5 h-3.5" />
-          <span>HFR Registry & ABHA Verifier</span>
+          <span>Verify Patient ABHA & Clinic ID</span>
         </button>
       </div>
 

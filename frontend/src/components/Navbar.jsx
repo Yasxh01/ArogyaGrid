@@ -10,31 +10,31 @@ export default function Navbar({ onOpenCopilot, onOpenVoice, onOpenExplainer, ac
   function getTabsForRole(role) {
     if (role === 'ADMIN') {
       return [
-        { id: 'dashboard', label: 'Formulary & Catalog' },
-        { id: 'federated', label: 'Nationwide Federated AI' }
+        { id: 'dashboard', label: 'Medicine Catalog' },
+        { id: 'federated', label: 'Smart Hospital AI Network' }
       ];
     }
     if (role === 'DISTRICT_OFFICER') {
       return [
-        { id: 'dashboard', label: 'Command Map' },
-        { id: 'coldchain', label: 'Cold-Chain IoT' },
-        { id: 'transfers', label: 'Logistics & Escrow' },
-        { id: 'stock', label: 'District Stock & FEFO' },
-        { id: 'beds', label: 'Bed Matrix' },
-        { id: 'abdm', label: 'ABDM & e-Aushadhi' },
-        { id: 'xai', label: 'ML & XAI Charts' }
+        { id: 'dashboard', label: 'Live Map' },
+        { id: 'coldchain', label: 'Vaccine Fridges' },
+        { id: 'transfers', label: 'Send Medicines' },
+        { id: 'stock', label: 'Medicine Stock' },
+        { id: 'beds', label: 'Hospital Beds' },
+        { id: 'abdm', label: 'Govt Portals & ABHA' },
+        { id: 'xai', label: 'AI Forecasts' }
       ];
     }
     if (role === 'DOCTOR') {
       return [
-        { id: 'dashboard', label: 'Clinical Beds' },
-        { id: 'staff', label: 'Staff Roster' },
-        { id: 'stock', label: 'Emergency Stock' }
+        { id: 'dashboard', label: 'Hospital Beds' },
+        { id: 'staff', label: 'Duty Roster' },
+        { id: 'stock', label: 'Emergency Medicines' }
       ];
     }
     return [
-      { id: 'dashboard', label: 'Frontline Kiosk' },
-      { id: 'stock', label: 'Stock Dispense' },
+      { id: 'dashboard', label: 'Frontline Counter' },
+      { id: 'stock', label: 'Give Medicines' },
       { id: 'beds', label: 'Bed Status' }
     ];
   }
@@ -111,10 +111,10 @@ export default function Navbar({ onOpenCopilot, onOpenVoice, onOpenExplainer, ac
               <button
                 onClick={onOpenExplainer}
                 className="hidden sm:flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/60 transition"
-                title="Why Federated AI is essential"
+                title="Learn how AI keeps patient records 100% private"
               >
                 <Cpu className="w-3.5 h-3.5" />
-                <span>AI Info</span>
+                <span>AI Privacy Guide</span>
               </button>
             )}
 
@@ -122,7 +122,7 @@ export default function Navbar({ onOpenCopilot, onOpenVoice, onOpenExplainer, ac
               <button
                 onClick={onOpenCopilot}
                 className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200/60 transition-all flex items-center justify-center"
-                title="Open AI Copilot"
+                title="Chat with AI Assistant (Copilot)"
               >
                 <Bot className="w-4 h-4 text-indigo-600" />
               </button>

@@ -98,13 +98,13 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
           </div>
           <div>
             <div className="flex items-center space-x-2 flex-wrap">
-              <h2 className="font-black text-lg text-slate-900">District Health Command Console</h2>
+              <h2 className="font-black text-lg text-slate-900">District Healthcare Dashboard</h2>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200">
                 👤 {user?.name || 'District Health Officer'}
               </span>
             </div>
             <p className="text-xs text-slate-500 font-medium">
-              Nationwide Multi-Tier Grid &bull; Currently commanding <span className="font-bold text-slate-800">{currentDistrict.name}</span> ({currentDistrict.state})
+              Connected across all clinics &bull; Viewing <span className="font-bold text-slate-800">{currentDistrict.name}</span> ({currentDistrict.state})
             </p>
           </div>
         </div>
@@ -132,12 +132,12 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
             className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl border border-emerald-200 transition shrink-0"
           >
             <Smartphone className="w-3.5 h-3.5" />
-            <span>ASHA WhatsApp Bridge</span>
+            <span>📱 ASHA WhatsApp Alerts</span>
           </button>
 
           <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center space-x-1 shrink-0">
             <ShieldCheck className="w-3.5 h-3.5 mr-1" />
-            <span>DPDP Verified</span>
+            <span>🔒 Patient Data Protected</span>
           </span>
         </div>
       </div>
@@ -153,7 +153,7 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
           }`}
         >
           <Map className="w-3.5 h-3.5" />
-          <span>GIS Command Map</span>
+          <span>Live Map</span>
         </button>
 
         <button
@@ -165,7 +165,7 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
           }`}
         >
           <Thermometer className="w-3.5 h-3.5" />
-          <span>Cold-Chain IoT Hub</span>
+          <span>Vaccine Fridges (2°C-8°C)</span>
         </button>
 
         <button
@@ -177,7 +177,7 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
           }`}
         >
           <Truck className="w-3.5 h-3.5" />
-          <span>Logistics Escrow Transfers</span>
+          <span>Send Medicines & Drones</span>
         </button>
 
         <button
@@ -189,7 +189,7 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
           }`}
         >
           <Package className="w-3.5 h-3.5" />
-          <span>NLEM Stock & Batches</span>
+          <span>Medicine Stock & Expiry</span>
         </button>
 
         <button
@@ -201,7 +201,7 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
           }`}
         >
           <Bed className="w-3.5 h-3.5" />
-          <span>Clinical Bed Matrix</span>
+          <span>Hospital Beds</span>
         </button>
 
         <button
@@ -213,7 +213,7 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
           }`}
         >
           <Network className="w-3.5 h-3.5" />
-          <span>ABDM & e-Aushadhi Hub</span>
+          <span>Govt Portals & ABHA</span>
         </button>
 
         <button
@@ -225,7 +225,7 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
           }`}
         >
           <BarChart3 className="w-3.5 h-3.5" />
-          <span>ML & XAI Charts</span>
+          <span>AI Forecasts & Charts</span>
         </button>
       </div>
 
@@ -239,10 +239,10 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
               </span>
               <div>
                 <span className="font-black text-rose-950 uppercase tracking-wide text-xs">
-                  🚨 MoHFW IDSP Early Outbreak Warning &bull; {epidemicAlerts[0].outbreak_type}
+                  🚨 Disease Outbreak Warning &bull; {epidemicAlerts[0].outbreak_type}
                 </span>
                 <p className="text-[11px] text-rose-800 font-semibold mt-0.5">
-                  Detected at <strong>{epidemicAlerts[0].phc_name}</strong> ({epidemicAlerts[0].burn_rate_spike})
+                  Unusual patient surge at <strong>{epidemicAlerts[0].phc_name}</strong> ({epidemicAlerts[0].burn_rate_spike})
                 </p>
               </div>
             </div>
@@ -251,7 +251,7 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
               onClick={() => handleQuickTransfer(epidemicAlerts[0].phc_id)}
               className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold rounded-xl transition shadow-sm flex items-center justify-center space-x-1 self-start sm:self-auto shrink-0"
             >
-              <span>⚡ Pre-Position Emergency Buffer</span>
+              <span>⚡ Send Emergency Medicines Now</span>
               <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </button>
           </div>

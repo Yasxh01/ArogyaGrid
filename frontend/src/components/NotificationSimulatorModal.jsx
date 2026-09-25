@@ -93,37 +93,37 @@ export default function NotificationSimulatorModal({ isOpen, onClose }) {
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="font-extrabold text-slate-900 text-base">Frontline ASHA & Worker Dispatch Bridge</h3>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">MoHFW Standard</span>
+              <h3 className="font-extrabold text-slate-900 text-base">WhatsApp Alerts for Village Health Workers</h3>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">Direct Delivery</span>
             </div>
-            <p className="text-xs text-slate-500">Live WhatsApp & SMS Dispatch Simulator for Grassroots Workers in Bharat</p>
+            <p className="text-xs text-slate-500">Instant WhatsApp and SMS alerts sent to ASHA workers and village clinic staff</p>
           </div>
         </div>
 
         {/* 1-Click Simulation Triggers */}
         <div className="mb-4 p-3 bg-slate-50 rounded-2xl border border-slate-200">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">⚡ Simulate Live Field Dispatches:</span>
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">⚡ Try Sending a Test Emergency Alert:</span>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <button
               onClick={() => handleSimulate('ASHA_COLD_CHAIN')}
               disabled={simulating}
               className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 rounded-xl text-[11px] font-bold transition flex items-center justify-center space-x-1"
             >
-              <span>❄️ ASHA Cold-Chain Breach</span>
+              <span>❄️ Vaccine Fridge Too Warm</span>
             </button>
             <button
               onClick={() => handleSimulate('CHO_VACCINE_ARRIVAL')}
               disabled={simulating}
               className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-[11px] font-bold transition flex items-center justify-center space-x-1"
             >
-              <span>📦 CHO Vaccine Arrival</span>
+              <span>📦 New Medicine Arrived</span>
             </button>
             <button
               onClick={() => handleSimulate('IDSP_EPIDEMIC')}
               disabled={simulating}
               className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl text-[11px] font-bold transition flex items-center justify-center space-x-1"
             >
-              <span>🚨 IDSP Outbreak Advisory</span>
+              <span>🚨 Disease Outbreak Alert</span>
             </button>
           </div>
         </div>

@@ -218,7 +218,7 @@ export default function StockManager({ selectedPHC: initialPHC, districtId = 'DI
           }`}
         >
           <Pill className="w-3.5 h-3.5" />
-          <span>Active SKU Inventory ({stock.length})</span>
+          <span>Available Medicines ({stock.length})</span>
         </button>
 
         <button
@@ -230,7 +230,7 @@ export default function StockManager({ selectedPHC: initialPHC, districtId = 'DI
           }`}
         >
           <Calendar className="w-3.5 h-3.5" />
-          <span>FEFO Batch Expiry Watchdog</span>
+          <span>Expiry Tracker & Batches</span>
           {batches.filter(b => b.status === 'CRITICAL_EXPIRY' || b.status === 'NEAR_EXPIRY').length > 0 && (
             <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-600 text-white animate-pulse">
               {batches.filter(b => b.status === 'CRITICAL_EXPIRY' || b.status === 'NEAR_EXPIRY').length}
@@ -263,7 +263,7 @@ export default function StockManager({ selectedPHC: initialPHC, districtId = 'DI
                     <span className="font-extrabold text-xs text-slate-900 block">{item.medicine_name || item.medicine_id}</span>
                     {isColdChain && (
                       <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
-                        ❄️ Cold-Chain (2°C–8°C)
+                        ❄️ Refrigerator (2°C–8°C)
                       </span>
                     )}
                   </div>
@@ -272,7 +272,7 @@ export default function StockManager({ selectedPHC: initialPHC, districtId = 'DI
                     isCritical ? 'bg-rose-200 text-rose-900 animate-pulse' :
                     isWarning ? 'bg-amber-200 text-amber-900' : 'bg-emerald-100 text-emerald-800'
                   }`}>
-                    {isCritical ? 'CRITICAL' : (isWarning ? 'LOW' : 'STABLE')}
+                    {isCritical ? 'URGENT' : (isWarning ? 'LOW STOCK' : 'IN STOCK')}
                   </span>
                 </div>
 
@@ -282,7 +282,7 @@ export default function StockManager({ selectedPHC: initialPHC, districtId = 'DI
                     <span className="text-xs text-slate-500 ml-1">{item.unit || 'units'}</span>
                   </div>
                   <div className="text-right text-[11px] text-slate-500 font-medium">
-                    <span>Burn: ~{item.daily_consumption || 15}/day</span>
+                    <span>Used: ~{item.daily_consumption || 15} / day</span>
                   </div>
                 </div>
               </div>
@@ -297,23 +297,23 @@ export default function StockManager({ selectedPHC: initialPHC, districtId = 'DI
           {/* FEFO Metrics Summary */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-              <span className="text-[10px] font-bold text-slate-500 uppercase">Batches Monitored</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase">Tracked Batches</span>
               <p className="text-xl font-extrabold text-slate-800">{batches.length}</p>
             </div>
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl">
-              <span className="text-[10px] font-bold text-rose-700 uppercase">Expiring &le; 30 Days</span>
+              <span className="text-[10px] font-bold text-rose-700 uppercase">Expiring in 30 Days</span>
               <p className="text-xl font-extrabold text-rose-700">
                 {batches.filter(b => b.status === 'CRITICAL_EXPIRY').length}
               </p>
             </div>
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
-              <span className="text-[10px] font-bold text-amber-800 uppercase">Expiring &le; 60 Days</span>
+              <span className="text-[10px] font-bold text-amber-800 uppercase">Expiring in 60 Days</span>
               <p className="text-xl font-extrabold text-amber-800">
                 {batches.filter(b => b.status === 'NEAR_EXPIRY').length}
               </p>
             </div>
             <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-              <span className="text-[10px] font-bold text-emerald-800 uppercase">Stable Lifespan</span>
+              <span className="text-[10px] font-bold text-emerald-800 uppercase">Long Shelf-Life</span>
               <p className="text-xl font-extrabold text-emerald-800">
                 {batches.filter(b => b.status === 'SAFE').length}
               </p>
@@ -326,11 +326,11 @@ export default function StockManager({ selectedPHC: initialPHC, districtId = 'DI
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
                 <tr>
                   <th className="py-2.5 px-3">Batch Number</th>
-                  <th className="py-2.5 px-3">Medicine & Condition</th>
-                  <th className="py-2.5 px-3">Challan Ref</th>
+                  <th className="py-2.5 px-3">Medicine</th>
+                  <th className="py-2.5 px-3">Delivery Challan</th>
                   <th className="py-2.5 px-3">Expiry Date</th>
-                  <th className="py-2.5 px-3">FEFO Status</th>
-                  <th className="py-2.5 px-3">Stock Qty</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3">Available Units</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -362,15 +362,15 @@ export default function StockManager({ selectedPHC: initialPHC, districtId = 'DI
                       <td className="py-2.5 px-3">
                         {b.status === 'CRITICAL_EXPIRY' ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 animate-pulse">
-                            <AlertTriangle className="w-3 h-3 mr-1" /> FEFO #1 Urgent Dispatch
+                            <AlertTriangle className="w-3 h-3 mr-1" /> Use First (Expiring Soon)
                           </span>
                         ) : b.status === 'NEAR_EXPIRY' ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
-                            <Clock className="w-3 h-3 mr-1" /> FEFO #2 Re-route Warning
+                            <Clock className="w-3 h-3 mr-1" /> Expiring in ~2 Months
                           </span>
                         ) : (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                            <CheckCircle className="w-3 h-3 mr-1" /> FEFO Stable
+                            <CheckCircle className="w-3 h-3 mr-1" /> Fresh & Safe
                           </span>
                         )}
                       </td>
@@ -390,19 +390,19 @@ export default function StockManager({ selectedPHC: initialPHC, districtId = 'DI
       {/* Transaction Intake Form */}
       <form onSubmit={handleTransaction} className="bg-slate-50 p-4 rounded-xl border border-slate-200/80">
         <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700 mb-3 flex items-center">
-          <PlusCircle className="w-4 h-4 mr-1.5 text-emerald-600" /> Log Stock Movement (Idempotent)
+          <PlusCircle className="w-4 h-4 mr-1.5 text-emerald-600" /> Update Medicine Stock (Received or Dispensed)
         </h4>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-3">
           <div>
-            <label className="text-[11px] font-semibold text-slate-600 block mb-1">Medicine (Select or Type)</label>
+            <label className="text-[11px] font-semibold text-slate-600 block mb-1">Medicine Name</label>
             <input
               type="text"
               list="stock-med-options"
               value={medicineId}
               onChange={(e) => setMedicineId(e.target.value)}
               className="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
-              placeholder="MED-001"
+              placeholder="e.g. Paracetamol"
               required
             />
             <datalist id="stock-med-options">
@@ -424,13 +424,13 @@ export default function StockManager({ selectedPHC: initialPHC, districtId = 'DI
               onChange={(e) => setTransactionType(e.target.value)}
               className="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
             >
-              <option value="INTAKE">📦 Restock / Intake</option>
-              <option value="DISPENSE">💊 Dispense to Patients</option>
+              <option value="INTAKE">📦 Received Fresh Supplies (+)</option>
+              <option value="DISPENSE">💊 Given to Patients (-)</option>
             </select>
           </div>
 
           <div>
-            <label className="text-[11px] font-semibold text-slate-600 block mb-1">Quantity</label>
+            <label className="text-[11px] font-semibold text-slate-600 block mb-1">Number of Units</label>
             <input
               type="number"
               placeholder="e.g. 50"
@@ -455,7 +455,7 @@ export default function StockManager({ selectedPHC: initialPHC, districtId = 'DI
           disabled={submitting}
           className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs transition shadow-sm flex items-center justify-center space-x-1.5 disabled:opacity-50"
         >
-          <span>{submitting ? 'Recording...' : 'Submit Transaction'}</span>
+          <span>{submitting ? 'Updating Stock...' : 'Save Stock Record'}</span>
         </button>
       </form>
 

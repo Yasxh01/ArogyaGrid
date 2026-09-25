@@ -478,6 +478,56 @@ async function seedDatabase() {
     { id: 'USR-PHC-PUN01', name: 'Haveli CHC Frontline Staff', email: 'phc.pune01@arogyagrid.gov.in', password_hash: passwordHash, role: 'PHC_STAFF', district_id: 'DIST-MH-01', phc_id: 'PHC-PUN-01' }
   ];
 
+  // 10. Initial Rebalance Escrows & ICMR Drone Flights
+  store.transfers = [
+    {
+      id: 'TRF-DRONE-01',
+      source_phc_id: 'PHC-RAN-02',
+      destination_phc_id: 'PHC-RAN-03',
+      medicine_id: 'MED-004',
+      quantity: 50,
+      status: 'APPROVED',
+      transport_mode: 'ICMR_DRONE',
+      route_distance_km: 14.2,
+      drone_telemetry: {
+        aerial_distance_km: 14.2,
+        road_distance_km: 21.0,
+        drone_flight_time_mins: 14,
+        road_transit_time_mins: 55,
+        time_saved_mins: 41,
+        drone_feasible: true,
+        recommended_mode: 'ICMR_DRONE_VTOL'
+      },
+      requested_by: 'district.ranchi@arogyagrid.gov.in',
+      approved_by: 'admin@arogyagrid.gov.in',
+      created_at: new Date(Date.now() - 3600000),
+      updated_at: new Date()
+    },
+    {
+      id: 'TRF-ROAD-02',
+      source_phc_id: 'DH-RAN-01',
+      destination_phc_id: 'PHC-RAN-01',
+      medicine_id: 'MED-001',
+      quantity: 200,
+      status: 'PENDING',
+      transport_mode: 'ROAD_ESCROW',
+      route_distance_km: 6.5,
+      drone_telemetry: {
+        aerial_distance_km: 6.5,
+        road_distance_km: 9.0,
+        drone_flight_time_mins: 8,
+        road_transit_time_mins: 22,
+        time_saved_mins: 14,
+        drone_feasible: true,
+        recommended_mode: 'ROAD_ESCROW'
+      },
+      requested_by: 'doctor.ranchi@arogyagrid.gov.in',
+      approved_by: null,
+      created_at: new Date(Date.now() - 1800000),
+      updated_at: new Date()
+    }
+  ];
+
   console.log('[Seed] Database seeded with multi-state districts, facilities, NLEM/WHO drugs, cold-chain units, and batches.');
 }
 

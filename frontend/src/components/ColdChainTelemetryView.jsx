@@ -102,9 +102,9 @@ export default function ColdChainTelemetryView({ districtId = 'DIST-JH-01' }) {
               <Thermometer className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-slate-900 tracking-tight">Cold-Chain IoT Telemetry Hub</h2>
+              <h2 className="text-lg font-black text-slate-900 tracking-tight">Vaccine Refrigerator Monitor</h2>
               <p className="text-xs text-slate-500 font-medium">
-                WHO PQS E003 Standard &bull; Real-time 2°C–8°C Ice-Lined Refrigerator (ILR) Monitoring
+                Real-time temperature tracking for government vaccine fridges &bull; Safe storage zone: 2°C to 8°C
               </p>
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function ColdChainTelemetryView({ districtId = 'DIST-JH-01' }) {
             className="flex items-center space-x-1.5 px-3 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh Telemetry</span>
+            <span>Refresh Readings</span>
           </button>
         </div>
       </div>
@@ -200,10 +200,10 @@ export default function ColdChainTelemetryView({ districtId = 'DIST-JH-01' }) {
                   </div>
                   <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold border ${getTempColor(unit.current_temp_celsius)}`}>
                     {unit.current_temp_celsius > 8.0
-                      ? 'HEAT BREACH (>8°C)'
+                      ? '⚠️ TOO WARM! (Above 8°C)'
                       : unit.current_temp_celsius < 2.0
-                      ? 'FREEZE DANGER (<2°C)'
-                      : 'OPTIMAL SAFE ZONE (2°C–8°C)'}
+                      ? '❄️ TOO COLD! (Below 2°C)'
+                      : '✅ SAFE STORAGE (2°C–8°C)'}
                   </span>
                 </div>
               </div>
@@ -213,13 +213,13 @@ export default function ColdChainTelemetryView({ districtId = 'DIST-JH-01' }) {
                 <div className="flex items-center space-x-1.5 text-slate-600">
                   <Zap className={`w-3.5 h-3.5 ${unit.power_status === 'MAINS_ACTIVE' ? 'text-amber-500' : 'text-slate-400'}`} />
                   <span className="text-[11px] font-semibold">
-                    {unit.power_status === 'MAINS_ACTIVE' ? 'Mains Grid Active' : 'Battery Backup'}
+                    {unit.power_status === 'MAINS_ACTIVE' ? 'Main Power Running' : 'Battery Backup Active'}
                   </span>
                 </div>
 
                 <div className="flex items-center space-x-1 text-slate-500">
                   <BatteryCharging className="w-3.5 h-3.5 text-teal-600" />
-                  <span className="text-[11px] font-bold">{unit.battery_runtime_mins}m left</span>
+                  <span className="text-[11px] font-bold">{unit.battery_runtime_mins}m battery remaining</span>
                 </div>
               </div>
             </div>
@@ -232,7 +232,7 @@ export default function ColdChainTelemetryView({ districtId = 'DIST-JH-01' }) {
         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
-              <span className="text-xs font-bold text-teal-600 uppercase tracking-wider">Unit Operations & Spoilage Watchdog</span>
+              <span className="text-xs font-bold text-teal-600 uppercase tracking-wider">Fridge Safety & Spoilage Watchdog</span>
               <h3 className="text-base font-black text-slate-900">
                 {selectedUnit.model_name} &bull; {selectedUnit.facility_name}
               </h3>
@@ -240,14 +240,14 @@ export default function ColdChainTelemetryView({ districtId = 'DIST-JH-01' }) {
 
             {/* Operations Drill Simulator Buttons */}
             <div className="flex items-center space-x-2">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Operations Drill:</span>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Test Scenarios:</span>
               <button
                 disabled={drillLoading}
                 onClick={() => handleSimulateDrill(selectedUnit.id, 'GRID_FAILURE')}
                 className="px-3 py-1.5 text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-xl transition flex items-center space-x-1"
               >
                 <AlertTriangle className="w-3 h-3" />
-                <span>Simulate Grid Cut (8.6°C)</span>
+                <span>Simulate Power Cut (Heats up)</span>
               </button>
               <button
                 disabled={drillLoading}
@@ -255,7 +255,7 @@ export default function ColdChainTelemetryView({ districtId = 'DIST-JH-01' }) {
                 className="px-3 py-1.5 text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition flex items-center space-x-1"
               >
                 <ShieldCheck className="w-3 h-3" />
-                <span>Restore Normal (4.2°C)</span>
+                <span>Restore Normal (Cools down)</span>
               </button>
             </div>
           </div>
@@ -272,7 +272,7 @@ export default function ColdChainTelemetryView({ districtId = 'DIST-JH-01' }) {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-1.5 font-bold">
                   <Thermometer className="w-4 h-4" />
-                  <span className="uppercase tracking-wider">Predictive Spoilage Hazard Evaluation</span>
+                  <span className="uppercase tracking-wider">AI Vaccine Safety & Spoilage Advisory</span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-white/80 border border-current">
                   Risk Level: {spoilageAssessment.risk_level}
@@ -282,8 +282,8 @@ export default function ColdChainTelemetryView({ districtId = 'DIST-JH-01' }) {
               <p className="font-medium mb-2">{spoilageAssessment.recommendation}</p>
 
               <div className="flex items-center space-x-6 text-[11px] font-semibold opacity-90">
-                <span>Current Cabinet Temp: <strong>{spoilageAssessment.current_temp_celsius}°C</strong></span>
-                <span>Hours to Spoilage / Decay: <strong>{spoilageAssessment.hours_to_spoilage} hrs</strong></span>
+                <span>Fridge Temp: <strong>{spoilageAssessment.current_temp_celsius}°C</strong></span>
+                <span>Time Before Medicines Spoil: <strong>{spoilageAssessment.hours_to_spoilage} hrs</strong></span>
                 <span>Power Source: <strong>{spoilageAssessment.power_status}</strong></span>
               </div>
             </div>

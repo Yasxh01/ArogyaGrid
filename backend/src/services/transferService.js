@@ -14,7 +14,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 class TransferService {
-  async createTransfer({ source_phc_id, destination_phc_id, medicine_id, quantity, requested_by }) {
+  async createTransfer({ source_phc_id, destination_phc_id, medicine_id, quantity, requested_by, transport_mode }) {
     const store = db.memoryStore;
     const src = store.phcs.find(p => p.id === source_phc_id);
     const dst = store.phcs.find(p => p.id === destination_phc_id);
@@ -26,7 +26,24 @@ class TransferService {
       destLat: dst.latitude,
       destLon: dst.longitude,
       payloadKg: (quantity * 0.05)
-    }) : null;
+    }) : {
+      aerial_distance_km: distance,
+      road_distance_km: Math.round(distance * 1.45 * 10) / 10,
+      drone_flight_time_mins: Math.round((distance / 65) * 60) + 4,
+      road_transit_time_mins: Math.round(((distance * 1.45) / 28) * 60),
+      time_saved_mins: Math.max(5, Math.round(((distance * 1.45) / 28) * 60) - (Math.round((distance / 65) * 60) + 4)),
+      drone_feasible: true,
+      recommended_mode: 'ICMR_DRONE_VTOL'
+    };
+
+    let selectedMode = 'ROAD_ESCROW';
+    if (transport_mode === 'ICMR_DRONE') {
+      selectedMode = 'ICMR_DRONE';
+    } else if (transport_mode === 'ROAD_ESCROW') {
+      selectedMode = 'ROAD_ESCROW';
+    } else if (droneAnalysis && droneAnalysis.drone_feasible) {
+      selectedMode = 'ICMR_DRONE';
+    }
 
     const transfer = {
       id: `TRF-${uuidv4().substring(0, 8)}`,
@@ -35,7 +52,7 @@ class TransferService {
       medicine_id,
       quantity: parseInt(quantity, 10),
       status: 'PENDING',
-      transport_mode: (droneAnalysis && droneAnalysis.drone_feasible && (droneAnalysis.time_saved_mins > 30)) ? 'ICMR_DRONE' : 'ROAD_ESCROW',
+      transport_mode: selectedMode,
       route_distance_km: distance,
       drone_telemetry: droneAnalysis,
       requested_by: requested_by || 'SYSTEM',

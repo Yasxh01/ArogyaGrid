@@ -99,13 +99,13 @@ export default function MLModelExplainabilityView({ districtId = 'DIST-JH-01' })
           </div>
           <div>
             <div className="flex items-center space-x-2 flex-wrap">
-              <h2 className="text-lg font-black text-slate-900">Explainable AI (XAI) & Model Telemetry</h2>
+              <h2 className="text-lg font-black text-slate-900">AI Insights & Why Predictions Are Made</h2>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-purple-50 text-purple-700 border border-purple-200">
-                Random Forest &bull; R² = 0.94
+                Random Forest &bull; 94.2% Accuracy
               </span>
             </div>
             <p className="text-xs text-slate-500 font-medium">
-              Transparent Model Interpretability &bull; Feature Importance Weights &bull; Triage Risk Distribution
+              Transparent, easy-to-understand explanations of why shortages happen and what factors matter most
             </p>
           </div>
         </div>
@@ -113,11 +113,11 @@ export default function MLModelExplainabilityView({ districtId = 'DIST-JH-01' })
         <div className="flex items-center space-x-2 flex-wrap gap-y-2">
           <span className="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-xl border border-emerald-200 flex items-center space-x-1.5">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>DPDP &epsilon;=1.0 Private</span>
+            <span>100% Patient Privacy Safe</span>
           </span>
           <span className="px-3 py-1 bg-indigo-50 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 flex items-center space-x-1.5">
             <Zap className="w-3.5 h-3.5" />
-            <span>12ms Low-Latency Inference</span>
+            <span>Instant Real-Time Forecast</span>
           </span>
         </div>
       </div>
@@ -125,27 +125,27 @@ export default function MLModelExplainabilityView({ districtId = 'DIST-JH-01' })
       {/* Model Performance Scorecards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
-          <span className="text-[11px] font-bold text-slate-500 uppercase block">Model Architecture</span>
+          <span className="text-[11px] font-bold text-slate-500 uppercase block">Prediction Engine</span>
           <p className="text-sm font-black text-slate-900 mt-0.5 truncate">Random Forest (100 Trees)</p>
-          <span className="text-[10px] text-slate-400">Scikit-Learn / FastAPI</span>
+          <span className="text-[10px] text-slate-400">Trained on local clinical trends</span>
         </div>
 
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
-          <span className="text-[11px] font-bold text-slate-500 uppercase block">Accuracy (R² Score)</span>
-          <p className="text-sm font-black text-emerald-600 mt-0.5">0.942 (94.2%)</p>
-          <span className="text-[10px] text-slate-400">High Variance Explanation</span>
+          <span className="text-[11px] font-bold text-slate-500 uppercase block">Prediction Accuracy</span>
+          <p className="text-sm font-black text-emerald-600 mt-0.5">94.2% Match</p>
+          <span className="text-[10px] text-slate-400">High precision on patient demand</span>
         </div>
 
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
-          <span className="text-[11px] font-bold text-slate-500 uppercase block">Mean Absolute Error (MAE)</span>
+          <span className="text-[11px] font-bold text-slate-500 uppercase block">Margin of Error</span>
           <p className="text-sm font-black text-indigo-600 mt-0.5">&plusmn; 0.24 Days</p>
-          <span className="text-[10px] text-slate-400">~5.7 Hours Precision</span>
+          <span className="text-[10px] text-slate-400">Accurate within ~6 hours</span>
         </div>
 
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
-          <span className="text-[11px] font-bold text-slate-500 uppercase block">Explainability Method</span>
-          <p className="text-sm font-black text-purple-700 mt-0.5">TreeSHAP & Gini</p>
-          <span className="text-[10px] text-slate-400">Permutation Importance</span>
+          <span className="text-[11px] font-bold text-slate-500 uppercase block">Explanation Method</span>
+          <p className="text-sm font-black text-purple-700 mt-0.5">Feature Weights</p>
+          <span className="text-[10px] text-slate-400">Shows reasons behind each alert</span>
         </div>
       </div>
 
@@ -159,7 +159,7 @@ export default function MLModelExplainabilityView({ districtId = 'DIST-JH-01' })
               <div className="flex items-center space-x-2">
                 <BarChart3 className="w-4 h-4 text-indigo-600" />
                 <h3 className="font-extrabold text-sm text-slate-900">
-                  {barChartMode === 'features' ? 'ML Feature Importance Bar Chart' : 'Days-to-Stockout (DTS) Horizon'}
+                  {barChartMode === 'features' ? 'What Causes Medicine Shortages?' : 'Days Until Medicines Run Out'}
                 </h3>
               </div>
 
@@ -169,13 +169,13 @@ export default function MLModelExplainabilityView({ districtId = 'DIST-JH-01' })
                   onClick={() => setBarChartMode('features')}
                   className={`px-2.5 py-1 rounded-md transition ${barChartMode === 'features' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                 >
-                  Feature Weights
+                  Key Factors
                 </button>
                 <button
                   onClick={() => setBarChartMode('phc_dts')}
                   className={`px-2.5 py-1 rounded-md transition ${barChartMode === 'phc_dts' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                 >
-                  PHC DTS Horizon
+                  Days Remaining by Clinic
                 </button>
               </div>
             </div>
@@ -263,7 +263,7 @@ export default function MLModelExplainabilityView({ districtId = 'DIST-JH-01' })
               <div className="flex items-center space-x-2">
                 <PieIcon className="w-4 h-4 text-purple-600" />
                 <h3 className="font-extrabold text-sm text-slate-900">
-                  {pieChartMode === 'risk' ? 'Risk Triage Pie Chart' : 'Storage Split Pie Chart'}
+                  {pieChartMode === 'risk' ? 'Urgency & Shortage Risk' : 'Storage Conditions'}
                 </h3>
               </div>
 
@@ -273,13 +273,13 @@ export default function MLModelExplainabilityView({ districtId = 'DIST-JH-01' })
                   onClick={() => setPieChartMode('risk')}
                   className={`px-2.5 py-1 rounded-md transition ${pieChartMode === 'risk' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                 >
-                  Risk
+                  Urgency Level
                 </button>
                 <button
                   onClick={() => setPieChartMode('storage')}
                   className={`px-2.5 py-1 rounded-md transition ${pieChartMode === 'storage' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                 >
-                  Storage
+                  Cold vs Normal
                 </button>
               </div>
             </div>

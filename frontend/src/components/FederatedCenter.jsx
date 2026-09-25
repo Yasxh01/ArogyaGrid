@@ -46,8 +46,8 @@ export default function FederatedCenter() {
             <Cpu className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="font-extrabold text-slate-900 text-base">Privacy-Preserving Federated AI Coordinator</h3>
-            <p className="text-xs text-slate-500">Differential Privacy FedAvg across State Health Nodes (Jharkhand, Bihar, Odisha, Maharashtra, Karnataka)</p>
+            <h3 className="font-extrabold text-slate-900 text-base">Smart Hospital Network (Privacy-Safe AI)</h3>
+            <p className="text-xs text-slate-500">Hospitals share predictive insights across states without patient data ever leaving the clinic</p>
           </div>
         </div>
 
@@ -57,28 +57,28 @@ export default function FederatedCenter() {
           className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition shadow-sm flex items-center space-x-2 disabled:opacity-50"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${triggering ? 'animate-spin' : ''}`} />
-          <span>{triggering ? 'Aggregating State Weights...' : 'Trigger Statewide FedAvg Round'}</span>
+          <span>{triggering ? 'Syncing Models Across States...' : 'Sync AI Across All States'}</span>
         </button>
       </div>
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
         <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Global Model</span>
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Current Model</span>
           <span className="text-xl font-extrabold text-slate-900">{status?.global_model_version || 'v2.5.0'}</span>
         </div>
         <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Active State Nodes</span>
-          <span className="text-xl font-extrabold text-indigo-600">{status?.active_nodes?.length || 5} States</span>
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Connected States</span>
+          <span className="text-xl font-extrabold text-indigo-600">{status?.active_nodes?.length || 5} States Active</span>
         </div>
         <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">DP Noise Budget (&epsilon;)</span>
-          <span className="text-xl font-extrabold text-emerald-600">&epsilon; = 1.0</span>
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Privacy Protection</span>
+          <span className="text-xl font-extrabold text-emerald-600">Grade A+ (Safe)</span>
         </div>
         <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Privacy Guarantee</span>
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Data Safety</span>
           <span className="text-xs font-bold text-slate-800 flex items-center mt-1">
-            <Lock className="w-3.5 h-3.5 mr-1 text-emerald-600" /> 100% Zero Raw EHR Transfer
+            <Lock className="w-3.5 h-3.5 mr-1 text-emerald-600" /> 100% Zero Patient Data Shared
           </span>
         </div>
       </div>
@@ -89,10 +89,10 @@ export default function FederatedCenter() {
           <div key={i} className="p-3.5 rounded-xl border border-slate-200 bg-white flex flex-col justify-between text-xs space-y-2">
             <div className="flex items-center space-x-2">
               <Layers className="w-4 h-4 text-indigo-500" />
-              <span className="font-bold text-slate-800">{node}</span>
+              <span className="font-bold text-slate-800">{node} State</span>
             </div>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 flex items-center justify-center">
-              <CheckCircle2 className="w-3 h-3 mr-1" /> Gradient Synced
+              <CheckCircle2 className="w-3 h-3 mr-1" /> Synced & Ready
             </span>
           </div>
         ))}
@@ -100,8 +100,8 @@ export default function FederatedCenter() {
 
       {roundResult && (
         <div className="p-4 rounded-xl bg-indigo-50/70 border border-indigo-200 text-xs text-indigo-950 animate-in fade-in">
-          <div className="font-bold mb-1">🎉 Federated Round #{roundResult.round_id} Completed Successfully!</div>
-          <p>Global Model updated to <span className="font-bold">{roundResult.global_model_version}</span> with mean convergence loss of {roundResult.mean_loss}. Differential privacy Laplace noise applied.</p>
+          <div className="font-bold mb-1">🎉 All State Networks Successfully Synced!</div>
+          <p>The prediction model has learned from recent healthcare trends across Jharkhand, Bihar, Odisha, Maharashtra, and Karnataka — with strict patient privacy fully preserved.</p>
         </div>
       )}
 

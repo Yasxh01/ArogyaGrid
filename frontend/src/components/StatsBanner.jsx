@@ -54,8 +54,8 @@ export default function StatsBanner({ districtId = 'DIST-JH-01' }) {
           <Building2 className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">PHCs Monitored</p>
-          <p className="text-lg font-extrabold text-slate-900">{stats.monitored_phcs_count} Centres</p>
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Clinics Monitored</p>
+          <p className="text-lg font-extrabold text-slate-900">{stats.monitored_phcs_count} Health Centres</p>
         </div>
       </div>
 
@@ -64,8 +64,8 @@ export default function StatsBanner({ districtId = 'DIST-JH-01' }) {
           <AlertTriangle className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Critical Alerts</p>
-          <p className="text-lg font-extrabold text-rose-600">{stats.critical_stockouts_count} Stockouts</p>
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Shortage Alerts</p>
+          <p className="text-lg font-extrabold text-rose-600">{stats.critical_stockouts_count} Need Restock</p>
         </div>
       </div>
 
@@ -74,7 +74,7 @@ export default function StatsBanner({ districtId = 'DIST-JH-01' }) {
           <BedDouble className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Bed Utilization</p>
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Hospital Beds</p>
           <p className="text-lg font-extrabold text-slate-900">{stats.bed_utilization_percentage}% Occupied</p>
         </div>
       </div>
@@ -84,7 +84,7 @@ export default function StatsBanner({ districtId = 'DIST-JH-01' }) {
           <Users2 className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Active Staff</p>
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Healthcare Staff</p>
           <p className="text-lg font-extrabold text-slate-900">{stats.active_staff_count} on Duty</p>
         </div>
       </div>
@@ -94,8 +94,8 @@ export default function StatsBanner({ districtId = 'DIST-JH-01' }) {
           <ShieldCheck className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Federated AI</p>
-          <p className="text-lg font-extrabold text-purple-700">{stats.federated_version || 'v2.5.0'} Synced</p>
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Smart AI Sync</p>
+          <p className="text-lg font-extrabold text-purple-700">{stats.federated_version || 'v2.5.0'} Active</p>
         </div>
       </div>
 
