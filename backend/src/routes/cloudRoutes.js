@@ -105,7 +105,7 @@ router.get('/status', (req, res) => {
     status: 'ONLINE',
     modules: {
       google_ai_gemini: {
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         provider: 'Google AI Studio / Gemini API',
         configured: !!(process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY),
         capabilities: ['Multimodal Vision Challan OCR', 'AI Health Copilot', 'Situation Reports']

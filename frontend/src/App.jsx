@@ -10,6 +10,7 @@ import PHCWorkerDashboardView from './views/PHCWorkerDashboardView';
 import VoiceIntakeModal from './components/VoiceIntakeModal';
 import AICopilotDrawer from './components/AICopilotDrawer';
 import FederatedExplainerModal from './components/FederatedExplainerModal';
+import GoogleCloudConsoleModal from './components/GoogleCloudConsoleModal';
 import FloatingChatBot from './components/FloatingChatBot';
 import { getPendingTransactions, clearPendingTransactions } from './api/offlineQueue';
 import { apiRequest } from './api/client';
@@ -22,6 +23,7 @@ function AppContent() {
   const [isVoiceOpen, setIsVoiceOpen] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [isExplainerOpen, setIsExplainerOpen] = useState(false);
+  const [isCloudOpen, setIsCloudOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
@@ -99,6 +101,7 @@ function AppContent() {
         onOpenVoice={() => setIsVoiceOpen(true)}
         onOpenCopilot={() => setIsCopilotOpen(true)}
         onOpenExplainer={() => setIsExplainerOpen(true)}
+        onOpenCloud={() => setIsCloudOpen(true)}
         pendingCount={pendingCount}
         onSyncPending={handleSyncPending}
       />
@@ -134,6 +137,7 @@ function AppContent() {
       />
       <AICopilotDrawer isOpen={isCopilotOpen} onClose={() => setIsCopilotOpen(false)} />
       <FederatedExplainerModal isOpen={isExplainerOpen} onClose={() => setIsExplainerOpen(false)} />
+      <GoogleCloudConsoleModal isOpen={isCloudOpen} onClose={() => setIsCloudOpen(false)} />
 
       <footer className="border-t border-slate-200/80 bg-white py-4 text-center text-xs text-slate-500 font-medium">
         ArogyaGrid Platform &bull; Role-Based Health Logistics & Resilient AI Network

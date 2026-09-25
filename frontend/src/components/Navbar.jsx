@@ -1,9 +1,9 @@
 import React from 'react';
 import { useAuth, PRESET_USERS } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
-import { Activity, Wifi, WifiOff, RefreshCw, ChevronDown, LogOut, MapPin } from 'lucide-react';
+import { Activity, Wifi, WifiOff, RefreshCw, ChevronDown, LogOut, MapPin, Cloud } from 'lucide-react';
 
-export default function Navbar({ onOpenCopilot, onOpenVoice, onOpenExplainer, activeTab, setActiveTab, pendingCount, onSyncPending }) {
+export default function Navbar({ onOpenCopilot, onOpenVoice, onOpenExplainer, onOpenCloud, activeTab, setActiveTab, pendingCount, onSyncPending }) {
   const { user, switchRole, logout } = useAuth();
   const { isOnline } = useSocket();
 
@@ -107,6 +107,15 @@ export default function Navbar({ onOpenCopilot, onOpenVoice, onOpenExplainer, ac
                 <span>Sync ({pendingCount})</span>
               </button>
             )}
+
+            <button
+              onClick={onOpenCloud}
+              className="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 shadow-xs transition"
+              title="Inspect Google Cloud Vertex AI & BigQuery Telemetry"
+            >
+              <Cloud className="w-3.5 h-3.5 text-blue-600" />
+              <span>Google Cloud & BigQuery</span>
+            </button>
 
             <div className="relative">
               <select
