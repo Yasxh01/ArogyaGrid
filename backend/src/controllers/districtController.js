@@ -106,3 +106,36 @@ exports.getDistrictMapTelemetry = (req, res) => {
     features
   });
 };
+
+exports.getDistrictFacilities = (req, res) => {
+  const { districtId } = req.params;
+  const store = db.memoryStore;
+  const facilities = store.phcs.filter(p => !districtId || p.district_id === districtId);
+  res.json({ facilities });
+};
+
+exports.getDistrictStats = (req, res) => {
+  const { districtId } = req.params;
+  const store = db.memoryStore;
+  const phcs = store.phcs.filter(p => !districtId || p.district_id === districtId);
+  const phcIds = phcs.map(p => p.id);
+
+  const stockList = store.stock.filter(s => phcIds.includes(s.phc_id));
+  const criticalStockouts = stockList.filter(s => s.quantity < 50).length;
+
+  const bedList = store.beds.filter(b => phcIds.includes(b.phc_id));
+  const totalBeds = bedList.reduce((acc, b) => acc + b.total_beds, 0);
+  const occupiedBeds = bedList.reduce((acc, b) => acc + b.occupied_beds, 0);
+  const bedUtilization = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0;
+
+  const activeStaff = store.staff_attendance.filter(s => phcIds.includes(s.phc_id) && s.status === 'ON_DUTY').length;
+
+  res.json({
+    district_id: districtId,
+    monitored_phcs_count: phcs.length,
+    critical_stockouts_count: criticalStockouts,
+    bed_utilization_percentage: bedUtilization,
+    active_staff_count: activeStaff,
+    federated_version: 'v2.5.0'
+  });
+};

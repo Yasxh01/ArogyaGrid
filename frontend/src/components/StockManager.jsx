@@ -18,8 +18,9 @@ import { useSocket } from '../context/SocketContext';
 import { queueOfflineTransaction } from '../api/offlineQueue';
 import ChallanScannerModal from './ChallanScannerModal';
 
-export default function StockManager({ selectedPHC: initialPHC, onTransactionLogged }) {
+export default function StockManager({ selectedPHC: initialPHC, districtId = 'DIST-JH-01', onTransactionLogged }) {
   const { socket } = useSocket();
+  const [facilities, setFacilities] = useState([]);
   const [currentPHC, setCurrentPHC] = useState(initialPHC || 'PHC-RAN-01');
   const [stock, setStock] = useState([]);
   const [batches, setBatches] = useState([]);
@@ -27,6 +28,26 @@ export default function StockManager({ selectedPHC: initialPHC, onTransactionLog
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+
+  // Load facilities dynamically for the active district
+  useEffect(() => {
+    async function loadDistrictFacilities() {
+      try {
+        const data = await apiRequest(`/districts/${districtId}/facilities`);
+        const facs = data.facilities || [];
+        setFacilities(facs);
+        const belongs = facs.some(f => f.id === initialPHC);
+        if (belongs) {
+          setCurrentPHC(initialPHC);
+        } else if (facs.length > 0) {
+          setCurrentPHC(facs[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to load district facilities in StockManager:', err);
+      }
+    }
+    loadDistrictFacilities();
+  }, [districtId, initialPHC]);
   
   // Intake Form State
   const [medicineId, setMedicineId] = useState('MED-001');
@@ -165,17 +186,15 @@ export default function StockManager({ selectedPHC: initialPHC, onTransactionLog
             onChange={(e) => setCurrentPHC(e.target.value)}
             className="text-xs font-bold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
           >
-            <option value="PHC-RAN-01">PHC-RAN-01 (Ranchi Sadar PHC)</option>
-            <option value="PHC-RAN-02">PHC-RAN-02 (Kanke Rural CHC)</option>
-            <option value="PHC-RAN-03">PHC-RAN-03 (Namkum PHC)</option>
-            <option value="DH-RAN-01">DH-RAN-01 (Ranchi District Hospital)</option>
-            <option value="HWC-RAN-01">HWC-RAN-01 (Bundu Ayushman Arogya Mandir)</option>
-            <option value="PHC-DHN-01">PHC-DHN-01 (Jharia Coalfield CHC)</option>
-            <option value="PHC-PAT-01">PHC-PAT-01 (Patna City SDH)</option>
-            <option value="PHC-GAY-01">PHC-GAY-01 (Bodh Gaya PHC)</option>
-            <option value="PHC-KHO-01">PHC-KHO-01 (Bhubaneswar Urban CHC)</option>
-            <option value="PHC-PUN-01">PHC-PUN-01 (Haveli Rural CHC)</option>
-            <option value="PHC-BLR-01">PHC-BLR-01 (Anekal CHC)</option>
+            {facilities.length > 0 ? (
+              facilities.map(f => (
+                <option key={f.id} value={f.id}>
+                  {f.id} ({f.name})
+                </option>
+              ))
+            ) : (
+              <option value={currentPHC}>{currentPHC || 'Loading...'}</option>
+            )}
           </select>
 
           <button

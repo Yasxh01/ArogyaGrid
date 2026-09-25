@@ -37,7 +37,19 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
 
   useEffect(() => {
     fetchEpidemicAlerts();
+    updateDistrictFacility();
   }, [selectedDistrictId]);
+
+  async function updateDistrictFacility() {
+    try {
+      const data = await apiRequest(`/districts/${selectedDistrictId}/facilities`);
+      if (data.facilities && data.facilities.length > 0) {
+        setSelectedPHC(data.facilities[0].id);
+      }
+    } catch (err) {
+      console.error('Failed to update district facility:', err);
+    }
+  }
 
   async function fetchDistricts() {
     try {
@@ -223,7 +235,7 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
         </div>
       )}
 
-      <StatsBanner />
+      <StatsBanner districtId={selectedDistrictId} />
 
       {effectiveTab === 'coldchain' && (
         <ColdChainTelemetryView districtId={selectedDistrictId} />
@@ -234,11 +246,11 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
       )}
 
       {effectiveTab === 'stock' && (
-        <StockManager selectedPHC={selectedPHC} />
+        <StockManager selectedPHC={selectedPHC} districtId={selectedDistrictId} />
       )}
 
       {effectiveTab === 'beds' && (
-        <BedMatrix selectedPHC={selectedPHC} />
+        <BedMatrix selectedPHC={selectedPHC} districtId={selectedDistrictId} />
       )}
 
       {(effectiveTab === 'map' || effectiveTab === 'dashboard') && (

@@ -36,10 +36,16 @@ export default function ColdChainTelemetryView({ districtId = 'DIST-JH-01' }) {
     setLoading(true);
     try {
       const data = await apiRequest(`/telemetry/cold-chain?district_id=${districtId}`);
-      setUnits(data.units || []);
-      if (data.units && data.units.length > 0 && !selectedUnit) {
-        setSelectedUnit(data.units[0]);
-        fetchSpoilageRisk(data.units[0].id);
+      const fetchedUnits = data.units || [];
+      setUnits(fetchedUnits);
+      if (fetchedUnits.length > 0) {
+        const stillExists = fetchedUnits.find(u => u.id === selectedUnit?.id);
+        const active = stillExists || fetchedUnits[0];
+        setSelectedUnit(active);
+        fetchSpoilageRisk(active.id);
+      } else {
+        setSelectedUnit(null);
+        setSpoilageAssessment(null);
       }
     } catch (err) {
       console.error('Failed to fetch cold-chain units:', err);
