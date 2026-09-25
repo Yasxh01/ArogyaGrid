@@ -15,6 +15,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
+import { queueOfflineTransaction } from '../api/offlineQueue';
 import ChallanScannerModal from './ChallanScannerModal';
 
 export default function StockManager({ selectedPHC: initialPHC, onTransactionLogged }) {
@@ -106,6 +107,27 @@ export default function StockManager({ selectedPHC: initialPHC, onTransactionLog
       fetchStock();
       if (onTransactionLogged) onTransactionLogged();
     } catch (err) {
+      if (err.message && (err.message.includes('unreachable') || err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
+        try {
+          await queueOfflineTransaction({
+            transaction_uuid: clientTxId,
+            phc_id: currentPHC,
+            medicine_id: medicineId,
+            quantity: Number(quantity),
+            transaction_type: transactionType,
+            timestamp: new Date().toISOString()
+          });
+          setMessage({
+            type: 'warning',
+            text: `Offline Mode: Transaction saved in browser IndexedDB with UUID ${clientTxId}. It will auto-sync upon reconnect.`
+          });
+          setQuantity('');
+          if (onTransactionLogged) onTransactionLogged();
+          return;
+        } catch (dbErr) {
+          console.error('Failed to queue offline transaction:', dbErr);
+        }
+      }
       setMessage({ type: 'error', text: err.message || 'Transaction failed' });
     } finally {
       setSubmitting(false);
