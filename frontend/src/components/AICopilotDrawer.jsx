@@ -42,12 +42,82 @@ export default function AICopilotDrawer({ isOpen, onClose }) {
         method: 'POST',
         body: JSON.stringify({ query: userMsg })
       });
-      setMessages(prev => [...prev, { sender: 'bot', text: res.answer }]);
+      setMessages(prev => [...prev, { 
+        sender: 'bot', 
+        text: res.answer, 
+        action_card: res.action_card 
+      }]);
     } catch (err) {
       setMessages(prev => [...prev, { sender: 'bot', text: 'Sorry, failed to process query: ' + err.message }]);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleExecuteAction(actionCard, index) {
+    try {
+      if (actionCard.card_type === 'ONE_CLICK_TRANSFER') {
+        const res = await apiRequest('/transfers', {
+          method: 'POST',
+          body: JSON.stringify({
+            source_phc_id: actionCard.source_phc_id,
+            destination_phc_id: actionCard.destination_phc_id,
+            medicine_id: actionCard.medicine_id,
+            quantity: actionCard.quantity,
+            requested_by: 'ai.copilot@arogyagrid.gov.in'
+          })
+        });
+        setMessages(prev => [
+          ...prev,
+          {
+            sender: 'bot',
+            text: `✔ Transfer ${res.id} Authorized & Queued! Route: ${actionCard.source_name} ➔ ${actionCard.destination_name} (${actionCard.quantity} units, ETA: ${actionCard.eta_mins} mins). Status: PENDING logistics escrow.`
+          }
+        ]);
+      } else if (actionCard.card_type === 'COLD_CHAIN_ALERT') {
+        await apiRequest('/notifications/simulate', {
+          method: 'POST',
+          body: JSON.stringify({
+            recipient_role: 'DISTRICT_OFFICER',
+            channel: 'SMS_GATEWAY',
+            type: 'COLD_CHAIN_ALERT',
+            message_hi: `⚠️ कोल्ड-चेन अलर्ट: ${actionCard.unit_id} पर आपातकालीन तकनीकी दल भेजा गया।`,
+            message_en: `⚠️ Cold-Chain Alert: Emergency response engineer dispatched to ${actionCard.unit_id}.`
+          })
+        });
+        setMessages(prev => [
+          ...prev,
+          {
+            sender: 'bot',
+            text: `✔ Cold-Chain Alert Dispatched to District Field Technician via SMS Gateway!`
+          }
+        ]);
+      } else if (actionCard.card_type === 'EPIDEMIC_SURGE_ALERT') {
+        await apiRequest('/notifications/simulate', {
+          method: 'POST',
+          body: JSON.stringify({
+            recipient_role: 'COMMUNITY_HEALTH_OFFICER',
+            channel: 'WHATSAPP',
+            type: 'IDSP_EPIDEMIC_SURGE',
+            message_hi: `🚨 IDSP अलर्ट: ${actionCard.phc_id} में आपातकालीन ओआरएस बफर तैयार करें।`,
+            message_en: `🚨 IDSP Alert: Pre-position 500 sachets ORS buffer at ${actionCard.phc_id}.`
+          })
+        });
+        setMessages(prev => [
+          ...prev,
+          {
+            sender: 'bot',
+            text: `✔ IDSP Outbreak Advisory broadcasted to Namkum PHC Medical Officer via WhatsApp!`
+          }
+        ]);
+      }
+    } catch (err) {
+      alert('Action execution failed: ' + err.message);
+    }
+  }
+
+  function handlePromptChipClick(chipText) {
+    setInput(chipText);
   }
 
   if (!isOpen) return null;
@@ -62,8 +132,11 @@ export default function AICopilotDrawer({ isOpen, onClose }) {
             <Bot className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-slate-900 text-sm">District Officer AI Copilot</h3>
-            <p className="text-[11px] text-slate-500">Live Clinical Supply Chain Intelligence</p>
+            <div className="flex items-center space-x-1.5">
+              <h3 className="font-bold text-slate-900 text-sm">District Officer AI Copilot</h3>
+              <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-indigo-100 text-indigo-700">Agentic</span>
+            </div>
+            <p className="text-[11px] text-slate-500">Live Clinical Supply Chain Intelligence with 1-Click Execution</p>
           </div>
         </div>
         <button
@@ -93,26 +166,105 @@ export default function AICopilotDrawer({ isOpen, onClose }) {
         {messages.map((m, i) => (
           <div
             key={i}
-            className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}
           >
             <div
-              className={`max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed ${
+              className={`max-w-[88%] p-3 rounded-2xl text-xs leading-relaxed ${
                 m.sender === 'user'
-                  ? 'bg-emerald-600 text-white rounded-br-none'
+                  ? 'bg-emerald-600 text-white rounded-br-none shadow-sm'
                   : 'bg-slate-100 text-slate-800 rounded-bl-none'
               }`}
             >
               {m.text}
             </div>
+
+            {/* Interactive Agentic Action Card */}
+            {m.action_card && (
+              <div className="mt-2 w-[88%] p-3 bg-gradient-to-br from-indigo-50 to-white rounded-xl border border-indigo-200 shadow-sm text-xs space-y-2">
+                <div className="flex items-center justify-between font-bold text-indigo-950">
+                  <span>{m.action_card.title}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-extrabold">1-Click Action</span>
+                </div>
+
+                {m.action_card.card_type === 'ONE_CLICK_TRANSFER' && (
+                  <div className="text-slate-600 space-y-1">
+                    <p><strong>Route:</strong> {m.action_card.source_name} ➔ {m.action_card.destination_name}</p>
+                    <p><strong>Supply:</strong> {m.action_card.quantity} units {m.action_card.medicine_name}</p>
+                    <p><strong>Transit:</strong> {m.action_card.transport_mode === 'ICMR_DRONE' ? '🚁 ICMR i-Drone (14 mins)' : '🚚 Road Escrow (22 mins)'}</p>
+                    <button
+                      onClick={() => handleExecuteAction(m.action_card, i)}
+                      className="w-full mt-2 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold rounded-lg text-xs transition shadow-sm flex items-center justify-center space-x-1"
+                    >
+                      <span>⚡ Authorize & Dispatch Transfer</span>
+                    </button>
+                  </div>
+                )}
+
+                {m.action_card.card_type === 'COLD_CHAIN_ALERT' && (
+                  <div className="text-slate-600 space-y-1">
+                    <p><strong>Unit:</strong> {m.action_card.unit_id} ({m.action_card.phc_id})</p>
+                    <p><strong>Temperature:</strong> <span className="font-bold text-rose-600">{m.action_card.temperature}°C</span></p>
+                    <button
+                      onClick={() => handleExecuteAction(m.action_card, i)}
+                      className="w-full mt-2 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-lg text-xs transition shadow-sm"
+                    >
+                      {m.action_card.action_label}
+                    </button>
+                  </div>
+                )}
+
+                {m.action_card.card_type === 'EPIDEMIC_SURGE_ALERT' && (
+                  <div className="text-slate-600 space-y-1">
+                    <p><strong>Pathogen / Cluster:</strong> {m.action_card.outbreak_type}</p>
+                    <p><strong>Location:</strong> {m.action_card.phc_id}</p>
+                    <button
+                      onClick={() => handleExecuteAction(m.action_card, i)}
+                      className="w-full mt-2 py-2 bg-rose-600 hover:bg-rose-700 text-white font-extrabold rounded-lg text-xs transition shadow-sm"
+                    >
+                      {m.action_card.action_label}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ))}
         {loading && (
           <div className="flex justify-start">
-            <div className="p-3 rounded-2xl bg-slate-100 text-xs text-slate-500 italic rounded-bl-none">
-              Thinking with district telemetry...
+            <div className="p-3 rounded-2xl bg-slate-100 text-xs text-slate-500 italic rounded-bl-none flex items-center space-x-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-ping"></span>
+              <span>Reasoning across district telemetry & inventory graphs...</span>
             </div>
           </div>
         )}
+      </div>
+
+      {/* Suggested Prompt Chips */}
+      <div className="px-3 pt-2 pb-1 border-t border-slate-100 bg-slate-50/50 flex flex-wrap gap-1">
+        <button
+          onClick={() => handlePromptChipClick('Which PHCs have critical stock shortages?')}
+          className="px-2 py-0.5 bg-white border border-slate-200 hover:border-indigo-300 text-[10px] font-semibold text-slate-600 rounded-md transition"
+        >
+          🚨 Critical Shortages
+        </button>
+        <button
+          onClick={() => handlePromptChipClick('Check cold-chain refrigerator temperature status')}
+          className="px-2 py-0.5 bg-white border border-slate-200 hover:border-indigo-300 text-[10px] font-semibold text-slate-600 rounded-md transition"
+        >
+          ❄️ Cold-Chain Status
+        </button>
+        <button
+          onClick={() => handlePromptChipClick('Are there any IDSP epidemic surges detected?')}
+          className="px-2 py-0.5 bg-white border border-slate-200 hover:border-indigo-300 text-[10px] font-semibold text-slate-600 rounded-md transition"
+        >
+          ⚠️ Epidemic Surges
+        </button>
+        <button
+          onClick={() => handlePromptChipClick('Recommend transfer to Namkum PHC')}
+          className="px-2 py-0.5 bg-white border border-slate-200 hover:border-indigo-300 text-[10px] font-semibold text-slate-600 rounded-md transition"
+        >
+          🚚 Transfer Recommendation
+        </button>
       </div>
 
       {/* Input Bar */}
@@ -121,7 +273,7 @@ export default function AICopilotDrawer({ isOpen, onClose }) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a question (e.g. Which PHCs need insulin?)..."
+          placeholder="Ask Copilot (e.g. Which PHCs need emergency insulin?)..."
           className="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 font-medium"
         />
         <button
@@ -132,6 +284,7 @@ export default function AICopilotDrawer({ isOpen, onClose }) {
           <Send className="w-4 h-4" />
         </button>
       </form>
+
 
     </div>
   );

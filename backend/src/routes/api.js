@@ -11,6 +11,8 @@ const districtRoutes = require('./districtRoutes');
 const mlRoutes = require('./mlRoutes');
 const aiRoutes = require('./aiRoutes');
 const coldChainRoutes = require('./coldChainRoutes');
+const epidemicRoutes = require('./epidemicRoutes');
+const notificationRoutes = require('./notificationRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/stock', stockRoutes);
@@ -22,6 +24,10 @@ router.use('/transfers', transferRoutes);
 router.use('/districts', districtRoutes);
 router.use('/ml', mlRoutes);
 router.use('/ai', aiRoutes);
+router.use('/epidemic', epidemicRoutes);
+router.use('/notifications', notificationRoutes);
+
+
 
 router.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'ArogyaGrid Backend', timestamp: new Date().toISOString() });

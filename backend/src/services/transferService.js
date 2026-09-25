@@ -20,6 +20,13 @@ class TransferService {
     const dst = store.phcs.find(p => p.id === destination_phc_id);
 
     const distance = (src && dst) ? calculateDistance(src.latitude, src.longitude, dst.latitude, dst.longitude) : 15.0;
+    const droneAnalysis = (src && dst) ? this.calculateDroneRoute({
+      sourceLat: src.latitude,
+      sourceLon: src.longitude,
+      destLat: dst.latitude,
+      destLon: dst.longitude,
+      payloadKg: (quantity * 0.05)
+    }) : null;
 
     const transfer = {
       id: `TRF-${uuidv4().substring(0, 8)}`,
@@ -28,7 +35,9 @@ class TransferService {
       medicine_id,
       quantity: parseInt(quantity, 10),
       status: 'PENDING',
+      transport_mode: (droneAnalysis && droneAnalysis.drone_feasible && (droneAnalysis.time_saved_mins > 30)) ? 'ICMR_DRONE' : 'ROAD_ESCROW',
       route_distance_km: distance,
+      drone_telemetry: droneAnalysis,
       requested_by: requested_by || 'SYSTEM',
       approved_by: null,
       created_at: new Date(),
@@ -39,6 +48,28 @@ class TransferService {
     broadcastEvent('transfer:requested', transfer);
     return transfer;
   }
+
+  calculateDroneRoute({ sourceLat, sourceLon, destLat, destLon, payloadKg = 2.0 }) {
+    const aerialKm = calculateDistance(sourceLat, sourceLon, destLat, destLon);
+    const roadKm = Math.round(aerialKm * 1.45 * 10) / 10;
+    const roadMinutes = Math.round((roadKm / 28) * 60);
+    const droneMinutes = Math.round((aerialKm / 75) * 60) + 4;
+    const minutesSaved = Math.max(0, roadMinutes - droneMinutes);
+    const isFeasible = aerialKm <= 40 && payloadKg <= 5.0;
+
+    return {
+      aerial_distance_km: aerialKm,
+      road_distance_km: roadKm,
+      road_time_mins: roadMinutes,
+      drone_flight_time_mins: droneMinutes,
+      time_saved_mins: minutesSaved,
+      time_reduction_percentage: Math.round((minutesSaved / Math.max(1, roadMinutes)) * 100),
+      drone_feasible: isFeasible,
+      spec: 'ICMR i-Drone VTOL Medical UAV (Payload: 5kg, Cruising: 75km/h, Insulated Cold Box 2°C–8°C)',
+      status: isFeasible ? 'OPTIMAL_FOR_DRONE' : 'ROAD_ESCROW_RECOMMENDED'
+    };
+  }
+
 
   async updateStatus(transfer_id, { status, approved_by }) {
     const store = db.memoryStore;

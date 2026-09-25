@@ -146,8 +146,8 @@ export default function TransferDashboard() {
                 <option value="MED-001">Paracetamol 500mg</option>
                 <option value="MED-002">Amoxicillin 250mg</option>
                 <option value="MED-003">ORS Sachets</option>
-                <option value="MED-004">Insulin Glargine</option>
-                <option value="MED-005">Anti-Rabies Vaccine</option>
+                <option value="MED-004">Insulin Glargine (Cold-Chain)</option>
+                <option value="MED-005">Anti-Rabies Vaccine (Cold-Chain)</option>
               </datalist>
               <input
                 type="number"
@@ -160,11 +160,25 @@ export default function TransferDashboard() {
             </div>
           </div>
 
+          <div>
+            <label className="font-semibold text-slate-600 block mb-1">Transit Route Corridor</label>
+            <div className="grid grid-cols-2 gap-2 text-xs font-bold">
+              <label className="flex items-center space-x-1.5 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100">
+                <input type="radio" name="mode" defaultChecked className="text-emerald-600" />
+                <span>🚚 Road Escrow</span>
+              </label>
+              <label className="flex items-center space-x-1.5 p-2 bg-indigo-50 border border-indigo-200 text-indigo-900 rounded-lg cursor-pointer hover:bg-indigo-100">
+                <input type="radio" name="mode" className="text-indigo-600" />
+                <span>🚁 ICMR i-Drone</span>
+              </label>
+            </div>
+          </div>
+
           <button
             type="submit"
-            className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition shadow-sm"
+            className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition shadow-sm flex items-center justify-center space-x-1"
           >
-            Dispatch Rebalance Request
+            <span>Dispatch Rebalance Request</span>
           </button>
         </form>
       </div>
@@ -173,8 +187,8 @@ export default function TransferDashboard() {
       <div className="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
         <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
           <div>
-            <h3 className="font-bold text-slate-900 text-sm sm:text-base">Inter-District Transfer Escrow</h3>
-            <p className="text-xs text-slate-500">Real-time Chain of Custody</p>
+            <h3 className="font-bold text-slate-900 text-sm sm:text-base">Inter-District Transfer Escrow & Drone Feasibility</h3>
+            <p className="text-xs text-slate-500">Real-time Chain of Custody & ICMR i-Drone Aerial Corridors</p>
           </div>
           <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
             {transfers.length} Total Logs
@@ -184,17 +198,27 @@ export default function TransferDashboard() {
         <div className="space-y-3">
           {transfers.map((t) => {
             const isApproved = t.status === 'APPROVED';
+            const isDrone = t.transport_mode === 'ICMR_DRONE';
             return (
               <div key={t.id} className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/40 hover:bg-slate-50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div>
-                  <div className="flex items-center space-x-2 mb-1.5">
+                  <div className="flex items-center space-x-2 mb-1.5 flex-wrap gap-y-1">
                     <span className="font-extrabold text-slate-900">{t.id}</span>
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
                       isApproved ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
                     }`}>
                       {t.status}
                     </span>
-                    <span className="text-slate-400">&bull; {t.route_distance_km || 15} km</span>
+
+                    {isDrone ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-800 flex items-center">
+                        🚁 ICMR i-Drone VTOL ({t.drone_telemetry?.drone_flight_time_mins || 14}m flight &bull; {t.drone_telemetry?.time_saved_mins || 55}m saved)
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">
+                        🚚 Road Escrow ({t.route_distance_km || 15} km)
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center space-x-2 text-slate-600 font-semibold">

@@ -214,11 +214,25 @@ Return strictly JSON with schema:
 
     let responseText = '';
     let action = null;
+    let actionCard = null;
 
     if (lower.includes('critical') || lower.includes('shortage') || lower.includes('कम') || lower.includes('दवा')) {
       const criticals = store.stock.filter(s => s.quantity < 50);
-      responseText = `There are currently ${criticals.length} critical medicine shortages in the district. Namkum PHC (PHC-RAN-03) has low stocks of Paracetamol (35 units) and Insulin Glargine (3 units).`;
+      responseText = `There are currently ${criticals.length} critical medicine shortages in the district. Namkum PHC (PHC-RAN-03) has dangerously low stock of Paracetamol (35 units) and Insulin Glargine (3 units).`;
       action = { type: 'VIEW_CRITICAL_STOCK', count: criticals.length };
+      actionCard = {
+        card_type: 'ONE_CLICK_TRANSFER',
+        title: '⚡ Agentic Emergency Transfer Proposal',
+        source_phc_id: 'PHC-RAN-02',
+        source_name: 'Kanke Rural CHC',
+        destination_phc_id: 'PHC-RAN-03',
+        destination_name: 'Namkum PHC',
+        medicine_id: 'MED-001',
+        medicine_name: 'Paracetamol 500mg Tablets',
+        quantity: 100,
+        transport_mode: 'ROAD_ESCROW',
+        eta_mins: 22
+      };
     } else if (lower.includes('bed') || lower.includes('बेड') || lower.includes('icu') || lower.includes('occupancy')) {
       const beds = store.beds;
       const total = beds.reduce((acc, b) => acc + b.total_beds, 0);
@@ -226,17 +240,47 @@ Return strictly JSON with schema:
       responseText = `District bed occupancy is at ${Math.round((occupied / Math.max(1, total)) * 100)}%. Namkum PHC is at high capacity with 24/25 General beds and 10/10 Oxygen beds occupied.`;
       action = { type: 'VIEW_BED_MATRIX', occupied, total };
     } else if (lower.includes('transfer') || lower.includes('rebalance') || lower.includes('भेज')) {
-      responseText = `Logistics recommendation: Dispatch 150 units of Paracetamol from Kanke Rural PHC (surplus: 720 units) to Namkum PHC. Estimated transit distance is 9.8 km with 0.94 feasibility score.`;
+      responseText = `Logistics recommendation: Dispatch 150 units of Paracetamol from Kanke Rural CHC (surplus: 720 units) to Namkum PHC. Feasibility score is 0.94 with 22-min transit.`;
       action = { type: 'RECOMMEND_TRANSFER', source: 'PHC-RAN-02', target: 'PHC-RAN-03' };
+      actionCard = {
+        card_type: 'ONE_CLICK_TRANSFER',
+        title: '⚡ Authorize Inter-PHC Stock Transfer',
+        source_phc_id: 'PHC-RAN-02',
+        source_name: 'Kanke Rural CHC',
+        destination_phc_id: 'PHC-RAN-03',
+        destination_name: 'Namkum PHC',
+        medicine_id: 'MED-001',
+        medicine_name: 'Paracetamol 500mg Tablets',
+        quantity: 150,
+        transport_mode: 'ICMR_DRONE',
+        eta_mins: 14
+      };
     } else if (lower.includes('cold') || lower.includes('vaccine') || lower.includes('fridge') || lower.includes('temp') || lower.includes('तापमान')) {
       const units = store.cold_chain_units;
       const breachUnits = units.filter(u => u.status === 'BREACH' || u.status === 'WARNING');
       if (breachUnits.length > 0) {
         responseText = `⚠️ Cold-Chain Alert: ${breachUnits.length} refrigeration unit(s) require attention. Unit ${breachUnits[0].id} at ${breachUnits[0].phc_id} is at ${breachUnits[0].current_temp_celsius}°C (Status: ${breachUnits[0].status}, Power: ${breachUnits[0].power_status}).`;
+        actionCard = {
+          card_type: 'COLD_CHAIN_ALERT',
+          title: '❄️ Cold-Chain Watchdog Alert',
+          unit_id: breachUnits[0].id,
+          phc_id: breachUnits[0].phc_id,
+          temperature: breachUnits[0].current_temp_celsius,
+          action_label: 'Switch to Solar/Battery Backup & Notify Field Engineer'
+        };
       } else {
         responseText = `All ${units.length} Ice-Lined Refrigerators (ILRs) are operating within the WHO safe range (2°C–8°C). Average district cabinet temperature is 4.1°C.`;
       }
       action = { type: 'VIEW_COLD_CHAIN', alert_count: breachUnits.length };
+    } else if (lower.includes('epidemic') || lower.includes('outbreak') || lower.includes('cholera') || lower.includes('dengue') || lower.includes('बीमारी')) {
+      responseText = `MoHFW IDSP Alert: Acute Diarrheal surge detected at Namkum PHC. ORS consumption has spiked +240% above 7-day moving average.`;
+      actionCard = {
+        card_type: 'EPIDEMIC_SURGE_ALERT',
+        title: '⚠️ IDSP Disease Surveillance Cluster Detected',
+        outbreak_type: 'Acute Diarrheal / Suspected Cholera',
+        phc_id: 'PHC-RAN-03',
+        action_label: 'Pre-position 500 Sachets ORS Buffer'
+      };
     } else {
       responseText = `ArogyaGrid AI Ops Copilot is active. Monitored resources: ${store.phcs.length} facilities across ${store.districts.length} districts in Jharkhand, Bihar, Odisha, Maharashtra, and Karnataka. All systems operational.`;
     }
@@ -245,9 +289,11 @@ Return strictly JSON with schema:
       query,
       answer: responseText,
       suggested_action: action,
+      action_card: actionCard,
       timestamp: new Date().toISOString()
     };
   }
+
 
   /**
    * Multimodal Google Gemini Vision OCR & Parsing for physical delivery challans,
