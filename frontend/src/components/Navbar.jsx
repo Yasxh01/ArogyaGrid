@@ -17,8 +17,9 @@ export default function Navbar({ onOpenCopilot, onOpenVoice, onOpenExplainer, ac
     if (role === 'DISTRICT_OFFICER') {
       return [
         { id: 'dashboard', label: 'Command Map' },
+        { id: 'coldchain', label: 'Cold-Chain IoT' },
         { id: 'transfers', label: 'Logistics & Escrow' },
-        { id: 'stock', label: 'District Stock' },
+        { id: 'stock', label: 'District Stock & FEFO' },
         { id: 'beds', label: 'Bed Matrix' }
       ];
     }

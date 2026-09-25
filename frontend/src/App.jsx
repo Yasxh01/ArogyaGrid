@@ -120,7 +120,11 @@ function AppContent() {
         {renderRoleDashboard()}
       </main>
 
-      <VoiceIntakeModal isOpen={isVoiceOpen} onClose={() => setIsVoiceOpen(false)} />
+      <VoiceIntakeModal 
+        isOpen={isVoiceOpen} 
+        onClose={() => setIsVoiceOpen(false)} 
+        phcId={user?.phc_id || 'PHC-RAN-01'} 
+      />
       <AICopilotDrawer isOpen={isCopilotOpen} onClose={() => setIsCopilotOpen(false)} />
       <FederatedExplainerModal isOpen={isExplainerOpen} onClose={() => setIsExplainerOpen(false)} />
 

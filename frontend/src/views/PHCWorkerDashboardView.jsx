@@ -120,6 +120,9 @@ export default function PHCWorkerDashboardView({ activeTab, onOpenVoice, pending
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         phcId={phcId}
+        onStockIngested={() => {
+          window.dispatchEvent(new Event('stock:updated'));
+        }}
       />
     </div>
   );
