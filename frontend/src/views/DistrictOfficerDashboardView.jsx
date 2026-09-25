@@ -8,6 +8,7 @@ import ColdChainTelemetryView from '../components/ColdChainTelemetryView';
 import ABDMInteroperabilityView from '../components/ABDMInteroperabilityView';
 import MLModelExplainabilityView from '../components/MLModelExplainabilityView';
 import NotificationSimulatorModal from '../components/NotificationSimulatorModal';
+import FacilityDetailModal from '../components/FacilityDetailModal';
 import { useAuth } from '../context/AuthContext';
 import { apiRequest } from '../api/client';
 import { 
@@ -17,13 +18,13 @@ import {
   Truck, 
   Package, 
   Bed, 
-  Globe,
-  AlertTriangle,
-  Smartphone,
-  Flame,
-  ArrowRight,
-  Network,
-  BarChart3
+  Globe, 
+  AlertTriangle, 
+  Smartphone, 
+  Flame, 
+  ArrowRight, 
+  Network, 
+  BarChart3 
 } from 'lucide-react';
 
 export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }) {
@@ -34,6 +35,7 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
   const [internalTab, setInternalTab] = useState('map');
   const [epidemicAlerts, setEpidemicAlerts] = useState([]);
   const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
+  const [inspectPHCId, setInspectPHCId] = useState(null);
 
   useEffect(() => {
     fetchDistricts();
@@ -292,10 +294,26 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
       {(effectiveTab === 'map' || effectiveTab === 'dashboard') && (
         <MapView 
           districtId={selectedDistrictId}
-          onSelectPHC={(id) => setSelectedPHC(id)} 
+          onSelectPHC={(id) => {
+            setSelectedPHC(id);
+            setInspectPHCId(id);
+          }} 
           onQuickTransfer={handleQuickTransfer} 
         />
       )}
+
+      {/* Facility Inspection Detail Modal */}
+      <FacilityDetailModal
+        isOpen={!!inspectPHCId}
+        onClose={() => setInspectPHCId(null)}
+        phcId={inspectPHCId}
+        onNavigateToTransfer={(phcId) => handleQuickTransfer(phcId)}
+        onNavigateToStock={(phcId) => {
+          setSelectedPHC(phcId);
+          if (setActiveTab) setActiveTab('stock');
+          setInternalTab('stock');
+        }}
+      />
 
       {/* ASHA WhatsApp & SMS Dispatch Modal */}
       <NotificationSimulatorModal

@@ -216,7 +216,123 @@ Return strictly JSON with schema:
     let action = null;
     let actionCard = null;
 
-    if (lower.includes('critical') || lower.includes('shortage') || lower.includes('कम') || lower.includes('दवा')) {
+    // 1. Dynamic Entity Extraction: Facilities and Medicines
+    const matchedFacility = store.phcs.find(p => 
+      lower.includes(p.id.toLowerCase()) || 
+      lower.includes(p.name.toLowerCase()) ||
+      p.name.toLowerCase().split(' ').some(w => w.length > 3 && lower.includes(w))
+    );
+
+    const matchedMedicine = store.medicines.find(m => 
+      lower.includes(m.id.toLowerCase()) ||
+      lower.includes(m.name.toLowerCase()) ||
+      (lower.includes('paracetamol') && m.id === 'MED-001') ||
+      (lower.includes('pcm') && m.id === 'MED-001') ||
+      (lower.includes('dolo') && m.id === 'MED-001') ||
+      (lower.includes('amoxicillin') && m.id === 'MED-002') ||
+      (lower.includes('ors') && m.id === 'MED-003') ||
+      (lower.includes('insulin') && m.id === 'MED-004') ||
+      (lower.includes('rabies') && m.id === 'MED-005') ||
+      (lower.includes('azithromycin') && m.id === 'MED-006') ||
+      (lower.includes('cetirizine') && m.id === 'MED-007') ||
+      (lower.includes('rotavirus') && m.id === 'MED-008')
+    );
+
+    // CASE A: Both Facility AND Medicine queried (e.g. "capacity of paracetamol in namkum")
+    if (matchedFacility && matchedMedicine) {
+      const stk = store.stock.find(s => s.phc_id === matchedFacility.id && s.medicine_id === matchedMedicine.id);
+      const qty = stk ? stk.quantity : 0;
+      const daily = stk?.daily_consumption || matchedMedicine.daily_base_consumption || 15;
+      const daysRemaining = (qty / Math.max(1, daily)).toFixed(1);
+      const isCritical = qty < 50;
+      const isLow = qty >= 50 && qty < 150;
+
+      // Find surplus donor in same district first, then general
+      const districtPrefix = matchedFacility.id.split('-').slice(0, 2).join('-');
+      const inDistrictSurplus = store.stock
+        .filter(s => s.medicine_id === matchedMedicine.id && s.phc_id !== matchedFacility.id && s.phc_id.startsWith(districtPrefix) && s.quantity > 150)
+        .sort((a, b) => b.quantity - a.quantity)[0];
+
+      const surplus = inDistrictSurplus || store.stock
+        .filter(s => s.medicine_id === matchedMedicine.id && s.phc_id !== matchedFacility.id && s.quantity > 200)
+        .sort((a, b) => b.quantity - a.quantity)[0];
+
+      const surplusPhc = surplus ? store.phcs.find(p => p.id === surplus.phc_id) : null;
+      const donorName = surplusPhc ? surplusPhc.name : (surplus?.phc_name || surplus?.phc_id || 'Regional Hub');
+
+      responseText = `At ${matchedFacility.name} (${matchedFacility.id}), the current stock of ${matchedMedicine.name} is ${qty} ${matchedMedicine.unit}.\n\n` +
+        `• Status: ${isCritical ? '🚨 CRITICAL SHORTAGE' : isLow ? '⚠️ LOW BUFFER' : '✅ HEALTHY SUPPLY'}\n` +
+        `• Daily Consumption: ~${daily} ${matchedMedicine.unit}/day\n` +
+        `• Days to Stockout: ~${daysRemaining} days remaining\n` +
+        (isCritical && surplus
+          ? `\nRecommended Action: Dispatch an emergency transfer of 100-150 units from ${donorName} (current surplus: ${surplus.quantity} units).`
+          : '');
+
+      if (isCritical && surplus) {
+        actionCard = {
+          card_type: 'ONE_CLICK_TRANSFER',
+          title: `⚡ Authorize Transfer: 100 ${matchedMedicine.name.split(' ')[0]} to ${matchedFacility.name}`,
+          source_phc_id: surplus.phc_id,
+          source_name: donorName,
+          destination_phc_id: matchedFacility.id,
+          destination_name: matchedFacility.name,
+          medicine_id: matchedMedicine.id,
+          medicine_name: matchedMedicine.name,
+          quantity: 100,
+          transport_mode: 'ROAD_ESCROW',
+          eta_mins: 22
+        };
+      }
+      action = { type: 'INSPECT_MEDICINE_STOCK', phc_id: matchedFacility.id, medicine_id: matchedMedicine.id, quantity: qty };
+    } 
+    // CASE B: Facility Query (e.g. "status of namkum", "beds in namkum")
+    else if (matchedFacility) {
+      const facilityStocks = store.stock.filter(s => s.phc_id === matchedFacility.id);
+      const critStocks = facilityStocks.filter(s => s.quantity < 50);
+      const facilityBeds = store.beds.filter(b => b.phc_id === matchedFacility.id);
+      const totalBeds = facilityBeds.reduce((acc, b) => acc + (b.total_beds || 0), 0);
+      const occBeds = facilityBeds.reduce((acc, b) => acc + (b.occupied_beds || 0), 0);
+      const rate = totalBeds > 0 ? Math.round((occBeds / totalBeds) * 100) : 0;
+      const ccUnit = store.cold_chain_units.find(u => u.phc_id === matchedFacility.id);
+
+      responseText = `Facility Intelligence Briefing for ${matchedFacility.name} (${matchedFacility.id}):\n\n` +
+        `• Medicine Stock: ${facilityStocks.length} medicines monitored (${critStocks.length} critical shortages: ${critStocks.map(s => `${s.medicine_name || s.medicine_id}: ${s.quantity}`).join(', ') || 'None'})\n` +
+        `• Hospital Beds: ${occBeds}/${totalBeds} beds occupied (${rate}% occupancy)\n` +
+        (ccUnit ? `• Vaccine Cold-Chain: Cabinet temperature is ${ccUnit.current_temp_celsius}°C (Status: ${ccUnit.status}, Power: ${ccUnit.power_status})\n` : '') +
+        `• Population Served: ~${(matchedFacility.population_served || 25000).toLocaleString('en-IN')} citizens`;
+
+      if (critStocks.length > 0) {
+        actionCard = {
+          card_type: 'ONE_CLICK_TRANSFER',
+          title: `⚡ Pre-Position Emergency Buffer for ${matchedFacility.name}`,
+          source_phc_id: 'PHC-RAN-02',
+          source_name: 'Kanke Rural CHC',
+          destination_phc_id: matchedFacility.id,
+          destination_name: matchedFacility.name,
+          medicine_id: critStocks[0].medicine_id,
+          medicine_name: critStocks[0].medicine_name || critStocks[0].medicine_id,
+          quantity: 100,
+          transport_mode: 'ROAD_ESCROW',
+          eta_mins: 22
+        };
+      }
+      action = { type: 'INSPECT_FACILITY', phc_id: matchedFacility.id };
+    }
+    // CASE C: Medicine queried across all facilities (e.g. "where is insulin", "paracetamol stock")
+    else if (matchedMedicine) {
+      const allWithMed = store.stock.filter(s => s.medicine_id === matchedMedicine.id);
+      const criticals = allWithMed.filter(s => s.quantity < 50);
+      const surplus = allWithMed.filter(s => s.quantity > 250);
+
+      responseText = `District Inventory for ${matchedMedicine.name}:\n\n` +
+        `• Total Monitored Facilities: ${allWithMed.length} centres\n` +
+        `• Critical Shortages (< 50 units): ${criticals.map(s => `${s.phc_name || s.phc_id} (${s.quantity})`).join(', ') || 'None'}\n` +
+        `• Surplus Nodes (> 250 units): ${surplus.map(s => `${s.phc_name || s.phc_id} (${s.quantity})`).join(', ') || 'None'}`;
+
+      action = { type: 'INSPECT_MEDICINE_GLOBAL', medicine_id: matchedMedicine.id };
+    }
+    // CASE D: Critical Shortages Query
+    else if (lower.includes('critical') || lower.includes('shortage') || lower.includes('कम') || lower.includes('दवा') || lower.includes('stock')) {
       const criticals = store.stock.filter(s => s.quantity < 50);
       responseText = `There are currently ${criticals.length} critical medicine shortages in the district. Namkum PHC (PHC-RAN-03) has dangerously low stock of Paracetamol (35 units) and Insulin Glargine (3 units).`;
       action = { type: 'VIEW_CRITICAL_STOCK', count: criticals.length };
@@ -233,14 +349,18 @@ Return strictly JSON with schema:
         transport_mode: 'ROAD_ESCROW',
         eta_mins: 22
       };
-    } else if (lower.includes('bed') || lower.includes('बेड') || lower.includes('icu') || lower.includes('occupancy')) {
+    } 
+    // CASE E: Bed occupancy
+    else if (lower.includes('bed') || lower.includes('बेड') || lower.includes('icu') || lower.includes('occupancy')) {
       const beds = store.beds;
       const total = beds.reduce((acc, b) => acc + b.total_beds, 0);
       const occupied = beds.reduce((acc, b) => acc + b.occupied_beds, 0);
       responseText = `District bed occupancy is at ${Math.round((occupied / Math.max(1, total)) * 100)}%. Namkum PHC is at high capacity with 24/25 General beds and 10/10 Oxygen beds occupied.`;
       action = { type: 'VIEW_BED_MATRIX', occupied, total };
-    } else if (lower.includes('transfer') || lower.includes('rebalance') || lower.includes('भेज')) {
-      responseText = `Logistics recommendation: Dispatch 150 units of Paracetamol from Kanke Rural CHC (surplus: 720 units) to Namkum PHC. Feasibility score is 0.94 with 22-min transit.`;
+    } 
+    // CASE F: Logistics & Transfers
+    else if (lower.includes('transfer') || lower.includes('rebalance') || lower.includes('drone') || lower.includes('भेज')) {
+      responseText = `Logistics recommendation: Dispatch 150 units of Paracetamol from Kanke Rural CHC (surplus: 720 units) to Namkum PHC. Feasibility score is 0.94 with 14-min ICMR drone aerial transit or 22-min road delivery.`;
       action = { type: 'RECOMMEND_TRANSFER', source: 'PHC-RAN-02', target: 'PHC-RAN-03' };
       actionCard = {
         card_type: 'ONE_CLICK_TRANSFER',
@@ -255,7 +375,9 @@ Return strictly JSON with schema:
         transport_mode: 'ICMR_DRONE',
         eta_mins: 14
       };
-    } else if (lower.includes('cold') || lower.includes('vaccine') || lower.includes('fridge') || lower.includes('temp') || lower.includes('तापमान')) {
+    } 
+    // CASE G: Cold Chain
+    else if (lower.includes('cold') || lower.includes('vaccine') || lower.includes('fridge') || lower.includes('temp') || lower.includes('तापमान')) {
       const units = store.cold_chain_units;
       const breachUnits = units.filter(u => u.status === 'BREACH' || u.status === 'WARNING');
       if (breachUnits.length > 0) {
@@ -272,7 +394,9 @@ Return strictly JSON with schema:
         responseText = `All ${units.length} Ice-Lined Refrigerators (ILRs) are operating within the WHO safe range (2°C–8°C). Average district cabinet temperature is 4.1°C.`;
       }
       action = { type: 'VIEW_COLD_CHAIN', alert_count: breachUnits.length };
-    } else if (lower.includes('epidemic') || lower.includes('outbreak') || lower.includes('cholera') || lower.includes('dengue') || lower.includes('बीमारी')) {
+    } 
+    // CASE H: Disease Surveillance & Epidemics
+    else if (lower.includes('epidemic') || lower.includes('outbreak') || lower.includes('cholera') || lower.includes('dengue') || lower.includes('बीमारी')) {
       responseText = `MoHFW IDSP Alert: Acute Diarrheal surge detected at Namkum PHC. ORS consumption has spiked +240% above 7-day moving average.`;
       actionCard = {
         card_type: 'EPIDEMIC_SURGE_ALERT',
@@ -282,7 +406,7 @@ Return strictly JSON with schema:
         action_label: 'Pre-position 500 Sachets ORS Buffer'
       };
     } else {
-      responseText = `ArogyaGrid AI Ops Copilot is active. Monitored resources: ${store.phcs.length} facilities across ${store.districts.length} districts in Jharkhand, Bihar, Odisha, Maharashtra, and Karnataka. All systems operational.`;
+      responseText = `ArogyaGrid AI Healthcare Copilot is active. Monitoring ${store.phcs.length} health facilities across ${store.districts.length} districts.\n\nYou can ask me specific questions like:\n• "Capacity of Paracetamol in Namkum"\n• "Status of Kanke Rural CHC"\n• "Who has surplus Insulin?"\n• "Bed availability in Ranchi"`;
     }
 
     return {
