@@ -10,6 +10,7 @@ import PHCWorkerDashboardView from './views/PHCWorkerDashboardView';
 import VoiceIntakeModal from './components/VoiceIntakeModal';
 import AICopilotDrawer from './components/AICopilotDrawer';
 import FederatedExplainerModal from './components/FederatedExplainerModal';
+import FloatingChatBot from './components/FloatingChatBot';
 import { getPendingTransactions, clearPendingTransactions } from './api/offlineQueue';
 import { apiRequest } from './api/client';
 import { ShieldAlert, X } from 'lucide-react';
@@ -119,6 +120,12 @@ function AppContent() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {renderRoleDashboard()}
       </main>
+
+      {/* Floating 3D Interactive AI Chatbot Widget */}
+      <FloatingChatBot
+        isOpen={isCopilotOpen}
+        onToggle={() => setIsCopilotOpen(prev => !prev)}
+      />
 
       <VoiceIntakeModal 
         isOpen={isVoiceOpen} 

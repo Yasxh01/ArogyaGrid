@@ -133,10 +133,10 @@ export default function AICopilotDrawer({ isOpen, onClose }) {
           </div>
           <div>
             <div className="flex items-center space-x-1.5">
-              <h3 className="font-bold text-slate-900 text-sm">District Officer AI Copilot</h3>
-              <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-indigo-100 text-indigo-700">Agentic</span>
+              <h3 className="font-bold text-slate-900 text-sm">AI Healthcare Copilot</h3>
+              <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-emerald-100 text-emerald-800">100% Private</span>
             </div>
-            <p className="text-[11px] text-slate-500">Live Clinical Supply Chain Intelligence with 1-Click Execution</p>
+            <p className="text-[11px] text-slate-500">Live clinical assistance with smart recommendations and 1-click execution</p>
           </div>
         </div>
         <button
