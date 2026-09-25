@@ -26,3 +26,13 @@ exports.triggerFederatedRound = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getExplainability = (req, res, next) => {
+  try {
+    const { districtId } = req.params;
+    const metrics = mlService.getExplainabilityMetrics(districtId);
+    res.json(metrics);
+  } catch (err) {
+    next(err);
+  }
+};

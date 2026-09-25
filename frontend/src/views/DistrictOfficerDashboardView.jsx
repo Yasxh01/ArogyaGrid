@@ -6,6 +6,7 @@ import StockManager from '../components/StockManager';
 import BedMatrix from '../components/BedMatrix';
 import ColdChainTelemetryView from '../components/ColdChainTelemetryView';
 import ABDMInteroperabilityView from '../components/ABDMInteroperabilityView';
+import MLModelExplainabilityView from '../components/MLModelExplainabilityView';
 import NotificationSimulatorModal from '../components/NotificationSimulatorModal';
 import { useAuth } from '../context/AuthContext';
 import { apiRequest } from '../api/client';
@@ -21,7 +22,8 @@ import {
   Smartphone,
   Flame,
   ArrowRight,
-  Network
+  Network,
+  BarChart3
 } from 'lucide-react';
 
 export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }) {
@@ -213,6 +215,18 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
           <Network className="w-3.5 h-3.5" />
           <span>ABDM & e-Aushadhi Hub</span>
         </button>
+
+        <button
+          onClick={() => { setInternalTab('xai'); if (setActiveTab) setActiveTab('xai'); }}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+            effectiveTab === 'xai'
+              ? 'bg-teal-600 text-white shadow-md'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <BarChart3 className="w-3.5 h-3.5" />
+          <span>ML & XAI Charts</span>
+        </button>
       </div>
 
       {/* MoHFW IDSP Disease Surveillance Epidemic Alert Banner */}
@@ -250,6 +264,10 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
       )}
 
       <StatsBanner districtId={selectedDistrictId} />
+
+      {effectiveTab === 'xai' && (
+        <MLModelExplainabilityView districtId={selectedDistrictId} />
+      )}
 
       {effectiveTab === 'abdm' && (
         <ABDMInteroperabilityView districtId={selectedDistrictId} />

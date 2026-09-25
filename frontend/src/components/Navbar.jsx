@@ -21,7 +21,8 @@ export default function Navbar({ onOpenCopilot, onOpenVoice, onOpenExplainer, ac
         { id: 'transfers', label: 'Logistics & Escrow' },
         { id: 'stock', label: 'District Stock & FEFO' },
         { id: 'beds', label: 'Bed Matrix' },
-        { id: 'abdm', label: 'ABDM & e-Aushadhi' }
+        { id: 'abdm', label: 'ABDM & e-Aushadhi' },
+        { id: 'xai', label: 'ML & XAI Charts' }
       ];
     }
     if (role === 'DOCTOR') {
