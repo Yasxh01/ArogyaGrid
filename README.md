@@ -89,7 +89,7 @@ ArogyaGrid/
 │   └── src/test/              # Comprehensive integration & E2E test suites
 ├── frontend/                  # React 18 + Vite PWA
 │   ├── src/views/             # Scoped Dashboards (Admin, District, Doctor, PHC Worker, AuthPortal)
-│   ├── src/components/        # MapView, BedMatrix, StockManager, StaffRoster, FederatedCenter
+│   ├── src/components/        # MapView, BedMatrix, StockManager, StaffRoster, FederatedExplainerModal, GoogleCloudConsoleModal
 │   ├── src/context/           # AuthContext (RBAC) & SocketContext (Live alerts)
 │   └── src/api/               # JWT client & IndexedDB offline queue
 ├── ml_service/                # Python FastAPI Microservice
