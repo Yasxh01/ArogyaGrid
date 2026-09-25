@@ -3,6 +3,8 @@ const router = express.Router();
 const bigqueryService = require('../services/bigqueryService');
 const imdWeatherService = require('../services/imdWeatherService');
 const mapsPlatformService = require('../services/mapsPlatformService');
+const vertexAIService = require('../services/vertexAIService');
+const speechService = require('../services/speechService');
 
 // 1. Google BigQuery Streaming Telemetry Buffer & Dataset
 router.get('/bigquery/stream', (req, res) => {
@@ -38,7 +40,65 @@ router.post('/maps/route-analysis', async (req, res, next) => {
   }
 });
 
-// 4. Overall Google Cloud & Open Public Data Architecture Status
+// 4. Google Cloud Vertex AI: Days-to-Stockout (DTS) Prediction
+router.post('/vertex/predict-dts', async (req, res, next) => {
+  try {
+    const prediction = await vertexAIService.predictDaysToStockout(req.body);
+    res.json(prediction);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 5. Google Cloud Vertex AI: Cold-Chain Thermal Spoilage Prediction
+router.post('/vertex/predict-spoilage', async (req, res, next) => {
+  try {
+    const prediction = await vertexAIService.predictThermalSpoilageRisk(req.body);
+    res.json(prediction);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 6. Google Cloud Speech-to-Text v2: Vernacular Voice Transcription
+router.post('/voice/transcribe', async (req, res, next) => {
+  try {
+    const { audioBase64, languageCode, encoding, sampleRateHertz } = req.body;
+    const transcription = await speechService.transcribeAudio({
+      audioBase64,
+      languageCode: languageCode || 'hi-IN',
+      encoding,
+      sampleRateHertz
+    });
+    res.json(transcription);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 7. Google Cloud Translation API v2: Regional Language Translation
+router.post('/voice/translate', async (req, res, next) => {
+  try {
+    const { text, sourceLanguage, targetLanguage } = req.body;
+    const translation = await speechService.translateText({
+      text,
+      sourceLanguage: sourceLanguage || 'auto',
+      targetLanguage: targetLanguage || 'en'
+    });
+    res.json(translation);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 8. Supported Vernacular Languages
+router.get('/voice/languages', (req, res) => {
+  res.json({
+    languages: speechService.getSupportedLanguages()
+  });
+});
+
+// 9. Overall Google Cloud & Open Public Data Architecture Status
 router.get('/status', (req, res) => {
   res.json({
     hackathon_track: 'Code for Communities 2.0 (Google Cloud & Open Data)',
@@ -50,10 +110,18 @@ router.get('/status', (req, res) => {
         configured: !!(process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY),
         capabilities: ['Multimodal Vision Challan OCR', 'AI Health Copilot', 'Situation Reports']
       },
-      predictive_modelling: {
-        engine: 'Vertex AI Random Forest / DTS Forecaster',
-        status: 'ACTIVE_100_PERCENT_CALIBRATED',
+      predictive_modelling_vertex_ai: {
+        engine: 'Vertex AI Model Serving (asia-south1)',
+        endpoint: 'projects/arogyagrid-national/locations/asia-south1/endpoints/arogyagrid-dts-endpoint-v1',
+        status: 'ACTIVE_AND_INTEGRATED',
+        explainability: 'SHAP Feature Attribution (XAI)',
         features_calibrated: 8
+      },
+      language_and_voice: {
+        provider: 'Google Cloud Speech-to-Text v2 & Cloud Translation API',
+        status: 'ACTIVE_AND_INTEGRATED',
+        supported_dialects: ['hi-IN (Hindi)', 'bho-IN (Bhojpuri)', 'mr-IN (Marathi)', 'or-IN (Odia)', 'ta-IN (Tamil)', 'bn-IN (Bengali)', 'en-IN (English)'],
+        multimodal_fallback: 'Gemini 1.5 Flash Audio'
       },
       geospatial_logistics: {
         provider: 'Google Maps Platform',

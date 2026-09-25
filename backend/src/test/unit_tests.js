@@ -12,6 +12,10 @@ const mlService = require('../services/mlService');
 const stockController = require('../controllers/stockController');
 const { JWT_SECRET } = require('../config/env');
 const { tools } = require('../../../mcp_server/tools/arogyaTools');
+const vertexAIService = require('../services/vertexAIService');
+const speechService = require('../services/speechService');
+const mapsPlatformService = require('../services/mapsPlatformService');
+const imdWeatherService = require('../services/imdWeatherService');
 
 let passedTests = 0;
 let totalTests = 0;
@@ -295,6 +299,67 @@ async function runAllUnitTests() {
     assert.strictEqual(fed.status, 'COMPLETED');
     assert.strictEqual(fed.participating_nodes.length, 3);
     assert.strictEqual(fed.dp_noise_applied, true);
+  });
+
+  console.log('\n☁️ [SUITE 9] Google Cloud & Open Public Data Integration:');
+
+  await itAsync('Vertex AI should forecast Days-to-Stockout with SHAP XAI attributions', async () => {
+    const res = await vertexAIService.predictDaysToStockout({
+      current_stock: 30,
+      daily_consumption: 10,
+      footfall_surge_factor: 1.0,
+      lead_time_days: 5
+    });
+    assert(res.predictions[0].days_to_stockout === 3.0);
+    assert.strictEqual(res.predictions[0].risk_level, 'CRITICAL');
+    assert(res.explainability.feature_attributions.length >= 4);
+    assert.strictEqual(res.explainability.method, 'SHAP_KERNEL_EXPLAINER');
+  });
+
+  await itAsync('Vertex AI should predict cold-chain thermal spoilage risk', async () => {
+    const res = await vertexAIService.predictThermalSpoilageRisk({
+      current_temp: 9.2,
+      ambient_temp: 34.0,
+      power_status: 'BATTERY_BACKUP',
+      battery_runtime_mins: 45
+    });
+    assert.strictEqual(res.predictions[0].risk_level, 'ACTIVE_EXCURSION');
+    assert.strictEqual(res.predictions[0].estimated_hours_to_breach, 0);
+  });
+
+  await itAsync('Speech & Translation service should return supported regional dialects', () => {
+    const langs = speechService.getSupportedLanguages();
+    assert(langs.length >= 6);
+    const codes = langs.map(l => l.code);
+    assert(codes.includes('hi-IN'));
+    assert(codes.includes('bho-IN'));
+    assert(codes.includes('ta-IN'));
+  });
+
+  await itAsync('Speech & Translation service should translate vernacular medicine queries', async () => {
+    const trans = await speechService.translateText({
+      text: 'सामुदायिक स्वास्थ्य केंद्र में पेरासिटामोल चाहिए',
+      targetLanguage: 'en'
+    });
+    assert(trans.translatedText.length > 0);
+  });
+
+  await itAsync('Maps Platform should compute Road Escrow vs ICMR Drone logistics', async () => {
+    const route = await mapsPlatformService.computeRouteAnalysis({
+      sourceLat: 23.36,
+      sourceLon: 85.32,
+      destLat: 23.50,
+      destLon: 85.50
+    });
+    assert(route.mode_comparison.road_network.distance_km > 0);
+    assert(route.mode_comparison.aerial_airway.distance_km > 0);
+    assert(route.mode_comparison.aerial_airway.speed_kmh === 75);
+  });
+
+  await itAsync('IMD Weather telemetry should fetch live rainfall & heatwave risk metrics', async () => {
+    const weather = await imdWeatherService.getDistrictWeatherTelemetry('DIST-JH-01');
+    assert(weather.meteorology.rainfall_24h_mm !== undefined);
+    assert(weather.health_risk_indices.cholera_water_borne_risk !== undefined);
   });
 
   console.log('\n================================================================');
