@@ -69,9 +69,68 @@ exports.getBatches = (req, res) => {
   const phc_id = req.params.phcId || (req.user ? req.user.phc_id : null);
   const store = db.memoryStore;
   let batches = store.batches || [];
+
   if (phc_id && phc_id !== 'ALL') {
-    batches = batches.filter(b => b.phc_id === phc_id);
+    let facilityBatches = batches.filter(b => b.phc_id === phc_id);
+    // If facility has no batches yet, generate realistic batches on-the-fly from its stock
+    if (facilityBatches.length === 0) {
+      store.batches = store.batches || [];
+      const facilityStock = (store.stock || []).filter(s => s.phc_id === phc_id);
+      facilityStock.forEach((stk, idx) => {
+        const med = (store.medicines || []).find(m => m.id === stk.medicine_id);
+        const qty = stk.quantity || 40;
+        const catPrefix = med?.category?.substring(0, 3).toUpperCase() || 'MED';
+
+        if (idx % 3 === 0 && qty >= 15) {
+          const nearDays = (idx % 6 === 0) ? 22 : 48;
+          const nearExp = new Date(Date.now() + nearDays * 24 * 60 * 60 * 1000);
+          const nearQty = Math.min(25, Math.floor(qty * 0.3));
+
+          store.batches.push({
+            id: `BAT-AUTO-${phc_id}-${stk.medicine_id}-1`,
+            phc_id,
+            medicine_id: stk.medicine_id,
+            batch_number: `${catPrefix}-2024-N${idx + 1}`,
+            quantity: nearQty,
+            mfg_date: '2023-09-15',
+            expiry_date: nearExp.toISOString().split('T')[0],
+            challan_ref: `CH-JSMSCL-${8100 + idx}`
+          });
+
+          const safeExp = new Date();
+          safeExp.setFullYear(safeExp.getFullYear() + 1);
+          safeExp.setMonth((safeExp.getMonth() + 4) % 12);
+          store.batches.push({
+            id: `BAT-AUTO-${phc_id}-${stk.medicine_id}-2`,
+            phc_id,
+            medicine_id: stk.medicine_id,
+            batch_number: `${catPrefix}-2025-S${idx + 1}`,
+            quantity: Math.max(1, qty - nearQty),
+            mfg_date: '2024-02-10',
+            expiry_date: safeExp.toISOString().split('T')[0],
+            challan_ref: `CH-JSMSCL-${9100 + idx}`
+          });
+        } else {
+          const safeExp = new Date();
+          safeExp.setFullYear(safeExp.getFullYear() + 1);
+          safeExp.setMonth((safeExp.getMonth() + 7) % 12);
+          store.batches.push({
+            id: `BAT-AUTO-${phc_id}-${stk.medicine_id}`,
+            phc_id,
+            medicine_id: stk.medicine_id,
+            batch_number: `${catPrefix}-2025-A${idx + 1}`,
+            quantity: qty,
+            mfg_date: '2024-01-20',
+            expiry_date: safeExp.toISOString().split('T')[0],
+            challan_ref: `CH-BMSICL-${7200 + idx}`
+          });
+        }
+      });
+      facilityBatches = store.batches.filter(b => b.phc_id === phc_id);
+    }
+    batches = facilityBatches;
   }
+
   const now = new Date();
   const enriched = batches.map(b => {
     const med = (store.medicines || []).find(m => m.id === b.medicine_id) || {};
@@ -121,4 +180,3 @@ exports.createBatch = (req, res) => {
 
   res.status(201).json({ success: true, batch: newBatch });
 };
-

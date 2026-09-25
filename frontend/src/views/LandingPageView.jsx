@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth, PRESET_USERS } from '../context/AuthContext';
 import { Activity, ShieldCheck, HeartPulse, Truck, Cpu, ArrowRight, Lock, Sparkles, Building2, UserCircle2 } from 'lucide-react';
-import FederatedExplainerModal from '../components/FederatedExplainerModal';
 
 export default function LandingPageView() {
   const { login } = useAuth();
@@ -10,7 +9,6 @@ export default function LandingPageView() {
   const [showManualLogin, setShowManualLogin] = useState(false);
   const [loadingRole, setLoadingRole] = useState(null);
   const [error, setError] = useState(null);
-  const [isExplainerOpen, setIsExplainerOpen] = useState(false);
 
   async function handleQuickLogin(preset) {
     setLoadingRole(preset.role);
@@ -51,13 +49,6 @@ export default function LandingPageView() {
 
           <div className="flex items-center space-x-3">
             <button
-              onClick={() => setIsExplainerOpen(true)}
-              className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3.5 py-1.5 rounded-xl border border-indigo-200/60 transition flex items-center space-x-1.5"
-            >
-              <Cpu className="w-3.5 h-3.5" />
-              <span>Why Federated AI?</span>
-            </button>
-            <button
               onClick={() => setShowManualLogin(!showManualLogin)}
               className="text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 rounded-xl transition"
             >
@@ -75,7 +66,7 @@ export default function LandingPageView() {
             <Sparkles className="w-3.5 h-3.5 mr-1 text-emerald-600" /> India's National Primary Health Centre Intelligence Grid
           </span>
           <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight mb-4">
-            Resilient, Offline-First & Federated <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Healthcare Supply Logistics</span>
+            Resilient, Offline-First & Intelligent <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Healthcare Supply Logistics</span>
           </h1>
           <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-medium">
             Real-time Tri-Resource tracking for <strong>Medicines</strong>, <strong>Beds</strong>, and <strong>Medical Staff</strong> with predictive stockout warnings and automated cross-district rebalancing.
@@ -181,13 +172,6 @@ export default function LandingPageView() {
       <footer className="border-t border-slate-200/80 bg-white py-4 text-center text-xs text-slate-500 font-medium">
         ArogyaGrid Platform &bull; Built for India's 150,000+ Primary Health Centre Network
       </footer>
-
-      {/* Federated AI Explainer Modal */}
-      <FederatedExplainerModal
-        isOpen={isExplainerOpen}
-        onClose={() => setIsExplainerOpen(false)}
-      />
-
     </div>
   );
 }

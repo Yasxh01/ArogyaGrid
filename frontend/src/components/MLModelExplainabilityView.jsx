@@ -356,8 +356,8 @@ export default function MLModelExplainabilityView({ districtId = 'DIST-JH-01' })
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-200/70 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Algorithm: GBDT / Random Forest</span>
+          <div className="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Algorithm: Vertex AI / Random Forest</span>
             <span className="text-emerald-700 font-bold">✔ 100% Calibrated</span>
           </div>
         </div>

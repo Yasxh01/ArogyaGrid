@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
+import { ALL_FACILITIES } from '../context/AuthContext';
 import { 
   Building2, 
   X, 
@@ -51,17 +52,25 @@ export default function FacilityDetailModal({ isOpen, onClose, phcId, onNavigate
       const staffData = await apiRequest(`/staff/phc/${phcId}`).catch(() => ({ staff: [] }));
       setStaffList(staffData.staff || []);
 
-      // 5. Build facility name / type fallback from phcId
+      // 5. Build facility name / type fallback from ALL_FACILITIES or live data
+      const matchedFac = ALL_FACILITIES.find(f => f.id === phcId);
       const name = stockData.stock?.[0]?.phc_name || 
                    bedsData.beds?.[0]?.phc_name || 
-                   (phcId === 'PHC-RAN-01' ? 'Ranchi Sadar PHC' :
-                    phcId === 'PHC-RAN-02' ? 'Kanke Rural CHC' :
-                    phcId === 'PHC-RAN-03' ? 'Namkum PHC' : phcId);
+                   matchedFac?.name || 
+                   phcId;
+
+      const typeLabel = matchedFac?.facility_type === 'DISTRICT_HOSPITAL' 
+        ? 'District Civil Hospital'
+        : matchedFac?.facility_type === 'CHC' 
+        ? 'Community Health Centre (CHC)'
+        : matchedFac?.facility_type === 'SUB_CENTRE_HWC' 
+        ? 'Ayushman Bharat Arogya Mandir'
+        : 'Primary Health Centre (PHC)';
 
       setFacilityInfo({
         id: phcId,
         name,
-        type: phcId.includes('CHC') ? 'Community Health Centre' : 'Primary Health Centre'
+        type: typeLabel
       });
     } catch (err) {
       console.error('Failed to load facility details:', err);
@@ -208,7 +217,13 @@ export default function FacilityDetailModal({ isOpen, onClose, phcId, onNavigate
                         <div key={b.id} className="space-y-1">
                           <div className="flex items-center justify-between text-xs">
                             <span className="font-semibold text-slate-700">
-                              {b.bed_type === 'ICU' ? 'ICU Beds' : b.bed_type === 'OXYGEN' ? 'Oxygen Beds' : 'General Beds'}
+                              {b.bed_type === 'ICU' 
+                                ? 'ICU Beds (Critical Care)' 
+                                : b.bed_type === 'OXYGEN' 
+                                ? 'Oxygen Supported Beds' 
+                                : b.bed_type === 'PEDIATRIC' 
+                                ? 'Pediatric & Maternity Beds' 
+                                : 'General Ward Beds'}
                             </span>
                             <span className={`font-bold ${isFull ? 'text-rose-600' : 'text-slate-800'}`}>
                               {b.occupied_beds} / {b.total_beds} ({pct}%)
@@ -301,7 +316,8 @@ export default function FacilityDetailModal({ isOpen, onClose, phcId, onNavigate
                           <span className="flex items-center">
                             <Bed className="w-4 h-4 mr-1.5 text-indigo-600" />
                             {b.bed_type === 'ICU' ? 'ICU (Critical Care) Beds' :
-                             b.bed_type === 'OXYGEN' ? 'Oxygen Supported Beds' : 'General Ward Beds'}
+                             b.bed_type === 'OXYGEN' ? 'Oxygen Supported Beds' :
+                             b.bed_type === 'PEDIATRIC' ? 'Pediatric & Maternity Beds' : 'General Ward Beds'}
                           </span>
                           <span className={pct >= 90 ? 'text-rose-600' : 'text-slate-700'}>
                             {b.occupied_beds} occupied / {b.total_beds} total ({pct}%)

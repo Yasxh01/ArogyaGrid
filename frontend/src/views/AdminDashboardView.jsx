@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
 import StatsBanner from '../components/StatsBanner';
-import FederatedCenter from '../components/FederatedCenter';
+import ABDMInteroperabilityView from '../components/ABDMInteroperabilityView';
+import MLModelExplainabilityView from '../components/MLModelExplainabilityView';
 import { Pill, PlusCircle, Building2, ShieldCheck, Database, Layers, Check, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
@@ -75,13 +76,12 @@ export default function AdminDashboardView({ activeTab }) {
     }
   }
 
-  if (activeTab === 'federated') {
-    return (
-      <div className="space-y-6 animate-in fade-in duration-200">
-        <StatsBanner />
-        <FederatedCenter />
-      </div>
-    );
+  if (activeTab === 'abdm') {
+    return <ABDMInteroperabilityView />;
+  }
+
+  if (activeTab === 'xai') {
+    return <MLModelExplainabilityView />;
   }
 
   return (

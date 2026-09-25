@@ -10,7 +10,7 @@ export default function StatsBanner({ districtId = 'DIST-JH-01' }) {
     critical_stockouts_count: 2,
     bed_utilization_percentage: 71,
     active_staff_count: 14,
-    federated_version: 'v2.5.0'
+    vaccine_coldchain_status: '2°C–8°C Safe'
   });
 
   useEffect(() => {
@@ -94,8 +94,8 @@ export default function StatsBanner({ districtId = 'DIST-JH-01' }) {
           <ShieldCheck className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Smart AI Sync</p>
-          <p className="text-lg font-extrabold text-purple-700">{stats.federated_version || 'v2.5.0'} Active</p>
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Vaccine Cold-Chain</p>
+          <p className="text-lg font-extrabold text-purple-700">{stats.vaccine_coldchain_status || '2°C–8°C Safe'}</p>
         </div>
       </div>
 

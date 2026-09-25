@@ -11,7 +11,8 @@ export default function Navbar({ onOpenCopilot, onOpenVoice, onOpenExplainer, ac
     if (role === 'ADMIN') {
       return [
         { id: 'dashboard', label: 'Medicine Catalog' },
-        { id: 'federated', label: 'Smart Hospital AI Network' }
+        { id: 'abdm', label: 'Govt Portals & ABHA' },
+        { id: 'xai', label: 'AI Health Forecasts' }
       ];
     }
     if (role === 'DISTRICT_OFFICER') {

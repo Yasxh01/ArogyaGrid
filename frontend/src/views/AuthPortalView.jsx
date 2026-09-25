@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
-import { useAuth, PRESET_USERS } from '../context/AuthContext';
-import { Activity, UserPlus, LogIn, ArrowRight, UserCheck, Cpu, Sparkles } from 'lucide-react';
-import FederatedExplainerModal from '../components/FederatedExplainerModal';
+import { useAuth, PRESET_USERS, ALL_DISTRICTS, ALL_FACILITIES } from '../context/AuthContext';
+import { Activity, UserPlus, LogIn, ArrowRight, UserCheck, Sparkles, Building2 } from 'lucide-react';
 
 export default function AuthPortalView() {
   const { login, register } = useAuth();
   const [activeTab, setActiveTab] = useState('presets');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [isExplainerOpen, setIsExplainerOpen] = useState(false);
 
   // Manual Login Form
   const [loginEmail, setLoginEmail] = useState('');
@@ -21,6 +19,17 @@ export default function AuthPortalView() {
   const [regRole, setRegRole] = useState('DOCTOR');
   const [regDistrict, setRegDistrict] = useState('DIST-JH-01');
   const [regPHC, setRegPHC] = useState('PHC-RAN-01');
+
+  function handleRegDistrictChange(e) {
+    const newDist = e.target.value;
+    setRegDistrict(newDist);
+    const facilitiesForDistrict = ALL_FACILITIES.filter(f => f.district_id === newDist);
+    if (facilitiesForDistrict.length > 0) {
+      setRegPHC(facilitiesForDistrict[0].id);
+    }
+  }
+
+  const availablePHCs = ALL_FACILITIES.filter(f => !regDistrict || f.district_id === regDistrict);
 
   async function handlePresetLogin(preset) {
     setLoading(true);
@@ -80,13 +89,9 @@ export default function AuthPortalView() {
           </div>
 
           <div className="flex items-center space-x-2.5">
-            <button
-              onClick={() => setIsExplainerOpen(true)}
-              className="text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3.5 py-1.5 rounded-xl border border-indigo-200/60 transition flex items-center space-x-1.5"
-            >
-              <Cpu className="w-3.5 h-3.5" />
-              <span>Why Federated AI?</span>
-            </button>
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              National Health Grid
+            </span>
           </div>
         </div>
       </header>
@@ -140,7 +145,7 @@ export default function AuthPortalView() {
           </div>
         )}
 
-        {/* 1-Click Role Cards */}
+        {/* 1-Click Role Cards (Exactly 4 Roles) */}
         {activeTab === 'presets' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {PRESET_USERS.map((preset) => (
@@ -186,19 +191,49 @@ export default function AuthPortalView() {
         {activeTab === 'login' && (
           <div className="max-w-md mx-auto w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl">
             <h2 className="font-extrabold text-lg text-slate-900 mb-1">Sign In to ArogyaGrid</h2>
-            <p className="text-xs text-slate-500 mb-6 font-medium">Access your assigned role and health telemetry console</p>
+            <p className="text-xs text-slate-500 mb-5 font-medium">Access your assigned role and health telemetry console</p>
+
+            {/* Quick Autofill Pills */}
+            <div className="mb-4 p-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl">
+              <span className="text-[10px] font-extrabold text-slate-500 block mb-1.5 uppercase tracking-wide">
+                Quick Autofill Test Accounts:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { label: 'Admin', email: 'admin@arogyagrid.gov.in' },
+                  { label: 'District Officer', email: 'district.ranchi@arogyagrid.gov.in' },
+                  { label: 'Doctor', email: 'doctor.ranchi@arogyagrid.gov.in' },
+                  { label: 'PHC Staff', email: 'phc.ranchi01@arogyagrid.gov.in' }
+                ].map((item) => (
+                  <button
+                    key={item.email}
+                    type="button"
+                    onClick={() => { setLoginEmail(item.email); setLoginPassword('password123'); }}
+                    className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-white text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 transition"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <form onSubmit={handleManualLogin} className="space-y-4 text-xs">
               <div>
                 <label className="font-bold text-slate-700 block mb-1">Email Address</label>
                 <input
                   type="email"
+                  list="login-preset-emails"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   placeholder="doctor.ranchi@arogyagrid.gov.in"
                   className="w-full font-semibold bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 outline-none focus:ring-2 focus:ring-emerald-500"
                   required
                 />
+                <datalist id="login-preset-emails">
+                  {PRESET_USERS.map((p) => (
+                    <option key={p.email} value={p.email}>{p.name} - {p.label}</option>
+                  ))}
+                </datalist>
               </div>
 
               <div>
@@ -228,7 +263,7 @@ export default function AuthPortalView() {
         {activeTab === 'register' && (
           <div className="max-w-md mx-auto w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl">
             <h2 className="font-extrabold text-lg text-slate-900 mb-1">Create ArogyaGrid Account</h2>
-            <p className="text-xs text-slate-500 mb-6 font-medium">Register as a Healthcare Officer, Doctor, or PHC Staff</p>
+            <p className="text-xs text-slate-500 mb-5 font-medium">Register for any PHC, CHC, or District Hospital across India</p>
 
             <form onSubmit={handleRegister} className="space-y-3.5 text-xs">
               <div>
@@ -244,7 +279,7 @@ export default function AuthPortalView() {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Email Address</label>
+                <label className="font-bold text-slate-700 block mb-1">Official Email Address</label>
                 <input
                   type="email"
                   value={regEmail}
@@ -268,7 +303,7 @@ export default function AuthPortalView() {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Designated Role</label>
+                <label className="font-bold text-slate-700 block mb-1">Designated Role (4 Options)</label>
                 <select
                   value={regRole}
                   onChange={(e) => setRegRole(e.target.value)}
@@ -282,44 +317,54 @@ export default function AuthPortalView() {
               </div>
 
               {regRole !== 'ADMIN' && (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-3 pt-1">
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">District</label>
-                    <input
-                      type="text"
-                      list="district-options"
+                    <label className="font-bold text-slate-700 block mb-1 flex items-center justify-between">
+                      <span>State & District</span>
+                      <span className="text-[10px] text-slate-400 font-normal">7 States / Districts</span>
+                    </label>
+                    <select
                       value={regDistrict}
-                      onChange={(e) => setRegDistrict(e.target.value)}
-                      placeholder="e.g. Ranchi, Patna, Mumbai"
+                      onChange={handleRegDistrictChange}
                       className="w-full font-semibold bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-emerald-500"
                       required
-                    />
-                    <datalist id="district-options">
-                      <option value="DIST-JH-01">Ranchi (Jharkhand)</option>
-                      <option value="DIST-JH-02">Dhanbad (Jharkhand)</option>
-                      <option value="DIST-BR-01">Patna (Bihar)</option>
-                      <option value="DIST-OD-01">Khordha (Odisha)</option>
-                      <option value="DIST-UP-01">Varanasi (Uttar Pradesh)</option>
-                    </datalist>
+                    >
+                      {ALL_DISTRICTS.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name} ({d.state})
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Assigned PHC / Hospital</label>
-                    <input
-                      type="text"
-                      list="phc-options"
+                    <label className="font-bold text-slate-700 block mb-1 flex items-center justify-between">
+                      <span>{regRole === 'DISTRICT_OFFICER' ? 'Headquarters Facility' : 'Assigned Health Centre / Hospital'}</span>
+                      <span className="text-[10px] text-emerald-700 font-bold">{availablePHCs.length} Available in District</span>
+                    </label>
+                    <select
                       value={regPHC}
                       onChange={(e) => setRegPHC(e.target.value)}
-                      placeholder="e.g. Sadar PHC, Shivpur CHC"
                       className="w-full font-semibold bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-emerald-500"
                       required
-                    />
-                    <datalist id="phc-options">
-                      <option value="PHC-RAN-01">Ranchi Sadar PHC</option>
-                      <option value="PHC-RAN-02">Kanke Rural PHC</option>
-                      <option value="PHC-RAN-03">Namkum PHC</option>
-                      <option value="PHC-PAT-01">Patna City PHC</option>
-                    </datalist>
+                    >
+                      {availablePHCs.map((f) => (
+                        <option key={f.id} value={f.id}>
+                          {f.name} [{f.facility_type === 'DISTRICT_HOSPITAL' ? 'DH' : f.facility_type}] ({f.id})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Selected Facility Confirmation Badge */}
+                  <div className="p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl flex items-center justify-between text-[11px] text-emerald-900">
+                    <span className="flex items-center font-medium">
+                      <Building2 className="w-3.5 h-3.5 mr-1.5 text-emerald-600 shrink-0" />
+                      {availablePHCs.find(f => f.id === regPHC)?.name || regPHC}
+                    </span>
+                    <span className="font-mono font-bold text-[10px] bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                      {regPHC}
+                    </span>
                   </div>
                 </div>
               )}
@@ -327,7 +372,7 @@ export default function AuthPortalView() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition shadow-md disabled:opacity-50"
+                className="w-full mt-3 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition shadow-md disabled:opacity-50"
               >
                 {loading ? 'Creating Account...' : 'Create Account & Sign In'}
               </button>
@@ -340,11 +385,6 @@ export default function AuthPortalView() {
       <footer className="border-t border-slate-200/80 bg-white py-4 text-center text-xs text-slate-500 font-medium">
         ArogyaGrid Platform &bull; Built for India's 150,000+ Primary Health Centre Network
       </footer>
-
-      <FederatedExplainerModal
-        isOpen={isExplainerOpen}
-        onClose={() => setIsExplainerOpen(false)}
-      />
 
     </div>
   );

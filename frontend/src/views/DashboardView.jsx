@@ -5,7 +5,6 @@ import StockManager from '../components/StockManager';
 import BedMatrix from '../components/BedMatrix';
 import StaffRoster from '../components/StaffRoster';
 import TransferDashboard from '../components/TransferDashboard';
-import FederatedCenter from '../components/FederatedCenter';
 
 export default function DashboardView({ activeTab, setActiveTab }) {
   const [selectedPHC, setSelectedPHC] = useState('PHC-RAN-01');
@@ -19,7 +18,6 @@ export default function DashboardView({ activeTab, setActiveTab }) {
   if (activeTab === 'beds') return <BedMatrix selectedPHC={selectedPHC} />;
   if (activeTab === 'staff') return <StaffRoster selectedPHC={selectedPHC} />;
   if (activeTab === 'transfers') return <TransferDashboard />;
-  if (activeTab === 'federated') return <FederatedCenter />;
 
   return (
     <div className="space-y-6">

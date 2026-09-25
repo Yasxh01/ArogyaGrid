@@ -29,6 +29,23 @@ class StockService {
     const qty = parseInt(quantity, 10);
     if (['INTAKE', 'TRANSFER_IN'].includes(transaction_type)) {
       stockItem.quantity += qty;
+      store.batches = store.batches || [];
+      const expDate = new Date();
+      expDate.setFullYear(expDate.getFullYear() + 1);
+      store.batches.push({
+        id: `BAT-IN-${uuidv4().substring(0, 6).toUpperCase()}`,
+        phc_id,
+        medicine_id,
+        batch_number: `LOT-${Date.now().toString(36).toUpperCase()}`,
+        quantity: qty,
+        mfg_date: new Date().toISOString().split('T')[0],
+        expiry_date: expDate.toISOString().split('T')[0],
+        challan_ref: `CH-INTAKE-${transaction_uuid.substring(0, 12)}`
+      });
+      try {
+        const epidemicService = require('./epidemicService');
+        epidemicService.resolveOutbreakForPHC(phc_id, medicine_id);
+      } catch (e) {}
     } else if (['DISPENSE', 'TRANSFER_OUT'].includes(transaction_type)) {
       if (stockItem.quantity < qty) {
         throw new Error(`Insufficient stock: Requested ${qty}, available ${stockItem.quantity}`);

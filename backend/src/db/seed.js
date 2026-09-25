@@ -131,23 +131,63 @@ async function seedDatabase() {
   });
   store.stock = stockSeed;
 
-  // 5. Batch-Level FEFO Inventory
+  // 5. Batch-Level FEFO Inventory across ALL facilities and ALL districts
   const now = new Date();
-  const expFar = new Date(now.getFullYear() + 2, now.getMonth(), 1);
-  const expNear = new Date(now.getFullYear(), now.getMonth() + 2, 1);
-  const expMed = new Date(now.getFullYear() + 1, now.getMonth() + 4, 1);
+  const batchSeed = [];
+  let batCounter = 1;
 
-  store.batches = [
-    { id: 'BAT-001', phc_id: 'PHC-RAN-01', medicine_id: 'MED-001', batch_number: 'PCM-2024-B1', quantity: 400, mfg_date: '2024-01-15', expiry_date: expFar.toISOString().split('T')[0], challan_ref: 'CH-JSMSCL-8841' },
-    { id: 'BAT-002', phc_id: 'PHC-RAN-01', medicine_id: 'MED-001', batch_number: 'PCM-2023-A9', quantity: 250, mfg_date: '2023-08-10', expiry_date: expNear.toISOString().split('T')[0], challan_ref: 'CH-JSMSCL-6520' },
-    { id: 'BAT-003', phc_id: 'PHC-RAN-01', medicine_id: 'MED-005', batch_number: 'ARV-2024-C2', quantity: 38, mfg_date: '2024-03-01', expiry_date: expFar.toISOString().split('T')[0], challan_ref: 'CH-JSMSCL-9102' },
-    { id: 'BAT-004', phc_id: 'PHC-RAN-03', medicine_id: 'MED-001', batch_number: 'PCM-2023-A4', quantity: 35, mfg_date: '2023-05-15', expiry_date: expNear.toISOString().split('T')[0], challan_ref: 'CH-JSMSCL-5211' },
-    { id: 'BAT-005', phc_id: 'PHC-PUN-01', medicine_id: 'MED-001', batch_number: 'PCM-MH-2024-01', quantity: 300, mfg_date: '2024-02-10', expiry_date: expFar.toISOString().split('T')[0], challan_ref: 'CH-MH-7890' },
-    { id: 'BAT-006', phc_id: 'PHC-PUN-01', medicine_id: 'MED-004', batch_number: 'INS-MH-2023-99', quantity: 18, mfg_date: '2023-09-01', expiry_date: expNear.toISOString().split('T')[0], challan_ref: 'CH-MH-4421' },
-    { id: 'BAT-007', phc_id: 'PHC-BLR-01', medicine_id: 'MED-001', batch_number: 'PCM-KA-2024-55', quantity: 350, mfg_date: '2024-01-20', expiry_date: expFar.toISOString().split('T')[0], challan_ref: 'CH-KA-1102' },
-    { id: 'BAT-008', phc_id: 'PHC-PAT-01', medicine_id: 'MED-001', batch_number: 'PCM-BR-2024-12', quantity: 600, mfg_date: '2024-02-01', expiry_date: expMed.toISOString().split('T')[0], challan_ref: 'CH-BR-9901' },
-    { id: 'BAT-009', phc_id: 'PHC-KHO-01', medicine_id: 'MED-005', batch_number: 'ARV-OD-2024-08', quantity: 60, mfg_date: '2024-03-12', expiry_date: expFar.toISOString().split('T')[0], challan_ref: 'CH-OD-5512' }
-  ];
+  store.stock.forEach((stk, idx) => {
+    const med = store.medicines.find(m => m.id === stk.medicine_id);
+    const qty = stk.quantity;
+    if (qty <= 0) return;
+
+    const catPrefix = med?.category?.substring(0, 3).toUpperCase() || 'MED';
+
+    // Distribute batches: some near/critical expiry for demonstration, rest long shelf-life
+    if (idx % 3 === 0 && qty >= 15) {
+      const nearDays = (idx % 6 === 0) ? 22 : 48; // 22d = CRITICAL_EXPIRY (<30d), 48d = NEAR_EXPIRY (<60d)
+      const nearExp = new Date(now.getTime() + nearDays * 24 * 60 * 60 * 1000);
+      const nearQty = Math.min(30, Math.floor(qty * 0.25));
+      const remQty = qty - nearQty;
+
+      batchSeed.push({
+        id: `BAT-${String(batCounter++).padStart(5, '0')}`,
+        phc_id: stk.phc_id,
+        medicine_id: stk.medicine_id,
+        batch_number: `${catPrefix}-2024-N${batCounter % 99}`,
+        quantity: nearQty,
+        mfg_date: '2023-08-10',
+        expiry_date: nearExp.toISOString().split('T')[0],
+        challan_ref: `CH-JSMSCL-${8000 + (batCounter % 1000)}`
+      });
+
+      const safeExp = new Date(now.getFullYear() + 1 + (idx % 2), (now.getMonth() + 4) % 12, 15);
+      batchSeed.push({
+        id: `BAT-${String(batCounter++).padStart(5, '0')}`,
+        phc_id: stk.phc_id,
+        medicine_id: stk.medicine_id,
+        batch_number: `${catPrefix}-2025-S${batCounter % 99}`,
+        quantity: remQty,
+        mfg_date: '2024-02-15',
+        expiry_date: safeExp.toISOString().split('T')[0],
+        challan_ref: `CH-JSMSCL-${9000 + (batCounter % 1000)}`
+      });
+    } else {
+      const safeExp = new Date(now.getFullYear() + 1 + (idx % 2), (now.getMonth() + 6) % 12, 20);
+      batchSeed.push({
+        id: `BAT-${String(batCounter++).padStart(5, '0')}`,
+        phc_id: stk.phc_id,
+        medicine_id: stk.medicine_id,
+        batch_number: `${catPrefix}-2025-A${batCounter % 99}`,
+        quantity: qty,
+        mfg_date: '2024-01-20',
+        expiry_date: safeExp.toISOString().split('T')[0],
+        challan_ref: `CH-BMSICL-${7000 + (batCounter % 1000)}`
+      });
+    }
+  });
+
+  store.batches = batchSeed;
 
   // 6. Industrial Cold-Chain IoT Units (WHO PQS Standard 2°C–8°C Ice-Lined Refrigerators across ALL Districts)
   store.cold_chain_units = [
@@ -469,13 +509,34 @@ async function seedDatabase() {
 
   store.users = [
     { id: 'USR-ADMIN', name: 'National Director AI Ops', email: 'admin@arogyagrid.gov.in', password_hash: passwordHash, role: 'ADMIN' },
+    // Ranchi (Jharkhand)
     { id: 'USR-DO-RAN', name: 'District Health Officer (Ranchi)', email: 'district.ranchi@arogyagrid.gov.in', password_hash: passwordHash, role: 'DISTRICT_OFFICER', district_id: 'DIST-JH-01' },
-    { id: 'USR-DO-PUN', name: 'District Health Officer (Pune)', email: 'district.pune@arogyagrid.gov.in', password_hash: passwordHash, role: 'DISTRICT_OFFICER', district_id: 'DIST-MH-01' },
-    { id: 'USR-DO-PAT', name: 'District Health Officer (Patna)', email: 'district.patna@arogyagrid.gov.in', password_hash: passwordHash, role: 'DISTRICT_OFFICER', district_id: 'DIST-BR-01' },
-    { id: 'USR-DO-BLR', name: 'District Health Officer (Bengaluru)', email: 'district.bengaluru@arogyagrid.gov.in', password_hash: passwordHash, role: 'DISTRICT_OFFICER', district_id: 'DIST-KA-01' },
     { id: 'USR-DOC-RAN01', name: 'Dr. Priya Sharma (Medical Officer)', email: 'doctor.ranchi@arogyagrid.gov.in', password_hash: passwordHash, role: 'DOCTOR', district_id: 'DIST-JH-01', phc_id: 'PHC-RAN-01' },
     { id: 'USR-PHC-RAN01', name: 'Sadar PHC Frontline Staff', email: 'phc.ranchi01@arogyagrid.gov.in', password_hash: passwordHash, role: 'PHC_STAFF', district_id: 'DIST-JH-01', phc_id: 'PHC-RAN-01' },
-    { id: 'USR-PHC-PUN01', name: 'Haveli CHC Frontline Staff', email: 'phc.pune01@arogyagrid.gov.in', password_hash: passwordHash, role: 'PHC_STAFF', district_id: 'DIST-MH-01', phc_id: 'PHC-PUN-01' }
+    // Dhanbad (Jharkhand)
+    { id: 'USR-DO-DHN', name: 'District Health Officer (Dhanbad)', email: 'district.dhanbad@arogyagrid.gov.in', password_hash: passwordHash, role: 'DISTRICT_OFFICER', district_id: 'DIST-JH-02' },
+    { id: 'USR-DOC-DHN01', name: 'Dr. Amit Banerjee (Medical Officer)', email: 'doctor.dhanbad@arogyagrid.gov.in', password_hash: passwordHash, role: 'DOCTOR', district_id: 'DIST-JH-02', phc_id: 'PHC-DHN-01' },
+    { id: 'USR-PHC-DHN01', name: 'Jharia Coalfield Frontline Staff', email: 'phc.dhanbad01@arogyagrid.gov.in', password_hash: passwordHash, role: 'PHC_STAFF', district_id: 'DIST-JH-02', phc_id: 'PHC-DHN-01' },
+    // Patna (Bihar)
+    { id: 'USR-DO-PAT', name: 'District Health Officer (Patna)', email: 'district.patna@arogyagrid.gov.in', password_hash: passwordHash, role: 'DISTRICT_OFFICER', district_id: 'DIST-BR-01' },
+    { id: 'USR-DOC-PAT01', name: 'Dr. Alok Kumar (Medical Officer)', email: 'doctor.patna@arogyagrid.gov.in', password_hash: passwordHash, role: 'DOCTOR', district_id: 'DIST-BR-01', phc_id: 'PHC-PAT-01' },
+    { id: 'USR-PHC-PAT01', name: 'Patna City Frontline Staff', email: 'phc.patna01@arogyagrid.gov.in', password_hash: passwordHash, role: 'PHC_STAFF', district_id: 'DIST-BR-01', phc_id: 'PHC-PAT-01' },
+    // Gaya (Bihar)
+    { id: 'USR-DO-GAY', name: 'District Health Officer (Gaya)', email: 'district.gaya@arogyagrid.gov.in', password_hash: passwordHash, role: 'DISTRICT_OFFICER', district_id: 'DIST-BR-02' },
+    { id: 'USR-DOC-GAY01', name: 'Dr. Manoj Yadav (Medical Officer)', email: 'doctor.gaya@arogyagrid.gov.in', password_hash: passwordHash, role: 'DOCTOR', district_id: 'DIST-BR-02', phc_id: 'PHC-GAY-01' },
+    { id: 'USR-PHC-GAY01', name: 'Bodh Gaya Frontline Staff', email: 'phc.gaya01@arogyagrid.gov.in', password_hash: passwordHash, role: 'PHC_STAFF', district_id: 'DIST-BR-02', phc_id: 'PHC-GAY-01' },
+    // Khordha (Odisha)
+    { id: 'USR-DO-KHO', name: 'District Health Officer (Khordha)', email: 'district.khordha@arogyagrid.gov.in', password_hash: passwordHash, role: 'DISTRICT_OFFICER', district_id: 'DIST-OD-01' },
+    { id: 'USR-DOC-KHO01', name: 'Dr. Subrat Mohanty (Medical Officer)', email: 'doctor.khordha@arogyagrid.gov.in', password_hash: passwordHash, role: 'DOCTOR', district_id: 'DIST-OD-01', phc_id: 'PHC-KHO-01' },
+    { id: 'USR-PHC-KHO01', name: 'Bhubaneswar Urban Frontline Staff', email: 'phc.khordha01@arogyagrid.gov.in', password_hash: passwordHash, role: 'PHC_STAFF', district_id: 'DIST-OD-01', phc_id: 'PHC-KHO-01' },
+    // Pune (Maharashtra)
+    { id: 'USR-DO-PUN', name: 'District Health Officer (Pune)', email: 'district.pune@arogyagrid.gov.in', password_hash: passwordHash, role: 'DISTRICT_OFFICER', district_id: 'DIST-MH-01' },
+    { id: 'USR-DOC-PUN01', name: 'Dr. Sachin Deshmukh (Medical Officer)', email: 'doctor.pune@arogyagrid.gov.in', password_hash: passwordHash, role: 'DOCTOR', district_id: 'DIST-MH-01', phc_id: 'PHC-PUN-01' },
+    { id: 'USR-PHC-PUN01', name: 'Haveli CHC Frontline Staff', email: 'phc.pune01@arogyagrid.gov.in', password_hash: passwordHash, role: 'PHC_STAFF', district_id: 'DIST-MH-01', phc_id: 'PHC-PUN-01' },
+    // Bengaluru Urban (Karnataka)
+    { id: 'USR-DO-BLR', name: 'District Health Officer (Bengaluru)', email: 'district.bengaluru@arogyagrid.gov.in', password_hash: passwordHash, role: 'DISTRICT_OFFICER', district_id: 'DIST-KA-01' },
+    { id: 'USR-DOC-BLR01', name: 'Dr. Ramesh Gowda (Medical Officer)', email: 'doctor.bengaluru@arogyagrid.gov.in', password_hash: passwordHash, role: 'DOCTOR', district_id: 'DIST-KA-01', phc_id: 'PHC-BLR-01' },
+    { id: 'USR-PHC-BLR01', name: 'Anekal CHC Frontline Staff', email: 'phc.bengaluru01@arogyagrid.gov.in', password_hash: passwordHash, role: 'PHC_STAFF', district_id: 'DIST-KA-01', phc_id: 'PHC-BLR-01' }
   ];
 
   // 10. Initial Rebalance Escrows & ICMR Drone Flights

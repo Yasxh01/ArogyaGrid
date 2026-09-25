@@ -1,9 +1,39 @@
 const db = require('../config/db');
 
 class EpidemicService {
+  constructor() {
+    this.resolvedAlerts = new Set();
+  }
+
+  resolveAlert(alertId) {
+    this.resolvedAlerts.add(alertId);
+    try {
+      const { broadcastEvent } = require('./socketService');
+      broadcastEvent('epidemic:resolved', { alertId });
+    } catch (e) {}
+  }
+
+  resolveOutbreakForPHC(phcId, medicineId = null) {
+    if (!medicineId || medicineId === 'MED-003') {
+      this.resolvedAlerts.add(`EPI-CHOL-${phcId}`);
+    }
+    if (!medicineId || medicineId === 'MED-001') {
+      this.resolvedAlerts.add(`EPI-FEV-${phcId}`);
+    }
+    if (!medicineId || medicineId === 'MED-005') {
+      this.resolvedAlerts.add(`EPI-RAB-${phcId}`);
+    }
+    try {
+      const { broadcastEvent } = require('./socketService');
+      broadcastEvent('epidemic:resolved', { phcId, medicineId });
+    } catch (e) {}
+  }
+
   /**
    * Analyzes real-time consumption anomalies against baseline burn rates
    * to detect early epidemic clusters (MoHFW IDSP / DEWS standard).
+   * Once stock is replenished (>= 50 units) or emergency transfer is dispatched,
+   * the alert is resolved.
    */
   detectOutbreakClusters(districtId = null) {
     const store = db.memoryStore;
@@ -14,10 +44,11 @@ class EpidemicService {
       const stockList = store.stock.filter(s => s.phc_id === phc.id);
 
       // 1. Water-Borne / Acute Diarrheal / Cholera Outbreak Detection
+      const cholId = `EPI-CHOL-${phc.id}`;
       const orsStock = stockList.find(s => s.medicine_id === 'MED-003');
-      if (orsStock && (orsStock.daily_consumption >= 35.0 || (orsStock.quantity < 50 && orsStock.daily_consumption >= 20.0))) {
+      if (!this.resolvedAlerts.has(cholId) && orsStock && orsStock.quantity < 50 && orsStock.daily_consumption >= 20.0) {
         alerts.push({
-          id: `EPI-CHOL-${phc.id}`,
+          id: cholId,
           phc_id: phc.id,
           phc_name: phc.name,
           district_id: phc.district_id,
@@ -35,10 +66,11 @@ class EpidemicService {
       }
 
       // 2. Vector-Borne / Dengue / Chikungunya / Malaria Fever Cluster
+      const fevId = `EPI-FEV-${phc.id}`;
       const pcmStock = stockList.find(s => s.medicine_id === 'MED-001');
-      if (pcmStock && (pcmStock.daily_consumption >= 40.0 || (pcmStock.quantity < 50 && pcmStock.daily_consumption >= 30.0))) {
+      if (!this.resolvedAlerts.has(fevId) && pcmStock && pcmStock.quantity < 50 && pcmStock.daily_consumption >= 25.0) {
         alerts.push({
-          id: `EPI-FEV-${phc.id}`,
+          id: fevId,
           phc_id: phc.id,
           phc_name: phc.name,
           district_id: phc.district_id,
@@ -56,10 +88,11 @@ class EpidemicService {
       }
 
       // 3. Animal Bite / Rabies Emergency Cluster
+      const rabId = `EPI-RAB-${phc.id}`;
       const arvStock = stockList.find(s => s.medicine_id === 'MED-005');
-      if (arvStock && arvStock.quantity < 10) {
+      if (!this.resolvedAlerts.has(rabId) && arvStock && arvStock.quantity < 10) {
         alerts.push({
-          id: `EPI-RAB-${phc.id}`,
+          id: rabId,
           phc_id: phc.id,
           phc_name: phc.name,
           district_id: phc.district_id,

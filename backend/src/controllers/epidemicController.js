@@ -10,3 +10,13 @@ exports.getOutbreakAlerts = (req, res) => {
     alerts
   });
 };
+
+exports.resolveAlert = (req, res) => {
+  const { alertId } = req.params;
+  epidemicService.resolveAlert(alertId);
+  res.json({
+    success: true,
+    message: `Alert ${alertId} resolved and marked mitigated.`,
+    alert_id: alertId
+  });
+};

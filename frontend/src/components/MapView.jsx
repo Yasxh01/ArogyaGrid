@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { apiRequest } from '../api/client';
 import { useSocket } from '../context/SocketContext';
-import { AlertTriangle, Bed, Users, Pill, ShieldAlert, ArrowRight, Activity } from 'lucide-react';
+import { AlertTriangle, Bed, Users, Pill, ShieldAlert, ArrowRight, Activity, Plane, Layers, Navigation } from 'lucide-react';
 
 function createCustomPin(status) {
   let color = '#10b981'; // Green
@@ -58,6 +58,24 @@ const DISTRICT_CENTERS = {
   'DIST-KA-01': [12.9716, 77.5946]  // Bengaluru Urban, Karnataka
 };
 
+const GOOGLE_MAP_TYPES = {
+  roadmap: {
+    id: 'm',
+    name: 'Roadmap',
+    url: 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}'
+  },
+  satellite: {
+    id: 'y',
+    name: 'Satellite',
+    url: 'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'
+  },
+  terrain: {
+    id: 'p',
+    name: 'Terrain',
+    url: 'https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}'
+  }
+};
+
 function RecenterMap({ center }) {
   const map = useMap();
   useEffect(() => {
@@ -74,6 +92,8 @@ export default function MapView({ districtId, onSelectPHC, onQuickTransfer }) {
   const [loading, setLoading] = useState(true);
   const [districtsList, setDistrictsList] = useState([]);
   const [selectedDistrict, setSelectedDistrict] = useState(districtId || 'DIST-JH-01');
+  const [mapStyle, setMapStyle] = useState('roadmap');
+  const [showDroneCorridors, setShowDroneCorridors] = useState(true);
 
   useEffect(() => {
     if (districtId && districtId !== selectedDistrict) {
@@ -131,6 +151,10 @@ export default function MapView({ districtId, onSelectPHC, onQuickTransfer }) {
     ? [districtData.district.latitude, districtData.district.longitude]
     : (DISTRICT_CENTERS[selectedDistrict] || [23.3441, 85.3096]);
 
+  // Identify central hub (District Hospital or CHC) to calculate drone corridors to peripheral centres
+  const hubFeature = districtData?.features?.find(f => f.properties?.facility_type === 'DISTRICT_HOSPITAL') || districtData?.features?.[0];
+  const hubCoords = hubFeature ? [hubFeature.geometry.coordinates[1], hubFeature.geometry.coordinates[0]] : null;
+
   return (
     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col h-[520px]">
       
@@ -142,30 +166,45 @@ export default function MapView({ districtId, onSelectPHC, onQuickTransfer }) {
           <span className="text-xs text-slate-500 font-medium">({districtData?.features?.length || 0} Centres Tracked)</span>
         </div>
 
-        {/* District Selector */}
-        <div className="flex items-center space-x-2">
-          <label className="text-xs font-semibold text-slate-500">District:</label>
-          <select
-            value={selectedDistrict}
-            onChange={(e) => setSelectedDistrict(e.target.value)}
-            className="text-xs font-bold bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+        {/* District Selector & Drone Corridor Toggle */}
+        <div className="flex items-center space-x-2.5 flex-wrap">
+          <button
+            onClick={() => setShowDroneCorridors(!showDroneCorridors)}
+            className={`text-xs px-2.5 py-1 rounded-lg font-bold border transition flex items-center space-x-1 ${
+              showDroneCorridors
+                ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                : 'bg-slate-50 border-slate-200 text-slate-500'
+            }`}
           >
-            {districtsList.length > 0 ? (
-              districtsList.map(d => (
-                <option key={d.id} value={d.id}>{d.name} ({d.state})</option>
-              ))
-            ) : (
-              <>
-                <option value="DIST-JH-01">Ranchi (Jharkhand)</option>
-                <option value="DIST-JH-02">Dhanbad (Jharkhand)</option>
-                <option value="DIST-BR-01">Patna (Bihar)</option>
-                <option value="DIST-BR-02">Gaya (Bihar)</option>
-                <option value="DIST-OD-01">Khordha (Odisha)</option>
-                <option value="DIST-MH-01">Pune (Maharashtra)</option>
-                <option value="DIST-KA-01">Bengaluru Urban (Karnataka)</option>
-              </>
-            )}
-          </select>
+            <span>🚁</span>
+            <span className="hidden sm:inline">ICMR Drone Corridors</span>
+            <span className="sm:hidden">Drone</span>
+          </button>
+
+          <div className="flex items-center space-x-1.5">
+            <label className="text-xs font-semibold text-slate-500">District:</label>
+            <select
+              value={selectedDistrict}
+              onChange={(e) => setSelectedDistrict(e.target.value)}
+              className="text-xs font-bold bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+            >
+              {districtsList.length > 0 ? (
+                districtsList.map(d => (
+                  <option key={d.id} value={d.id}>{d.name} ({d.state})</option>
+                ))
+              ) : (
+                <>
+                  <option value="DIST-JH-01">Ranchi (Jharkhand)</option>
+                  <option value="DIST-JH-02">Dhanbad (Jharkhand)</option>
+                  <option value="DIST-BR-01">Patna (Bihar)</option>
+                  <option value="DIST-BR-02">Gaya (Bihar)</option>
+                  <option value="DIST-OD-01">Khordha (Odisha)</option>
+                  <option value="DIST-MH-01">Pune (Maharashtra)</option>
+                  <option value="DIST-KA-01">Bengaluru Urban (Karnataka)</option>
+                </>
+              )}
+            </select>
+          </div>
 
           {/* Map Legend */}
           <div className="hidden lg:flex items-center space-x-3 text-[11px] font-medium pl-2 border-l border-slate-200">
@@ -176,14 +215,86 @@ export default function MapView({ districtId, onSelectPHC, onQuickTransfer }) {
         </div>
       </div>
 
-      {/* Map Body */}
+      {/* Map Body with Google Maps Platform Integration */}
       <div className="flex-1 w-full rounded-xl overflow-hidden relative">
-        <MapContainer center={currentCenter} zoom={11} scrollWheelZoom={true} className="w-full h-full">
+
+        {/* Google Maps Layer Switcher */}
+        <div className="absolute top-3 right-3 z-[1000] bg-white/95 backdrop-blur-sm rounded-lg shadow-md border border-slate-200 p-1 flex items-center space-x-1 text-[11px] font-bold">
+          {Object.entries(GOOGLE_MAP_TYPES).map(([key, cfg]) => (
+            <button
+              key={key}
+              onClick={() => setMapStyle(key)}
+              className={`px-2.5 py-1 rounded-md transition ${
+                mapStyle === key
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              {cfg.name}
+            </button>
+          ))}
+        </div>
+
+        {/* Google Maps Platform Watermark Badge */}
+        <div className="absolute bottom-3 left-3 z-[1000] pointer-events-none select-none flex items-center space-x-1.5 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-md shadow-sm border border-slate-200 text-xs font-bold">
+          <span className="flex items-center font-extrabold tracking-tight">
+            <span className="text-[#4285F4]">G</span>
+            <span className="text-[#EA4335]">o</span>
+            <span className="text-[#FBBC05]">o</span>
+            <span className="text-[#4285F4]">g</span>
+            <span className="text-[#34A853]">l</span>
+            <span className="text-[#EA4335]">e</span>
+          </span>
+          <span className="text-slate-600 font-semibold text-[10px]">Maps Platform</span>
+        </div>
+
+        {/* Attribution Notice */}
+        <div className="absolute bottom-3 right-3 z-[1000] pointer-events-none select-none text-[10px] text-slate-600 bg-white/90 backdrop-blur-xs px-2 py-0.5 rounded shadow-xs border border-slate-200/60">
+          Map data &copy; Google &bull; ICMR Drone Airway Telemetry
+        </div>
+
+        <MapContainer
+          center={currentCenter}
+          zoom={11}
+          scrollWheelZoom={true}
+          attributionControl={false}
+          className="w-full h-full"
+        >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            key={mapStyle}
+            url={GOOGLE_MAP_TYPES[mapStyle].url}
+            subdomains={['0', '1', '2', '3']}
+            maxZoom={20}
           />
           <RecenterMap center={currentCenter} />
+
+          {/* ICMR Drone Airway Corridors */}
+          {showDroneCorridors && hubCoords && districtData?.features?.map((feat) => {
+            if (feat.properties?.id === hubFeature?.properties?.id) return null;
+            const targetCoords = [feat.geometry.coordinates[1], feat.geometry.coordinates[0]];
+            const isCritical = feat.properties?.status === 'CRITICAL';
+            return (
+              <Polyline
+                key={`corridor-${feat.properties?.id}`}
+                positions={[hubCoords, targetCoords]}
+                pathOptions={{
+                  color: isCritical ? '#6366f1' : '#94a3b8',
+                  weight: isCritical ? 2.5 : 1.5,
+                  dashArray: isCritical ? '6, 8' : '4, 6',
+                  opacity: isCritical ? 0.9 : 0.4
+                }}
+              >
+                <Tooltip sticky>
+                  <div className="text-[11px] font-bold text-slate-800">
+                    <div>🚁 ICMR Drone Airway Corridor</div>
+                    <div className="text-slate-500 font-normal">
+                      To: {feat.properties?.name} &bull; Est. Flight: 14 mins (55m faster than road)
+                    </div>
+                  </div>
+                </Tooltip>
+              </Polyline>
+            );
+          })}
 
           {districtData?.features?.map((feat) => {
             const props = feat.properties;

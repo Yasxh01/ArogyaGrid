@@ -1,21 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, ALL_FACILITIES } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
-import { Truck, ArrowRight, CheckCircle, Clock, ShieldCheck, MapPin } from 'lucide-react';
+import { Truck, ArrowRight, CheckCircle, Clock, ShieldCheck, MapPin, Zap } from 'lucide-react';
 
-export default function TransferDashboard() {
+export default function TransferDashboard({ initialDestination, initialSource, initialMedicine, onTransferSuccess }) {
   const { user } = useAuth();
   const { on, off } = useSocket();
   const [transfers, setTransfers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Transfer Requisition Form
-  const [sourcePHC, setSourcePHC] = useState('PHC-RAN-02');
-  const [destPHC, setDestPHC] = useState('PHC-RAN-03');
-  const [medicineId, setMedicineId] = useState('MED-001');
+  const [sourcePHC, setSourcePHC] = useState(initialSource || 'DH-RAN-01');
+  const [destPHC, setDestPHC] = useState(initialDestination || 'PHC-RAN-03');
+  const [medicineId, setMedicineId] = useState(initialMedicine || 'MED-003');
   const [quantity, setQuantity] = useState(100);
   const [transportMode, setTransportMode] = useState('ICMR_DRONE');
+  const [autoApprove, setAutoApprove] = useState(true);
+  const [successBanner, setSuccessBanner] = useState(null);
+
+  useEffect(() => {
+    if (initialDestination) setDestPHC(initialDestination);
+  }, [initialDestination]);
+
+  useEffect(() => {
+    if (initialSource) setSourcePHC(initialSource);
+  }, [initialSource]);
+
+  useEffect(() => {
+    if (initialMedicine) setMedicineId(initialMedicine);
+  }, [initialMedicine]);
 
   useEffect(() => {
     fetchTransfers();
@@ -50,6 +64,7 @@ export default function TransferDashboard() {
   async function handleCreateTransfer(e) {
     e.preventDefault();
     try {
+      setSuccessBanner(null);
       await apiRequest('/transfers/request', {
         method: 'POST',
         body: JSON.stringify({
@@ -57,10 +72,18 @@ export default function TransferDashboard() {
           destination_phc_id: destPHC,
           medicine_id: medicineId,
           quantity: parseInt(quantity, 10),
-          transport_mode: transportMode
+          transport_mode: transportMode,
+          auto_approve: autoApprove
         })
       });
       fetchTransfers();
+      setSuccessBanner(
+        autoApprove
+          ? `⚡ Stock transferred & emergency restock completed for ${destPHC}! Shortage mitigated.`
+          : `✓ Transfer request queued for approval.`
+      );
+      if (onTransferSuccess) onTransferSuccess();
+      setTimeout(() => setSuccessBanner(null), 6000);
     } catch (err) {
       alert('Transfer request failed: ' + err.message);
     }
@@ -73,6 +96,9 @@ export default function TransferDashboard() {
         body: JSON.stringify({ status: 'APPROVED' })
       });
       fetchTransfers();
+      setSuccessBanner(`⚡ Transfer approved and stock delivered!`);
+      if (onTransferSuccess) onTransferSuccess();
+      setTimeout(() => setSuccessBanner(null), 5000);
     } catch (err) {
       alert('Approval failed: ' + err.message);
     }
@@ -95,6 +121,13 @@ export default function TransferDashboard() {
           </div>
         </div>
 
+        {successBanner && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl font-bold text-xs mb-3 animate-in fade-in flex items-center space-x-2">
+            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{successBanner}</span>
+          </div>
+        )}
+
         <form onSubmit={handleCreateTransfer} className="space-y-3 text-xs">
           <div>
             <label className="font-semibold text-slate-600 block mb-1">Sending Health Centre (From)</label>
@@ -103,14 +136,16 @@ export default function TransferDashboard() {
               list="donor-phc-options"
               value={sourcePHC}
               onChange={(e) => setSourcePHC(e.target.value)}
-              placeholder="e.g. PHC-RAN-02, Sadar PHC"
+              placeholder="e.g. DH-RAN-01, District Hospital"
               className="w-full font-semibold bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
               required
             />
             <datalist id="donor-phc-options">
-              <option value="PHC-RAN-01">Ranchi Sadar PHC</option>
-              <option value="PHC-RAN-02">Kanke Rural PHC (Surplus)</option>
-              <option value="PHC-PAT-01">Patna City PHC</option>
+              {ALL_FACILITIES.map(f => (
+                <option key={f.id} value={f.id}>
+                  {f.name} ({f.facility_type})
+                </option>
+              ))}
             </datalist>
           </div>
 
@@ -126,9 +161,11 @@ export default function TransferDashboard() {
               required
             />
             <datalist id="dest-phc-options">
-              <option value="PHC-RAN-03">Namkum PHC (Critical Shortage)</option>
-              <option value="PHC-DHN-01">Jharia Coalfield PHC</option>
-              <option value="PHC-PAT-01">Patna City PHC</option>
+              {ALL_FACILITIES.map(f => (
+                <option key={f.id} value={f.id}>
+                  {f.name} ({f.facility_type})
+                </option>
+              ))}
             </datalist>
           </div>
 
@@ -140,16 +177,19 @@ export default function TransferDashboard() {
                 list="transfer-med-options"
                 value={medicineId}
                 onChange={(e) => setMedicineId(e.target.value)}
-                placeholder="e.g. MED-001, Paracetamol"
+                placeholder="e.g. MED-003, ORS"
                 className="font-semibold bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
                 required
               />
               <datalist id="transfer-med-options">
                 <option value="MED-001">Paracetamol 500mg</option>
                 <option value="MED-002">Amoxicillin 250mg</option>
-                <option value="MED-003">ORS Sachets</option>
+                <option value="MED-003">ORS Sachets (Diarrheal / Cholera)</option>
                 <option value="MED-004">Insulin Glargine (Cold-Chain)</option>
                 <option value="MED-005">Anti-Rabies Vaccine (Cold-Chain)</option>
+                <option value="MED-006">Azithromycin 500mg</option>
+                <option value="MED-007">Cetirizine 10mg</option>
+                <option value="MED-008">Rotavirus Vaccine</option>
               </datalist>
               <input
                 type="number"
@@ -190,11 +230,24 @@ export default function TransferDashboard() {
             </div>
           </div>
 
+          <label className="flex items-center space-x-2 pt-1 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={autoApprove}
+              onChange={(e) => setAutoApprove(e.target.checked)}
+              className="rounded text-emerald-600 focus:ring-0 cursor-pointer"
+            />
+            <span className="font-bold text-slate-700 text-xs">
+              ⚡ Fast-Track: Auto-Approve & Move Stock Immediately
+            </span>
+          </label>
+
           <button
             type="submit"
             className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition shadow-sm flex items-center justify-center space-x-1"
           >
-            <span>Send Medicine Transfer Request</span>
+            <span>Send Medicines Now</span>
+            <ArrowRight className="w-4 h-4 ml-1" />
           </button>
         </form>
       </div>
@@ -228,7 +281,7 @@ export default function TransferDashboard() {
 
                     {isDrone ? (
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-800 flex items-center">
-                        🚁 Drone Flight ({t.drone_telemetry?.drone_flight_time_mins || 14}m flight &bull; {t.drone_telemetry?.time_saved_mins || 55}m faster than road)
+                        🛸 Drone Flight ({t.drone_telemetry?.drone_flight_time_mins || 14}m flight &bull; {t.drone_telemetry?.time_saved_mins || 55}m faster than road)
                       </span>
                     ) : (
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">
@@ -246,18 +299,30 @@ export default function TransferDashboard() {
                   </div>
                 </div>
 
-                {t.status === 'PENDING' && canApprove && (
-                  <button
-                    onClick={() => handleApprove(t.id)}
-                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition shadow-sm flex items-center justify-center space-x-1"
-                  >
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>Approve Transfer</span>
-                  </button>
-                )}
+                <div className="flex items-center space-x-2 self-end sm:self-center">
+                  {!isApproved && canApprove && (
+                    <button
+                      onClick={() => handleApprove(t.id)}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition text-xs shadow-xs"
+                    >
+                      Approve & Dispatch
+                    </button>
+                  )}
+                  {isApproved && (
+                    <span className="text-emerald-700 font-bold flex items-center">
+                      <CheckCircle className="w-4 h-4 mr-1 text-emerald-600" /> Delivered
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })}
+
+          {transfers.length === 0 && (
+            <div className="text-center py-10 text-slate-400 text-xs">
+              No transfers logged. Request an emergency transfer using the form.
+            </div>
+          )}
         </div>
       </div>
 

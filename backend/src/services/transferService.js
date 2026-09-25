@@ -14,7 +14,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 class TransferService {
-  async createTransfer({ source_phc_id, destination_phc_id, medicine_id, quantity, requested_by, transport_mode }) {
+  async createTransfer({ source_phc_id, destination_phc_id, medicine_id, quantity, requested_by, transport_mode, auto_approve }) {
     const store = db.memoryStore;
     const src = store.phcs.find(p => p.id === source_phc_id);
     const dst = store.phcs.find(p => p.id === destination_phc_id);
@@ -51,18 +51,25 @@ class TransferService {
       destination_phc_id,
       medicine_id,
       quantity: parseInt(quantity, 10),
-      status: 'PENDING',
+      status: auto_approve ? 'APPROVED' : 'PENDING',
       transport_mode: selectedMode,
       route_distance_km: distance,
       drone_telemetry: droneAnalysis,
       requested_by: requested_by || 'SYSTEM',
-      approved_by: null,
+      approved_by: auto_approve ? (requested_by || 'DISTRICT_OFFICER') : null,
       created_at: new Date(),
       updated_at: new Date()
     };
 
     store.transfers.push(transfer);
-    broadcastEvent('transfer:requested', transfer);
+
+    if (auto_approve) {
+      await this.executeStockMovement(transfer);
+      broadcastEvent('transfer:approved', transfer);
+    } else {
+      broadcastEvent('transfer:requested', transfer);
+    }
+
     return transfer;
   }
 
@@ -87,6 +94,70 @@ class TransferService {
     };
   }
 
+  async executeStockMovement(transfer) {
+    const store = db.memoryStore;
+    const qty = parseInt(transfer.quantity, 10);
+
+    // 1. Decrement source PHC stock
+    let srcStock = store.stock.find(s => s.phc_id === transfer.source_phc_id && s.medicine_id === transfer.medicine_id);
+    if (srcStock) {
+      srcStock.quantity = Math.max(0, srcStock.quantity - qty);
+      srcStock.updated_at = new Date();
+      broadcastEvent('stock:updated', {
+        phc_id: transfer.source_phc_id,
+        medicine_id: transfer.medicine_id,
+        new_quantity: srcStock.quantity,
+        transaction_type: 'TRANSFER_OUT'
+      });
+    }
+
+    // 2. Increment destination PHC stock
+    let dstStock = store.stock.find(s => s.phc_id === transfer.destination_phc_id && s.medicine_id === transfer.medicine_id);
+    if (!dstStock) {
+      dstStock = {
+        id: `STK-${uuidv4().substring(0, 8)}`,
+        phc_id: transfer.destination_phc_id,
+        medicine_id: transfer.medicine_id,
+        quantity: 0,
+        daily_consumption: 15.0,
+        updated_at: new Date()
+      };
+      store.stock.push(dstStock);
+    }
+    dstStock.quantity += qty;
+    dstStock.updated_at = new Date();
+
+    // 3. Add fresh batch entry at destination so Expiry Tracker updates
+    store.batches = store.batches || [];
+    const expDate = new Date();
+    expDate.setFullYear(expDate.getFullYear() + 1);
+
+    store.batches.push({
+      id: `BAT-TRF-${uuidv4().substring(0, 6).toUpperCase()}`,
+      phc_id: transfer.destination_phc_id,
+      medicine_id: transfer.medicine_id,
+      batch_number: `TRF-${Date.now().toString(36).toUpperCase()}`,
+      quantity: qty,
+      mfg_date: new Date().toISOString().split('T')[0],
+      expiry_date: expDate.toISOString().split('T')[0],
+      challan_ref: `CH-TRANSFER-${transfer.id}`
+    });
+
+    broadcastEvent('stock:updated', {
+      phc_id: transfer.destination_phc_id,
+      medicine_id: transfer.medicine_id,
+      new_quantity: dstStock.quantity,
+      transaction_type: 'TRANSFER_IN'
+    });
+
+    // 4. Resolve epidemic outbreak alert for destination PHC & medicine
+    try {
+      const epidemicService = require('./epidemicService');
+      epidemicService.resolveOutbreakForPHC(transfer.destination_phc_id, transfer.medicine_id);
+    } catch (e) {
+      console.warn('Could not resolve epidemic outbreak automatically:', e);
+    }
+  }
 
   async updateStatus(transfer_id, { status, approved_by }) {
     const store = db.memoryStore;
@@ -98,6 +169,7 @@ class TransferService {
     transfer.updated_at = new Date();
 
     if (status === 'APPROVED') {
+      await this.executeStockMovement(transfer);
       broadcastEvent('transfer:approved', transfer);
     } else if (status === 'DISPATCHED') {
       broadcastEvent('transfer:dispatched', transfer);

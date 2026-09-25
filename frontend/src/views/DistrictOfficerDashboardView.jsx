@@ -10,6 +10,7 @@ import MLModelExplainabilityView from '../components/MLModelExplainabilityView';
 import NotificationSimulatorModal from '../components/NotificationSimulatorModal';
 import FacilityDetailModal from '../components/FacilityDetailModal';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { apiRequest } from '../api/client';
 import { 
   Map, 
@@ -24,11 +25,14 @@ import {
   Flame, 
   ArrowRight, 
   Network, 
-  BarChart3 
+  BarChart3,
+  CheckCircle2,
+  X
 } from 'lucide-react';
 
 export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }) {
   const { user } = useAuth();
+  const { on, off } = useSocket();
   const [selectedPHC, setSelectedPHC] = useState('PHC-RAN-01');
   const [districts, setDistricts] = useState([]);
   const [selectedDistrictId, setSelectedDistrictId] = useState(user?.district_id || 'DIST-JH-01');
@@ -36,6 +40,7 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
   const [epidemicAlerts, setEpidemicAlerts] = useState([]);
   const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
   const [inspectPHCId, setInspectPHCId] = useState(null);
+  const [resolvedBanner, setResolvedBanner] = useState(null);
 
   useEffect(() => {
     fetchDistricts();
@@ -45,6 +50,24 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
     fetchEpidemicAlerts();
     updateDistrictFacility();
   }, [selectedDistrictId]);
+
+  useEffect(() => {
+    if (!on || !off) return;
+    const handleSync = () => {
+      fetchEpidemicAlerts();
+    };
+    on('stock:updated', handleSync);
+    on('transfer:approved', handleSync);
+    on('transfer:dispatched', handleSync);
+    on('epidemic:resolved', handleSync);
+
+    return () => {
+      off('stock:updated', handleSync);
+      off('transfer:approved', handleSync);
+      off('transfer:dispatched', handleSync);
+      off('epidemic:resolved', handleSync);
+    };
+  }, [on, off, selectedDistrictId]);
 
   async function updateDistrictFacility() {
     try {
@@ -73,6 +96,17 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
     } catch (err) {
       console.error('Failed to load epidemic alerts:', err);
     }
+  }
+
+  async function handleDismissAlert(alertId) {
+    try {
+      await apiRequest(`/epidemic/alerts/${alertId}/resolve`, { method: 'POST' });
+    } catch (e) {
+      console.warn('Alert dismissed locally:', e);
+    }
+    setEpidemicAlerts(prev => prev.filter(a => a.id !== alertId));
+    setResolvedBanner('✓ Outbreak alert mitigated & emergency supplies recorded.');
+    setTimeout(() => setResolvedBanner(null), 5000);
   }
 
   function handleQuickTransfer(phcId) {
@@ -231,6 +265,13 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
         </button>
       </div>
 
+      {resolvedBanner && (
+        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold flex items-center space-x-2 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{resolvedBanner}</span>
+        </div>
+      )}
+
       {/* MoHFW IDSP Disease Surveillance Epidemic Alert Banner */}
       {epidemicAlerts.length > 0 && (
         <div className="p-4 bg-gradient-to-r from-rose-50 via-amber-50 to-rose-50 border-2 border-rose-300 rounded-2xl shadow-sm text-xs space-y-2 animate-in fade-in">
@@ -249,13 +290,24 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
               </div>
             </div>
 
-            <button
-              onClick={() => handleQuickTransfer(epidemicAlerts[0].phc_id)}
-              className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold rounded-xl transition shadow-sm flex items-center justify-center space-x-1 self-start sm:self-auto shrink-0"
-            >
-              <span>⚡ Send Emergency Medicines Now</span>
-              <ArrowRight className="w-3.5 h-3.5 ml-1" />
-            </button>
+            <div className="flex items-center space-x-2 flex-wrap gap-1">
+              <button
+                onClick={() => handleDismissAlert(epidemicAlerts[0].id)}
+                className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-300 rounded-xl transition text-xs shadow-xs flex items-center space-x-1"
+                title="Mark outbreak alert as resolved"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mr-1" />
+                <span>Mark Mitigated</span>
+              </button>
+
+              <button
+                onClick={() => handleQuickTransfer(epidemicAlerts[0].phc_id)}
+                className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold rounded-xl transition shadow-sm flex items-center justify-center space-x-1"
+              >
+                <span>⚡ Send Emergency Medicines Now</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-1" />
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-600 pt-2 border-t border-rose-200/60 gap-2">
@@ -280,7 +332,14 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
       )}
 
       {effectiveTab === 'transfers' && (
-        <TransferDashboard />
+        <TransferDashboard
+          initialDestination={selectedPHC}
+          onTransferSuccess={() => {
+            fetchEpidemicAlerts();
+            setResolvedBanner('⚡ Emergency transfer dispatched! Outbreak alert mitigated.');
+            setTimeout(() => setResolvedBanner(null), 5000);
+          }}
+        />
       )}
 
       {effectiveTab === 'stock' && (

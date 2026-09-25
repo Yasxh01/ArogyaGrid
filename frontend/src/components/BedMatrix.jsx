@@ -115,7 +115,13 @@ export default function BedMatrix({ selectedPHC: initialPHC, districtId = 'DIST-
             const rate = Math.round((b.occupied_beds / Math.max(1, b.total_beds)) * 100);
             const isCritical = rate >= 90;
             const isWarning = rate >= 75 && rate < 90;
-            const label = b.bed_type === 'ICU' ? 'ICU Beds (Critical Care)' : b.bed_type === 'OXYGEN' ? 'Oxygen Supported Beds' : 'General Ward Beds';
+            const label = b.bed_type === 'ICU' 
+              ? 'ICU Beds (Critical Care)' 
+              : b.bed_type === 'OXYGEN' 
+              ? 'Oxygen Supported Beds' 
+              : b.bed_type === 'PEDIATRIC' 
+              ? 'Pediatric & Maternity Beds' 
+              : 'General Ward Beds';
 
             return (
               <div key={b.id} className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition">
