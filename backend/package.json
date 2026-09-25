@@ -8,9 +8,12 @@
     "start": "node src/server.js",
     "dev": "node src/server.js",
     "test": "node src/test/unit_tests.js",
-    "test:integration": "node src/test/integration.test.js",
+    "test:coldchain": "node src/test/coldchain.test.js",
     "test:ai": "node src/test/ai.test.js",
-    "test:all": "node src/test/unit_tests.js && node src/test/integration.test.js && node src/test/ai.test.js && node src/test/e2e_full_check.js"
+    "test:stress": "node src/test/websocket_stress.test.js",
+    "test:who": "node src/test/who_verification_report.js",
+    "test:e2e": "node src/test/e2e_full_check.js",
+    "test:all": "node src/test/unit_tests.js && node src/test/coldchain.test.js && node src/test/ai.test.js && node src/test/websocket_stress.test.js && node src/test/who_verification_report.js && node src/test/e2e_full_check.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
