@@ -64,3 +64,61 @@ exports.submitTransaction = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getBatches = (req, res) => {
+  const phc_id = req.params.phcId || (req.user ? req.user.phc_id : null);
+  const store = db.memoryStore;
+  let batches = store.batches || [];
+  if (phc_id && phc_id !== 'ALL') {
+    batches = batches.filter(b => b.phc_id === phc_id);
+  }
+  const now = new Date();
+  const enriched = batches.map(b => {
+    const med = (store.medicines || []).find(m => m.id === b.medicine_id) || {};
+    const phc = (store.phcs || []).find(p => p.id === b.phc_id) || {};
+    const exp = new Date(b.expiry_date);
+    const diffDays = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
+    let status = 'SAFE';
+    if (diffDays <= 30) status = 'CRITICAL_EXPIRY';
+    else if (diffDays <= 60) status = 'NEAR_EXPIRY';
+
+    return {
+      ...b,
+      medicine_name: med.name || b.medicine_id,
+      category: med.category || 'General',
+      storage_type: med.storage_type || 'AMBIENT',
+      phc_name: phc.name || b.phc_id,
+      days_to_expiry: diffDays,
+      status,
+      fefo_priority: diffDays <= 30 ? 1 : (diffDays <= 60 ? 2 : 3)
+    };
+  }).sort((a, b) => new Date(a.expiry_date) - new Date(b.expiry_date));
+
+  res.json({ count: enriched.length, batches: enriched });
+};
+
+exports.createBatch = (req, res) => {
+  const { phc_id, medicine_id, batch_number, quantity, mfg_date, expiry_date, challan_ref } = req.body;
+  if (!phc_id || !medicine_id || !batch_number || !quantity || !expiry_date) {
+    return res.status(400).json({ error: 'phc_id, medicine_id, batch_number, quantity, expiry_date are required', code: 'INVALID_INPUT' });
+  }
+
+  const store = db.memoryStore;
+  const newBatch = {
+    id: `BAT-${Date.now().toString(36).toUpperCase()}`,
+    phc_id,
+    medicine_id,
+    batch_number,
+    quantity: parseInt(quantity, 10),
+    mfg_date: mfg_date || new Date().toISOString().split('T')[0],
+    expiry_date,
+    challan_ref: challan_ref || `CH-JSMSCL-${Math.floor(1000 + Math.random() * 9000)}`,
+    created_at: new Date()
+  };
+
+  store.batches.push(newBatch);
+  broadcastEvent('stock:updated', { phc_id, medicine_id, batch_number, quantity: newBatch.quantity });
+
+  res.status(201).json({ success: true, batch: newBatch });
+};
+

@@ -9,6 +9,7 @@ const staffService = require('../services/staffService');
 const transferService = require('../services/transferService');
 const aiService = require('../services/aiService');
 const mlService = require('../services/mlService');
+const stockController = require('../controllers/stockController');
 const { JWT_SECRET } = require('../config/env');
 const { tools } = require('../../../mcp_server/tools/arogyaTools');
 
@@ -108,6 +109,23 @@ async function runAllUnitTests() {
     assert(Array.isArray(items));
     assert(items.length > 0);
     assert(items[0].medicine_name !== undefined);
+  });
+
+  await itAsync('Should retrieve facility batches sorted by FEFO with days_to_expiry', async () => {
+    let responseData = null;
+    const req = { params: { phcId: 'PHC-RAN-01' } };
+    const res = {
+      json: (data) => { responseData = data; }
+    };
+    stockController.getBatches(req, res);
+    assert(responseData !== null);
+    assert(Array.isArray(responseData.batches));
+    assert(responseData.batches.length > 0);
+    assert(responseData.batches[0].days_to_expiry !== undefined);
+    assert(responseData.batches[0].status !== undefined);
+    for (let i = 0; i < responseData.batches.length - 1; i++) {
+      assert(new Date(responseData.batches[i].expiry_date) <= new Date(responseData.batches[i+1].expiry_date));
+    }
   });
 
   console.log('\n🛏️ [SUITE 2] Bed Service & Capacity Alerts:');

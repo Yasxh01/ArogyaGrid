@@ -37,7 +37,7 @@ class MLService {
     return {
       current_round: 5,
       global_model_version: 'v2.5.0',
-      active_nodes: ['Bihar', 'Jharkhand', 'Odisha'],
+      active_nodes: ['Jharkhand', 'Bihar', 'Odisha', 'Maharashtra', 'Karnataka'],
       dp_epsilon: 1.0,
       status: 'SYNCHRONIZED'
     };
@@ -55,7 +55,7 @@ class MLService {
     return {
       round_id: 6,
       status: 'COMPLETED',
-      participating_nodes: nodes || ['Bihar', 'Jharkhand', 'Odisha'],
+      participating_nodes: nodes || ['Jharkhand', 'Bihar', 'Odisha', 'Maharashtra', 'Karnataka'],
       global_model_version: 'v2.6.0',
       mean_loss: 0.112,
       dp_noise_applied: true

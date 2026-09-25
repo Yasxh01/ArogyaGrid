@@ -25,7 +25,7 @@ export default function FederatedCenter() {
     try {
       const res = await apiRequest('/ml/federated/round', {
         method: 'POST',
-        body: JSON.stringify({ nodes: ['Bihar', 'Jharkhand', 'Odisha', 'West Bengal'] })
+        body: JSON.stringify({ nodes: ['Jharkhand', 'Bihar', 'Odisha', 'Maharashtra', 'Karnataka'] })
       });
       setRoundResult(res);
       fetchStatus();
@@ -47,7 +47,7 @@ export default function FederatedCenter() {
           </div>
           <div>
             <h3 className="font-extrabold text-slate-900 text-base">Privacy-Preserving Federated AI Coordinator</h3>
-            <p className="text-xs text-slate-500">Differential Privacy FedAvg across State Health Nodes (Bihar, Jharkhand, Odisha)</p>
+            <p className="text-xs text-slate-500">Differential Privacy FedAvg across State Health Nodes (Jharkhand, Bihar, Odisha, Maharashtra, Karnataka)</p>
           </div>
         </div>
 
@@ -69,11 +69,11 @@ export default function FederatedCenter() {
         </div>
         <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Active State Nodes</span>
-          <span className="text-xl font-extrabold text-indigo-600">{status?.active_nodes?.length || 3} States</span>
+          <span className="text-xl font-extrabold text-indigo-600">{status?.active_nodes?.length || 5} States</span>
         </div>
         <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">DP Noise Budget (ε)</span>
-          <span className="text-xl font-extrabold text-emerald-600">ε = 1.0</span>
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">DP Noise Budget (&epsilon;)</span>
+          <span className="text-xl font-extrabold text-emerald-600">&epsilon; = 1.0</span>
         </div>
         <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Privacy Guarantee</span>
@@ -84,14 +84,14 @@ export default function FederatedCenter() {
       </div>
 
       {/* State Nodes Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        {(status?.active_nodes || ['Bihar', 'Jharkhand', 'Odisha']).map((node, i) => (
-          <div key={i} className="p-3.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between text-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+        {(status?.active_nodes || ['Jharkhand', 'Bihar', 'Odisha', 'Maharashtra', 'Karnataka']).map((node, i) => (
+          <div key={i} className="p-3.5 rounded-xl border border-slate-200 bg-white flex flex-col justify-between text-xs space-y-2">
             <div className="flex items-center space-x-2">
               <Layers className="w-4 h-4 text-indigo-500" />
-              <span className="font-bold text-slate-800">{node} State Node</span>
+              <span className="font-bold text-slate-800">{node}</span>
             </div>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 flex items-center">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 flex items-center justify-center">
               <CheckCircle2 className="w-3 h-3 mr-1" /> Gradient Synced
             </span>
           </div>

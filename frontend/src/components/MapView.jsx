@@ -49,28 +49,51 @@ function createCustomPin(status) {
 }
 
 const DISTRICT_CENTERS = {
-  'DIST-JH-01': [23.35, 85.33], // Ranchi, Jharkhand
-  'DIST-JH-02': [23.79, 86.43], // Dhanbad, Jharkhand
-  'DIST-BR-01': [25.59, 85.13], // Patna, Bihar
-  'DIST-BR-02': [24.79, 85.00], // Gaya, Bihar
-  'DIST-OD-01': [20.18, 85.61]  // Khordha, Odisha
+  'DIST-JH-01': [23.3441, 85.3096], // Ranchi, Jharkhand
+  'DIST-JH-02': [23.7957, 86.4304], // Dhanbad, Jharkhand
+  'DIST-BR-01': [25.5941, 85.1376], // Patna, Bihar
+  'DIST-BR-02': [24.7955, 85.0002], // Gaya, Bihar
+  'DIST-OD-01': [20.1812, 85.6174], // Khordha, Odisha
+  'DIST-MH-01': [18.5204, 73.8567], // Pune, Maharashtra
+  'DIST-KA-01': [12.9716, 77.5946]  // Bengaluru Urban, Karnataka
 };
 
 function RecenterMap({ center }) {
   const map = useMap();
   useEffect(() => {
-    if (center) {
+    if (center && center[0] && center[1]) {
       map.flyTo(center, 11, { duration: 1.0 });
     }
   }, [center]);
   return null;
 }
 
-export default function MapView({ onSelectPHC, onQuickTransfer }) {
+export default function MapView({ districtId, onSelectPHC, onQuickTransfer }) {
   const { on, off } = useSocket();
   const [districtData, setDistrictData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedDistrict, setSelectedDistrict] = useState('DIST-JH-01');
+  const [districtsList, setDistrictsList] = useState([]);
+  const [selectedDistrict, setSelectedDistrict] = useState(districtId || 'DIST-JH-01');
+
+  useEffect(() => {
+    if (districtId && districtId !== selectedDistrict) {
+      setSelectedDistrict(districtId);
+    }
+  }, [districtId]);
+
+  useEffect(() => {
+    async function loadDistricts() {
+      try {
+        const res = await apiRequest('/districts');
+        if (res.districts && res.districts.length > 0) {
+          setDistrictsList(res.districts);
+        }
+      } catch (err) {
+        console.error('Failed to load district list:', err);
+      }
+    }
+    loadDistricts();
+  }, []);
 
   async function fetchMap() {
     try {
@@ -104,7 +127,9 @@ export default function MapView({ onSelectPHC, onQuickTransfer }) {
     };
   }, [selectedDistrict, on, off]);
 
-  const currentCenter = DISTRICT_CENTERS[selectedDistrict] || [23.35, 85.33];
+  const currentCenter = (districtData?.district?.latitude && districtData?.district?.longitude)
+    ? [districtData.district.latitude, districtData.district.longitude]
+    : (DISTRICT_CENTERS[selectedDistrict] || [23.3441, 85.3096]);
 
   return (
     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col h-[520px]">
@@ -113,7 +138,7 @@ export default function MapView({ onSelectPHC, onQuickTransfer }) {
       <div className="flex flex-wrap items-center justify-between pb-3 mb-2 border-b border-slate-100 gap-2">
         <div className="flex items-center space-x-2">
           <Activity className="w-5 h-5 text-emerald-600" />
-          <h2 className="font-bold text-slate-800 text-sm sm:text-base">National PHC Telemetry Map</h2>
+          <h2 className="font-bold text-slate-800 text-sm sm:text-base">National Multi-Tier GIS Command Map</h2>
           <span className="text-xs text-slate-500 font-medium">({districtData?.features?.length || 0} Centres Tracked)</span>
         </div>
 
@@ -123,13 +148,23 @@ export default function MapView({ onSelectPHC, onQuickTransfer }) {
           <select
             value={selectedDistrict}
             onChange={(e) => setSelectedDistrict(e.target.value)}
-            className="text-xs font-semibold bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
+            className="text-xs font-bold bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
           >
-            <option value="DIST-JH-01">Ranchi (Jharkhand)</option>
-            <option value="DIST-JH-02">Dhanbad (Jharkhand)</option>
-            <option value="DIST-BR-01">Patna (Bihar)</option>
-            <option value="DIST-BR-02">Gaya (Bihar)</option>
-            <option value="DIST-OD-01">Khordha (Odisha)</option>
+            {districtsList.length > 0 ? (
+              districtsList.map(d => (
+                <option key={d.id} value={d.id}>{d.name} ({d.state})</option>
+              ))
+            ) : (
+              <>
+                <option value="DIST-JH-01">Ranchi (Jharkhand)</option>
+                <option value="DIST-JH-02">Dhanbad (Jharkhand)</option>
+                <option value="DIST-BR-01">Patna (Bihar)</option>
+                <option value="DIST-BR-02">Gaya (Bihar)</option>
+                <option value="DIST-OD-01">Khordha (Odisha)</option>
+                <option value="DIST-MH-01">Pune (Maharashtra)</option>
+                <option value="DIST-KA-01">Bengaluru Urban (Karnataka)</option>
+              </>
+            )}
           </select>
 
           {/* Map Legend */}
@@ -162,7 +197,14 @@ export default function MapView({ onSelectPHC, onQuickTransfer }) {
                 <Popup className="custom-popup">
                   <div className="p-1 text-xs">
                     <div className="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
-                      <span>{props.name}</span>
+                      <div className="flex items-center space-x-1.5">
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-slate-100 text-slate-700 border border-slate-200">
+                          {props.facility_type === 'DISTRICT_HOSPITAL' ? 'DH' :
+                           props.facility_type === 'CHC' ? 'CHC' :
+                           props.facility_type === 'SUB_CENTRE_HWC' ? 'HWC' : 'PHC'}
+                        </span>
+                        <span>{props.name}</span>
+                      </div>
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
                         props.status === 'CRITICAL' ? 'bg-rose-100 text-rose-800' :
                         props.status === 'WARNING' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
@@ -172,6 +214,11 @@ export default function MapView({ onSelectPHC, onQuickTransfer }) {
                     </div>
 
                     <div className="space-y-1.5 text-slate-600 mb-2">
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                        <span>Population Served:</span>
+                        <span className="font-bold text-slate-700">{(props.population_served || 15000).toLocaleString('en-IN')} citizens</span>
+                      </div>
+
                       <div className="flex items-center justify-between">
                         <span className="flex items-center"><Pill className="w-3.5 h-3.5 mr-1 text-slate-400" /> Critical Meds:</span>
                         <span className={`font-bold ${props.critical_medicines_count > 0 ? 'text-rose-600' : 'text-slate-800'}`}>
