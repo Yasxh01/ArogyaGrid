@@ -136,31 +136,65 @@ Return strictly JSON with schema:
   /**
    * Generates an Executive State/District Health Situation Report
    */
-  async generateSituationReport({ district_id = 'DIST-JH-01', state = 'Jharkhand' }) {
+  async generateSituationReport({ district_id = 'DIST-JH-01', state, district_name }) {
     const store = db.memoryStore;
+    const district = store.districts.find(d => d.id === district_id) || store.districts[0];
+    const resolvedState = state || district?.state || 'Jharkhand';
+    const resolvedDistrict = district_name || district?.name || 'Ranchi';
+
     const phcs = store.phcs.filter(p => !district_id || p.district_id === district_id);
-    const criticalStocks = store.stock.filter(s => s.quantity < 50);
-    const beds = store.beds;
-    const totalBeds = beds.reduce((acc, b) => acc + b.total_beds, 0);
-    const occupiedBeds = beds.reduce((acc, b) => acc + b.occupied_beds, 0);
+    const phcIds = new Set(phcs.map(p => p.id));
+
+    // CRITICAL: Filter stock and beds strictly for the facilities in THIS district
+    const districtStocks = store.stock.filter(s => phcIds.has(s.phc_id));
+    const criticalStocks = districtStocks.filter(s => s.quantity < 50);
+
+    const districtBeds = store.beds.filter(b => phcIds.has(b.phc_id));
+    const totalBeds = districtBeds.reduce((acc, b) => acc + (b.total_beds || 0), 0);
+    const occupiedBeds = districtBeds.reduce((acc, b) => acc + (b.occupied_beds || 0), 0);
     const bedOccupancyRate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0;
-    const activeTransfers = store.transfers.filter(t => t.status === 'PENDING' || t.status === 'APPROVED');
+
+    const activeStaff = store.staff_attendance.filter(s => phcIds.has(s.phc_id) && s.status === 'ON_DUTY').length;
+
+    // Dynamically find lowest-stock facility (deficit) and highest-stock facility (surplus)
+    const deficitPHC = phcs.find(p => districtStocks.some(s => s.phc_id === p.id && s.quantity < 40)) || phcs[0];
+    const surplusPHC = phcs.find(p => p.id !== deficitPHC?.id && districtStocks.some(s => s.phc_id === p.id && s.quantity > 80)) || phcs.find(p => p.id !== deficitPHC?.id) || phcs[0];
+
+    const activeTransfers = store.transfers.filter(t => 
+      (t.status === 'PENDING' || t.status === 'APPROVED') &&
+      (phcIds.has(t.source_phc_id) || phcIds.has(t.destination_phc_id))
+    );
 
     const promptContext = {
       district_id,
-      state,
+      district_name: resolvedDistrict,
+      state: resolvedState,
       total_phcs: phcs.length,
       bed_occupancy_percentage: bedOccupancyRate,
+      occupied_beds: occupiedBeds,
+      total_beds: totalBeds,
       critical_stock_count: criticalStocks.length,
       active_transfer_count: activeTransfers.length,
+      active_staff_count: activeStaff,
+      deficit_facility: deficitPHC ? { id: deficitPHC.id, name: deficitPHC.name } : null,
+      surplus_facility: surplusPHC ? { id: surplusPHC.id, name: surplusPHC.name } : null,
       phc_details: phcs.map(p => ({ id: p.id, name: p.name, status: p.status }))
     };
 
     if (this.apiKey) {
       try {
-        const prompt = `You are the AI Chief Health Intelligence Officer for ${state}, India.
-Analyze the following live district telemetry and provide an executive briefing for the Health Directorate:
+        const prompt = `You are the AI Chief Health Intelligence Officer for ${resolvedDistrict} district in ${resolvedState}, India.
+Analyze the following live district telemetry and provide an executive briefing for the District Health Directorate:
 ${JSON.stringify(promptContext, null, 2)}
+
+Constraints:
+1. You MUST use EXACTLY the telemetry numbers provided above:
+   - Total PHCs: ${phcs.length}
+   - Bed occupancy: ${bedOccupancyRate}% (${occupiedBeds}/${totalBeds})
+   - Critical stockouts count: ${criticalStocks.length}
+   - Active staff: ${activeStaff}
+2. Executive summary must mention ${resolvedDistrict}, ${resolvedState}, ${phcs.length} PHCs monitored, bed occupancy of ${bedOccupancyRate}%, and ${criticalStocks.length} shortages.
+3. Recommend action between ${surplusPHC?.name || 'hub'} and ${deficitPHC?.name || 'peripheral clinic'}.
 
 Return strictly JSON with schema:
 {
@@ -182,22 +216,35 @@ Return strictly JSON with schema:
         if (res.ok) {
           const data = await res.json();
           const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
-          return { ...parsed, source: 'GEMINI_FLASH_API' };
+          return { 
+            ...parsed, 
+            district_id,
+            district_name: resolvedDistrict,
+            state: resolvedState,
+            source: 'GEMINI_FLASH_API' 
+          };
         }
       } catch (err) {
         console.warn('[AIService] Gemini API error in situation report:', err.message);
       }
     }
 
-    // High-quality local narrative generator
+    // Dynamic calibrated local narrative generator (100% consistent with StatsBanner)
+    const transferAction = (deficitPHC && surplusPHC && deficitPHC.id !== surplusPHC.id)
+      ? `Approve inter-facility emergency transfer from surplus node (${surplusPHC.name}) to ${deficitPHC.name}.`
+      : `Initiate supplier replenishment dispatch for ${resolvedDistrict} district warehouse.`;
+
     return {
-      executive_summary: `State Health Briefing for ${state} (${district_id}): Total ${phcs.length} PHCs monitored. Overall bed occupancy is at ${bedOccupancyRate}%. ${criticalStocks.length} critical medicine stockouts detected across peripheral centers.`,
-      outbreak_risk_level: bedOccupancyRate > 80 || criticalStocks.length > 2 ? 'HIGH' : 'MODERATE',
-      critical_shortages: criticalStocks.map(s => `PHC: ${s.phc_id}, Medicine: ${s.medicine_id}, Current Stock: ${s.quantity} units`),
-      bed_capacity_assessment: `Bed utilization stands at ${bedOccupancyRate}% (${occupiedBeds}/${totalBeds} occupied). Oxygen & ICU beds in Namkum PHC are nearing capacity threshold.`,
+      district_id,
+      district_name: resolvedDistrict,
+      state: resolvedState,
+      executive_summary: `State Health Briefing for ${resolvedDistrict} (${district_id}): Total ${phcs.length} PHCs monitored. Overall bed occupancy is at ${bedOccupancyRate}%. ${criticalStocks.length} critical medicine stockouts detected across peripheral centers.`,
+      outbreak_risk_level: bedOccupancyRate > 80 || criticalStocks.length > 5 ? 'HIGH' : (criticalStocks.length > 0 ? 'MODERATE' : 'LOW'),
+      critical_shortages: criticalStocks.map(s => `Facility: ${s.phc_name || s.phc_id}, Medicine: ${s.medicine_name || s.medicine_id}, Current Stock: ${s.quantity} units`),
+      bed_capacity_assessment: `Bed utilization in ${resolvedDistrict} stands at ${bedOccupancyRate}% (${occupiedBeds}/${totalBeds} occupied across ${phcs.length} health facilities).`,
       recommended_immediate_actions: [
-        `Approve inter-district emergency transfer from surplus nodes (Kanke Rural PHC) to Namkum PHC.`,
-        `Mobilize additional medical officers to morning shift for high-footfall centers.`,
+        transferAction,
+        `Maintain ${activeStaff} active healthcare personnel on duty across high-occupancy centers.`,
         `Trigger statewide federated demand model aggregation to update 14-day stockout projections.`
       ],
       generated_at: new Date().toISOString(),
@@ -208,19 +255,30 @@ Return strictly JSON with schema:
   /**
    * Natural language AI Chatbot / Copilot for District Health Officers
    */
-  async handleCopilotQuery({ query, user_role = 'DISTRICT_OFFICER' }) {
+  async handleCopilotQuery({ query, district_id = 'DIST-JH-01', user_role = 'DISTRICT_OFFICER' }) {
     const lower = query.toLowerCase();
     const store = db.memoryStore;
+    const district = store.districts.find(d => d.id === district_id) || store.districts[0];
+    const districtName = district ? district.name : 'Ranchi';
+    const stateName = district ? district.state : 'Jharkhand';
+
+    const phcs = store.phcs.filter(p => !district_id || p.district_id === district_id);
+    const phcIds = new Set(phcs.map(p => p.id));
+    const districtStocks = store.stock.filter(s => phcIds.has(s.phc_id));
+    const districtBeds = store.beds.filter(b => phcIds.has(b.phc_id));
 
     let responseText = '';
     let action = null;
     let actionCard = null;
 
     // 1. Dynamic Entity Extraction: Facilities and Medicines
-    const matchedFacility = store.phcs.find(p => 
+    const matchedFacility = phcs.find(p => 
       lower.includes(p.id.toLowerCase()) || 
       lower.includes(p.name.toLowerCase()) ||
       p.name.toLowerCase().split(' ').some(w => w.length > 3 && lower.includes(w))
+    ) || store.phcs.find(p => 
+      lower.includes(p.id.toLowerCase()) || 
+      lower.includes(p.name.toLowerCase())
     );
 
     const matchedMedicine = store.medicines.find(m => 
@@ -238,7 +296,7 @@ Return strictly JSON with schema:
       (lower.includes('rotavirus') && m.id === 'MED-008')
     );
 
-    // CASE A: Both Facility AND Medicine queried (e.g. "capacity of paracetamol in namkum")
+    // CASE A: Both Facility AND Medicine queried
     if (matchedFacility && matchedMedicine) {
       const stk = store.stock.find(s => s.phc_id === matchedFacility.id && s.medicine_id === matchedMedicine.id);
       const qty = stk ? stk.quantity : 0;
@@ -247,32 +305,27 @@ Return strictly JSON with schema:
       const isCritical = qty < 50;
       const isLow = qty >= 50 && qty < 150;
 
-      // Find surplus donor in same district first, then general
-      const districtPrefix = matchedFacility.id.split('-').slice(0, 2).join('-');
-      const inDistrictSurplus = store.stock
-        .filter(s => s.medicine_id === matchedMedicine.id && s.phc_id !== matchedFacility.id && s.phc_id.startsWith(districtPrefix) && s.quantity > 150)
+      // Find surplus donor in same district
+      const inDistrictSurplus = districtStocks
+        .filter(s => s.medicine_id === matchedMedicine.id && s.phc_id !== matchedFacility.id && s.quantity > 80)
         .sort((a, b) => b.quantity - a.quantity)[0];
 
-      const surplus = inDistrictSurplus || store.stock
-        .filter(s => s.medicine_id === matchedMedicine.id && s.phc_id !== matchedFacility.id && s.quantity > 200)
-        .sort((a, b) => b.quantity - a.quantity)[0];
-
-      const surplusPhc = surplus ? store.phcs.find(p => p.id === surplus.phc_id) : null;
-      const donorName = surplusPhc ? surplusPhc.name : (surplus?.phc_name || surplus?.phc_id || 'Regional Hub');
+      const surplusPhc = inDistrictSurplus ? phcs.find(p => p.id === inDistrictSurplus.phc_id) : null;
+      const donorName = surplusPhc ? surplusPhc.name : 'District Central Warehouse';
 
       responseText = `At ${matchedFacility.name} (${matchedFacility.id}), the current stock of ${matchedMedicine.name} is ${qty} ${matchedMedicine.unit}.\n\n` +
         `• Status: ${isCritical ? '🚨 CRITICAL SHORTAGE' : isLow ? '⚠️ LOW BUFFER' : '✅ HEALTHY SUPPLY'}\n` +
         `• Daily Consumption: ~${daily} ${matchedMedicine.unit}/day\n` +
         `• Days to Stockout: ~${daysRemaining} days remaining\n` +
-        (isCritical && surplus
-          ? `\nRecommended Action: Dispatch an emergency transfer of 100-150 units from ${donorName} (current surplus: ${surplus.quantity} units).`
+        (isCritical && inDistrictSurplus
+          ? `\nRecommended Action: Dispatch an emergency transfer of 100 units from ${donorName} (current stock: ${inDistrictSurplus.quantity} units).`
           : '');
 
-      if (isCritical && surplus) {
+      if (isCritical && inDistrictSurplus) {
         actionCard = {
           card_type: 'ONE_CLICK_TRANSFER',
           title: `⚡ Authorize Transfer: 100 ${matchedMedicine.name.split(' ')[0]} to ${matchedFacility.name}`,
-          source_phc_id: surplus.phc_id,
+          source_phc_id: inDistrictSurplus.phc_id,
           source_name: donorName,
           destination_phc_id: matchedFacility.id,
           destination_name: matchedFacility.name,
@@ -280,12 +333,12 @@ Return strictly JSON with schema:
           medicine_name: matchedMedicine.name,
           quantity: 100,
           transport_mode: 'ROAD_ESCROW',
-          eta_mins: 22
+          eta_mins: 20
         };
       }
       action = { type: 'INSPECT_MEDICINE_STOCK', phc_id: matchedFacility.id, medicine_id: matchedMedicine.id, quantity: qty };
     } 
-    // CASE B: Facility Query (e.g. "status of namkum", "beds in namkum")
+    // CASE B: Facility Query
     else if (matchedFacility) {
       const facilityStocks = store.stock.filter(s => s.phc_id === matchedFacility.id);
       const critStocks = facilityStocks.filter(s => s.quantity < 50);
@@ -302,11 +355,12 @@ Return strictly JSON with schema:
         `• Population Served: ~${(matchedFacility.population_served || 25000).toLocaleString('en-IN')} citizens`;
 
       if (critStocks.length > 0) {
+        const donor = phcs.find(p => p.id !== matchedFacility.id) || phcs[0];
         actionCard = {
           card_type: 'ONE_CLICK_TRANSFER',
           title: `⚡ Pre-Position Emergency Buffer for ${matchedFacility.name}`,
-          source_phc_id: 'PHC-RAN-02',
-          source_name: 'Kanke Rural CHC',
+          source_phc_id: donor.id,
+          source_name: donor.name,
           destination_phc_id: matchedFacility.id,
           destination_name: matchedFacility.name,
           medicine_id: critStocks[0].medicine_id,
@@ -318,70 +372,76 @@ Return strictly JSON with schema:
       }
       action = { type: 'INSPECT_FACILITY', phc_id: matchedFacility.id };
     }
-    // CASE C: Medicine queried across all facilities (e.g. "where is insulin", "paracetamol stock")
+    // CASE C: Medicine queried
     else if (matchedMedicine) {
-      const allWithMed = store.stock.filter(s => s.medicine_id === matchedMedicine.id);
+      const allWithMed = districtStocks.filter(s => s.medicine_id === matchedMedicine.id);
       const criticals = allWithMed.filter(s => s.quantity < 50);
-      const surplus = allWithMed.filter(s => s.quantity > 250);
+      const surplus = allWithMed.filter(s => s.quantity > 100);
 
-      responseText = `District Inventory for ${matchedMedicine.name}:\n\n` +
+      responseText = `${districtName} District Inventory for ${matchedMedicine.name}:\n\n` +
         `• Total Monitored Facilities: ${allWithMed.length} centres\n` +
         `• Critical Shortages (< 50 units): ${criticals.map(s => `${s.phc_name || s.phc_id} (${s.quantity})`).join(', ') || 'None'}\n` +
-        `• Surplus Nodes (> 250 units): ${surplus.map(s => `${s.phc_name || s.phc_id} (${s.quantity})`).join(', ') || 'None'}`;
+        `• Surplus Nodes (> 100 units): ${surplus.map(s => `${s.phc_name || s.phc_id} (${s.quantity})`).join(', ') || 'None'}`;
 
       action = { type: 'INSPECT_MEDICINE_GLOBAL', medicine_id: matchedMedicine.id };
     }
     // CASE D: Critical Shortages Query
     else if (lower.includes('critical') || lower.includes('shortage') || lower.includes('कम') || lower.includes('दवा') || lower.includes('stock')) {
-      const criticals = store.stock.filter(s => s.quantity < 50);
-      responseText = `There are currently ${criticals.length} critical medicine shortages in the district. Namkum PHC (PHC-RAN-03) has dangerously low stock of Paracetamol (35 units) and Insulin Glargine (3 units).`;
+      const criticals = districtStocks.filter(s => s.quantity < 50);
+      const deficitPHC = phcs.find(p => districtStocks.some(s => s.phc_id === p.id && s.quantity < 30)) || phcs[0];
+      const surplusPHC = phcs.find(p => p.id !== deficitPHC?.id && districtStocks.some(s => s.phc_id === p.id && s.quantity > 80)) || phcs[1] || phcs[0];
+
+      responseText = `There are currently ${criticals.length} medicine shortage alerts in ${districtName} district across ${phcs.length} peripheral centers. Critical low stock observed at ${deficitPHC.name}.`;
       action = { type: 'VIEW_CRITICAL_STOCK', count: criticals.length };
       actionCard = {
         card_type: 'ONE_CLICK_TRANSFER',
-        title: '⚡ Agentic Emergency Transfer Proposal',
-        source_phc_id: 'PHC-RAN-02',
-        source_name: 'Kanke Rural CHC',
-        destination_phc_id: 'PHC-RAN-03',
-        destination_name: 'Namkum PHC',
+        title: `⚡ Agentic Emergency Transfer Proposal`,
+        source_phc_id: surplusPHC.id,
+        source_name: surplusPHC.name,
+        destination_phc_id: deficitPHC.id,
+        destination_name: deficitPHC.name,
         medicine_id: 'MED-001',
         medicine_name: 'Paracetamol 500mg Tablets',
         quantity: 100,
         transport_mode: 'ROAD_ESCROW',
-        eta_mins: 22
+        eta_mins: 20
       };
     } 
     // CASE E: Bed occupancy
     else if (lower.includes('bed') || lower.includes('बेड') || lower.includes('icu') || lower.includes('occupancy')) {
-      const beds = store.beds;
-      const total = beds.reduce((acc, b) => acc + b.total_beds, 0);
-      const occupied = beds.reduce((acc, b) => acc + b.occupied_beds, 0);
-      responseText = `District bed occupancy is at ${Math.round((occupied / Math.max(1, total)) * 100)}%. Namkum PHC is at high capacity with 24/25 General beds and 10/10 Oxygen beds occupied.`;
+      const total = districtBeds.reduce((acc, b) => acc + (b.total_beds || 0), 0);
+      const occupied = districtBeds.reduce((acc, b) => acc + (b.occupied_beds || 0), 0);
+      const rate = total > 0 ? Math.round((occupied / total) * 100) : 0;
+      responseText = `${districtName} district bed occupancy is at ${rate}% (${occupied}/${total} beds occupied across ${phcs.length} health centers).`;
       action = { type: 'VIEW_BED_MATRIX', occupied, total };
     } 
     // CASE F: Logistics & Transfers
     else if (lower.includes('transfer') || lower.includes('rebalance') || lower.includes('drone') || lower.includes('भेज')) {
-      responseText = `Logistics recommendation: Dispatch 150 units of Paracetamol from Kanke Rural CHC (surplus: 720 units) to Namkum PHC. Feasibility score is 0.94 with 14-min ICMR drone aerial transit or 22-min road delivery.`;
-      action = { type: 'RECOMMEND_TRANSFER', source: 'PHC-RAN-02', target: 'PHC-RAN-03' };
+      const deficitPHC = phcs.find(p => districtStocks.some(s => s.phc_id === p.id && s.quantity < 30)) || phcs[0];
+      const surplusPHC = phcs.find(p => p.id !== deficitPHC?.id && districtStocks.some(s => s.phc_id === p.id && s.quantity > 80)) || phcs[1] || phcs[0];
+
+      responseText = `Logistics recommendation for ${districtName}: Dispatch 100 units of Paracetamol from ${surplusPHC.name} to ${deficitPHC.name}. Transit feasibility is optimal with ICMR Drone corridor or road escrow.`;
+      action = { type: 'RECOMMEND_TRANSFER', source: surplusPHC.id, target: deficitPHC.id };
       actionCard = {
         card_type: 'ONE_CLICK_TRANSFER',
-        title: '⚡ Authorize Inter-PHC Stock Transfer',
-        source_phc_id: 'PHC-RAN-02',
-        source_name: 'Kanke Rural CHC',
-        destination_phc_id: 'PHC-RAN-03',
-        destination_name: 'Namkum PHC',
+        title: `⚡ Authorize Inter-PHC Stock Transfer`,
+        source_phc_id: surplusPHC.id,
+        source_name: surplusPHC.name,
+        destination_phc_id: deficitPHC.id,
+        destination_name: deficitPHC.name,
         medicine_id: 'MED-001',
         medicine_name: 'Paracetamol 500mg Tablets',
-        quantity: 150,
+        quantity: 100,
         transport_mode: 'ICMR_DRONE',
         eta_mins: 14
       };
     } 
     // CASE G: Cold Chain
     else if (lower.includes('cold') || lower.includes('vaccine') || lower.includes('fridge') || lower.includes('temp') || lower.includes('तापमान')) {
-      const units = store.cold_chain_units;
+      const units = store.cold_chain_units.filter(u => phcIds.has(u.phc_id));
       const breachUnits = units.filter(u => u.status === 'BREACH' || u.status === 'WARNING');
       if (breachUnits.length > 0) {
-        responseText = `⚠️ Cold-Chain Alert: ${breachUnits.length} refrigeration unit(s) require attention. Unit ${breachUnits[0].id} at ${breachUnits[0].phc_id} is at ${breachUnits[0].current_temp_celsius}°C (Status: ${breachUnits[0].status}, Power: ${breachUnits[0].power_status}).`;
+        responseText = `⚠️ Cold-Chain Alert in ${districtName}: ${breachUnits.length} refrigeration unit(s) require attention. Unit ${breachUnits[0].id} at ${breachUnits[0].phc_id} is at ${breachUnits[0].current_temp_celsius}°C (Status: ${breachUnits[0].status}, Power: ${breachUnits[0].power_status}).`;
         actionCard = {
           card_type: 'COLD_CHAIN_ALERT',
           title: '❄️ Cold-Chain Watchdog Alert',
@@ -391,22 +451,13 @@ Return strictly JSON with schema:
           action_label: 'Switch to Solar/Battery Backup & Notify Field Engineer'
         };
       } else {
-        responseText = `All ${units.length} Ice-Lined Refrigerators (ILRs) are operating within the WHO safe range (2°C–8°C). Average district cabinet temperature is 4.1°C.`;
+        responseText = `All ${units.length || phcs.length} Ice-Lined Refrigerators (ILRs) in ${districtName} are operating within the WHO safe range (2°C–8°C).`;
       }
       action = { type: 'VIEW_COLD_CHAIN', alert_count: breachUnits.length };
     } 
-    // CASE H: Disease Surveillance & Epidemics
-    else if (lower.includes('epidemic') || lower.includes('outbreak') || lower.includes('cholera') || lower.includes('dengue') || lower.includes('बीमारी')) {
-      responseText = `MoHFW IDSP Alert: Acute Diarrheal surge detected at Namkum PHC. ORS consumption has spiked +240% above 7-day moving average.`;
-      actionCard = {
-        card_type: 'EPIDEMIC_SURGE_ALERT',
-        title: '⚠️ IDSP Disease Surveillance Cluster Detected',
-        outbreak_type: 'Acute Diarrheal / Suspected Cholera',
-        phc_id: 'PHC-RAN-03',
-        action_label: 'Pre-position 500 Sachets ORS Buffer'
-      };
-    } else {
-      responseText = `ArogyaGrid AI Healthcare Copilot is active. Monitoring ${store.phcs.length} health facilities across ${store.districts.length} districts.\n\nYou can ask me specific questions like:\n• "Capacity of Paracetamol in Namkum"\n• "Status of Kanke Rural CHC"\n• "Who has surplus Insulin?"\n• "Bed availability in Ranchi"`;
+    // Default overview
+    else {
+      responseText = `ArogyaGrid AI Healthcare Copilot is active for ${districtName}, ${stateName}.\nMonitoring ${phcs.length} health facilities with live FEFO batch stock and IoT cold-chain tracking.\n\nYou can ask:\n• "Capacity of Paracetamol in ${phcs[0]?.name || 'PHC'}"\n• "Bed availability in ${districtName}"\n• "Critical medicine shortages in ${districtName}"\n• "Recommend stock transfer"`;
     }
 
     return {
@@ -414,6 +465,9 @@ Return strictly JSON with schema:
       answer: responseText,
       suggested_action: action,
       action_card: actionCard,
+      district_id,
+      district_name: districtName,
+      state: stateName,
       timestamp: new Date().toISOString()
     };
   }

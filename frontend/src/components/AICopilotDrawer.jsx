@@ -2,13 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
 import { Bot, X, Send, Sparkles, FileText, AlertTriangle } from 'lucide-react';
 
-export default function AICopilotDrawer({ isOpen, onClose }) {
-  const [messages, setMessages] = useState([
-    {
-      sender: 'bot',
-      text: 'Namaste! I am the ArogyaGrid AI Health Ops Copilot. Ask me about PHC stockout risks, bed occupancy, or transfer recommendations in Ranchi and Jharkhand.'
-    }
-  ]);
+export default function AICopilotDrawer({ isOpen, onClose, districtId = 'DIST-JH-01' }) {
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState(null);
@@ -17,12 +12,22 @@ export default function AICopilotDrawer({ isOpen, onClose }) {
     if (isOpen) {
       fetchSituationReport();
     }
-  }, [isOpen]);
+  }, [isOpen, districtId]);
 
   async function fetchSituationReport() {
     try {
-      const data = await apiRequest('/ai/situation-report');
-      setReport(data.report);
+      const data = await apiRequest(`/ai/situation-report?district_id=${districtId}`);
+      if (data?.report) {
+        setReport(data.report);
+        const dName = data.report.district_name || 'District';
+        const sName = data.report.state || 'India';
+        setMessages([
+          {
+            sender: 'bot',
+            text: `Namaste! I am the ArogyaGrid AI Health Ops Copilot. Ask me about PHC stockout risks, bed occupancy, or transfer recommendations in ${dName}, ${sName}.`
+          }
+        ]);
+      }
     } catch (err) {
       console.error('Failed to load report:', err);
     }
@@ -40,7 +45,10 @@ export default function AICopilotDrawer({ isOpen, onClose }) {
     try {
       const res = await apiRequest('/ai/copilot', {
         method: 'POST',
-        body: JSON.stringify({ query: userMsg })
+        body: JSON.stringify({ 
+          query: userMsg,
+          district_id: districtId 
+        })
       });
       setMessages(prev => [...prev, { 
         sender: 'bot', 
@@ -177,7 +185,7 @@ export default function AICopilotDrawer({ isOpen, onClose }) {
         <div className="p-4 bg-gradient-to-br from-indigo-50/60 to-slate-50 border-b border-indigo-100 text-xs">
           <div className="flex items-center space-x-1.5 font-bold text-indigo-900 mb-1">
             <FileText className="w-4 h-4" />
-            <span>Executive Health Briefing (Jharkhand)</span>
+            <span>Executive Health Briefing ({report.district_name || 'District'}{report.state ? `, ${report.state}` : ''})</span>
           </div>
           <p className="text-slate-700 leading-relaxed mb-2">{report.executive_summary}</p>
           <div className="text-[11px] font-semibold text-rose-700 bg-rose-50 p-2 rounded-lg border border-rose-200">

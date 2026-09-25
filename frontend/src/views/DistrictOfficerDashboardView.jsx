@@ -30,17 +30,23 @@ import {
   X
 } from 'lucide-react';
 
-export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }) {
+export default function DistrictOfficerDashboardView({ activeTab, setActiveTab, selectedDistrictId: propDistrictId, onSelectDistrict }) {
   const { user } = useAuth();
   const { on, off } = useSocket();
   const [selectedPHC, setSelectedPHC] = useState('PHC-RAN-01');
   const [districts, setDistricts] = useState([]);
-  const [selectedDistrictId, setSelectedDistrictId] = useState(user?.district_id || 'DIST-JH-01');
+  const [selectedDistrictId, setSelectedDistrictId] = useState(propDistrictId || user?.district_id || 'DIST-JH-01');
   const [internalTab, setInternalTab] = useState('map');
   const [epidemicAlerts, setEpidemicAlerts] = useState([]);
   const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
   const [inspectPHCId, setInspectPHCId] = useState(null);
   const [resolvedBanner, setResolvedBanner] = useState(null);
+
+  useEffect(() => {
+    if (propDistrictId && propDistrictId !== selectedDistrictId) {
+      setSelectedDistrictId(propDistrictId);
+    }
+  }, [propDistrictId]);
 
   useEffect(() => {
     fetchDistricts();
@@ -152,7 +158,11 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab }
             <span className="text-xs font-bold text-slate-600">Switch District:</span>
             <select
               value={selectedDistrictId}
-              onChange={(e) => setSelectedDistrictId(e.target.value)}
+              onChange={(e) => {
+                const newId = e.target.value;
+                setSelectedDistrictId(newId);
+                if (onSelectDistrict) onSelectDistrict(newId);
+              }}
               className="bg-transparent font-bold text-xs text-slate-800 focus:outline-none cursor-pointer"
             >
               {districts.map(d => (

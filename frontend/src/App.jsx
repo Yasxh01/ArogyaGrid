@@ -25,6 +25,7 @@ function AppContent() {
   const [isExplainerOpen, setIsExplainerOpen] = useState(false);
   const [isCloudOpen, setIsCloudOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [selectedDistrictId, setSelectedDistrictId] = useState(user?.district_id || 'DIST-JH-01');
 
   useEffect(() => {
     checkOfflineQueue();
@@ -89,6 +90,8 @@ function AppContent() {
       <DistrictOfficerDashboardView
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        selectedDistrictId={selectedDistrictId}
+        onSelectDistrict={setSelectedDistrictId}
       />
     );
   }
@@ -135,7 +138,11 @@ function AppContent() {
         onClose={() => setIsVoiceOpen(false)} 
         phcId={user?.phc_id || 'PHC-RAN-01'} 
       />
-      <AICopilotDrawer isOpen={isCopilotOpen} onClose={() => setIsCopilotOpen(false)} />
+      <AICopilotDrawer 
+        isOpen={isCopilotOpen} 
+        onClose={() => setIsCopilotOpen(false)} 
+        districtId={selectedDistrictId}
+      />
       <FederatedExplainerModal isOpen={isExplainerOpen} onClose={() => setIsExplainerOpen(false)} />
       <GoogleCloudConsoleModal isOpen={isCloudOpen} onClose={() => setIsCloudOpen(false)} />
 
