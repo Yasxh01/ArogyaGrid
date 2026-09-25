@@ -14,6 +14,7 @@ const coldChainRoutes = require('./coldChainRoutes');
 const epidemicRoutes = require('./epidemicRoutes');
 const notificationRoutes = require('./notificationRoutes');
 const abdmRoutes = require('./abdmRoutes');
+const cloudRoutes = require('./cloudRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/stock', stockRoutes);
@@ -28,6 +29,7 @@ router.use('/ai', aiRoutes);
 router.use('/epidemic', epidemicRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/abdm', abdmRoutes);
+router.use('/cloud', cloudRoutes);
 
 
 

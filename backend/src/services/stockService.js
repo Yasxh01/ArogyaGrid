@@ -66,6 +66,12 @@ class StockService {
     };
     store.stock_transactions.push(transaction);
 
+    // Stream to Google BigQuery national dataset buffer
+    try {
+      const bigqueryService = require('./bigqueryService');
+      bigqueryService.streamStockEvent(transaction);
+    } catch (e) {}
+
     broadcastEvent('stock:updated', {
       phc_id,
       medicine_id,

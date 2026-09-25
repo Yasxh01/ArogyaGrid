@@ -157,6 +157,20 @@ class TransferService {
     } catch (e) {
       console.warn('Could not resolve epidemic outbreak automatically:', e);
     }
+
+    // 5. Stream transfer & drone flight mission to Google BigQuery
+    try {
+      const bigqueryService = require('./bigqueryService');
+      bigqueryService.streamDroneFlightEvent({
+        transfer_id: transfer.id,
+        source_phc: transfer.source_phc_id,
+        destination_phc: transfer.destination_phc_id,
+        payload_kg: (qty * 0.05).toFixed(2),
+        flight_mins: transfer.drone_telemetry?.drone_flight_time_mins || 14,
+        time_saved_mins: transfer.drone_telemetry?.time_saved_mins || 55,
+        transport_mode: transfer.transport_mode
+      });
+    } catch (e) {}
   }
 
   async updateStatus(transfer_id, { status, approved_by }) {
