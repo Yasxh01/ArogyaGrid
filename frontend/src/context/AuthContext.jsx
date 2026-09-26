@@ -122,22 +122,49 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function login(email, password = 'password123') {
+    if (!email || !email.trim()) {
+      throw new Error('Please enter your email address.');
+    }
+    if (!password) {
+      throw new Error('Please enter your password.');
+    }
+
+    const cleanEmail = email.trim();
+
     try {
       const data = await apiRequest('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email: cleanEmail, password })
       });
       localStorage.setItem('arogya_token', data.token);
       localStorage.setItem('arogya_user', JSON.stringify(data.user));
       setUser(data.user);
       return data.user;
     } catch (err) {
-      console.warn('Backend login unavailable, checking local registered and preset users:', err.message);
+      // Check if this was an explicit backend response vs network failure
+      const isNetworkError = 
+        !err.status && (
+          err.message.includes('Failed to fetch') ||
+          err.message.includes('NetworkError') ||
+          err.message.includes('Load failed') ||
+          err.message.includes('unreachable') ||
+          err.message.includes('fetch failed')
+        );
+
+      // If backend responded with 401 or any HTTP error, ALWAYS re-throw immediately!
+      if (!isNetworkError) {
+        throw new Error(err.message || 'Invalid email or password.');
+      }
+
+      console.warn('Backend server offline, checking registered accounts in offline mode:', err.message);
       
-      // Check cached registered users first
+      // Offline fallback: check cached registered users with strict password check
       const registered = JSON.parse(localStorage.getItem('arogya_registered_users') || '[]');
-      const registeredMatch = registered.find(u => u.email.toLowerCase() === email.toLowerCase());
+      const registeredMatch = registered.find(u => u.email.toLowerCase() === cleanEmail.toLowerCase());
       if (registeredMatch) {
+        if (registeredMatch.password && registeredMatch.password !== password) {
+          throw new Error('Invalid email or password.');
+        }
         const mockToken = 'mock-jwt-token-' + Date.now();
         localStorage.setItem('arogya_token', mockToken);
         localStorage.setItem('arogya_user', JSON.stringify(registeredMatch));
@@ -145,9 +172,12 @@ export function AuthProvider({ children }) {
         return registeredMatch;
       }
 
-      // Check presets
-      const matched = PRESET_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
+      // Offline fallback: check preset accounts (strict password 'password123')
+      const matched = PRESET_USERS.find(u => u.email.toLowerCase() === cleanEmail.toLowerCase());
       if (matched) {
+        if (password !== 'password123') {
+          throw new Error('Invalid email or password.');
+        }
         const localUser = {
           id: 'USR-LOCAL-' + matched.role,
           name: matched.name,
@@ -163,29 +193,16 @@ export function AuthProvider({ children }) {
         return localUser;
       }
 
-      // If user typed a custom email, synthesize a resilient session for them
-      if (email && email.includes('@')) {
-        const role = email.includes('admin') ? 'ADMIN' : email.includes('officer') || email.includes('district') ? 'DISTRICT_OFFICER' : email.includes('doctor') ? 'DOCTOR' : 'PHC_STAFF';
-        const dynamicUser = {
-          id: 'USR-LOCAL-' + Date.now().toString(36).toUpperCase(),
-          name: email.split('@')[0].replace('.', ' ').toUpperCase(),
-          email: email.toLowerCase(),
-          role,
-          district_id: 'DIST-JH-01',
-          phc_id: role === 'ADMIN' ? null : 'PHC-RAN-01'
-        };
-        const mockToken = 'mock-jwt-token-' + Date.now();
-        localStorage.setItem('arogya_token', mockToken);
-        localStorage.setItem('arogya_user', JSON.stringify(dynamicUser));
-        setUser(dynamicUser);
-        return dynamicUser;
-      }
-
-      throw err;
+      // If account does not exist, reject!
+      throw new Error('No account found with this email. Please check your credentials or register a new account.');
     }
   }
 
   async function register(userData) {
+    if (!userData.name || !userData.email || !userData.password) {
+      throw new Error('Name, email, and password are required.');
+    }
+
     try {
       const data = await apiRequest('/auth/register', {
         method: 'POST',
@@ -194,24 +211,45 @@ export function AuthProvider({ children }) {
       localStorage.setItem('arogya_token', data.token);
       localStorage.setItem('arogya_user', JSON.stringify(data.user));
 
-      // Cache locally
+      // Cache locally with password for offline resilience
       const existing = JSON.parse(localStorage.getItem('arogya_registered_users') || '[]');
-      existing.push(data.user);
+      existing.push({ ...data.user, password: userData.password });
       localStorage.setItem('arogya_registered_users', JSON.stringify(existing));
 
       setUser(data.user);
       return data.user;
     } catch (err) {
-      console.warn('Backend registration unavailable, creating resilient local session:', err.message);
+      const isNetworkError = 
+        !err.status && (
+          err.message.includes('Failed to fetch') ||
+          err.message.includes('NetworkError') ||
+          err.message.includes('Load failed') ||
+          err.message.includes('unreachable') ||
+          err.message.includes('fetch failed')
+        );
+
+      // If backend responded with 400 (e.g. Email is already registered), throw it directly!
+      if (!isNetworkError) {
+        throw new Error(err.message || 'Registration failed.');
+      }
+
+      console.warn('Backend server offline, registering in offline mode:', err.message);
+      const cleanEmail = userData.email.trim().toLowerCase();
+      const existing = JSON.parse(localStorage.getItem('arogya_registered_users') || '[]');
+      if (existing.some(u => u.email.toLowerCase() === cleanEmail)) {
+        throw new Error('Email is already registered. Please sign in.');
+      }
+
       const fallbackUser = {
         id: 'USR-' + Date.now().toString(36).toUpperCase(),
-        name: userData.name || 'Healthcare User',
-        email: userData.email,
+        name: userData.name.trim(),
+        email: cleanEmail,
+        password: userData.password,
         role: userData.role || 'DOCTOR',
         district_id: userData.district_id || 'DIST-JH-01',
         phc_id: userData.role === 'ADMIN' ? null : (userData.phc_id || 'PHC-RAN-01')
       };
-      const existing = JSON.parse(localStorage.getItem('arogya_registered_users') || '[]');
+
       existing.push(fallbackUser);
       localStorage.setItem('arogya_registered_users', JSON.stringify(existing));
 

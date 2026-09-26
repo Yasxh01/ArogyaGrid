@@ -6,7 +6,11 @@ const { JWT_SECRET } = require('../config/env');
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const user = db.memoryStore.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required', code: 'MISSING_FIELDS' });
+    }
+
+    const user = db.memoryStore.users.find(u => u.email.toLowerCase() === email.trim().toLowerCase());
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password', code: 'INVALID_CREDENTIALS' });
@@ -42,20 +46,25 @@ exports.login = async (req, res, next) => {
 exports.register = async (req, res, next) => {
   try {
     const { name, email, password, role, district_id, phc_id } = req.body;
-    const store = db.memoryStore;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email, and password are required', code: 'MISSING_FIELDS' });
+    }
 
-    const existing = store.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const store = db.memoryStore;
+    const cleanEmail = email.trim().toLowerCase();
+
+    const existing = store.users.find(u => u.email.toLowerCase() === cleanEmail);
     if (existing) {
-      return res.status(400).json({ error: 'Email is already registered', code: 'EMAIL_IN_USE' });
+      return res.status(400).json({ error: 'Email is already registered. Please sign in.', code: 'EMAIL_IN_USE' });
     }
 
     const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password || 'password123', salt);
+    const passwordHash = await bcrypt.hash(password, salt);
 
     const newUser = {
       id: 'USR-' + Date.now().toString(36).toUpperCase(),
-      name,
-      email: email.toLowerCase(),
+      name: name.trim(),
+      email: cleanEmail,
       password_hash: passwordHash,
       role: role || 'PHC_STAFF',
       district_id: district_id || 'DIST-JH-01',

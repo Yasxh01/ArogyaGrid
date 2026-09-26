@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth, PRESET_USERS, ALL_DISTRICTS, ALL_FACILITIES } from '../context/AuthContext';
-import { Activity, UserPlus, LogIn, ArrowRight, UserCheck, Sparkles, Building2 } from 'lucide-react';
+import { Activity, UserPlus, LogIn, ArrowRight, UserCheck, Sparkles, Building2, AlertCircle } from 'lucide-react';
 
 export default function AuthPortalView() {
   const { login, register } = useAuth();
@@ -139,9 +139,10 @@ export default function AuthPortalView() {
           </div>
         </div>
 
-        {error && (
-          <div className="max-w-md mx-auto mb-6 p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold rounded-xl text-center">
-            {error}
+        {error && activeTab === 'presets' && (
+          <div className="max-w-md mx-auto mb-6 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold rounded-2xl flex items-center justify-center shadow-sm">
+            <AlertCircle className="w-4 h-4 mr-2 shrink-0 text-rose-600" />
+            <span>{error}</span>
           </div>
         )}
 
@@ -191,7 +192,14 @@ export default function AuthPortalView() {
         {activeTab === 'login' && (
           <div className="max-w-md mx-auto w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl">
             <h2 className="font-extrabold text-lg text-slate-900 mb-1">Sign In to ArogyaGrid</h2>
-            <p className="text-xs text-slate-500 mb-5 font-medium">Access your assigned role and health telemetry console</p>
+            <p className="text-xs text-slate-500 mb-4 font-medium">Access your assigned role and health telemetry console</p>
+
+            {error && (
+              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold rounded-2xl flex items-center shadow-sm">
+                <AlertCircle className="w-4 h-4 mr-2.5 shrink-0 text-rose-600" />
+                <span>{error}</span>
+              </div>
+            )}
 
             {/* Quick Autofill Pills */}
             <div className="mb-4 p-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl">
@@ -208,7 +216,7 @@ export default function AuthPortalView() {
                   <button
                     key={item.email}
                     type="button"
-                    onClick={() => { setLoginEmail(item.email); setLoginPassword('password123'); }}
+                    onClick={() => { setLoginEmail(item.email); setLoginPassword('password123'); setError(null); }}
                     className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-white text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 transition"
                   >
                     {item.label}
@@ -224,7 +232,7 @@ export default function AuthPortalView() {
                   type="email"
                   list="login-preset-emails"
                   value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
+                  onChange={(e) => { setLoginEmail(e.target.value); setError(null); }}
                   placeholder="doctor.ranchi@arogyagrid.gov.in"
                   className="w-full font-semibold bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 outline-none focus:ring-2 focus:ring-emerald-500"
                   required
@@ -237,11 +245,14 @@ export default function AuthPortalView() {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Password</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold text-slate-700 block">Password</label>
+                  <span className="text-[10px] text-slate-400 font-semibold">Demo accounts: password123</span>
+                </div>
                 <input
                   type="password"
                   value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
+                  onChange={(e) => { setLoginPassword(e.target.value); setError(null); }}
                   placeholder="••••••••"
                   className="w-full font-semibold bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 outline-none focus:ring-2 focus:ring-emerald-500"
                   required
@@ -263,7 +274,14 @@ export default function AuthPortalView() {
         {activeTab === 'register' && (
           <div className="max-w-md mx-auto w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl">
             <h2 className="font-extrabold text-lg text-slate-900 mb-1">Create ArogyaGrid Account</h2>
-            <p className="text-xs text-slate-500 mb-5 font-medium">Register for any PHC, CHC, or District Hospital across India</p>
+            <p className="text-xs text-slate-500 mb-4 font-medium">Register for any PHC, CHC, or District Hospital across India</p>
+
+            {error && (
+              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold rounded-2xl flex items-center shadow-sm">
+                <AlertCircle className="w-4 h-4 mr-2.5 shrink-0 text-rose-600" />
+                <span>{error}</span>
+              </div>
+            )}
 
             <form onSubmit={handleRegister} className="space-y-3.5 text-xs">
               <div>

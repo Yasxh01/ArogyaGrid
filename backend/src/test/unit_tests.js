@@ -10,6 +10,7 @@ const transferService = require('../services/transferService');
 const aiService = require('../services/aiService');
 const mlService = require('../services/mlService');
 const stockController = require('../controllers/stockController');
+const authController = require('../controllers/authController');
 const { JWT_SECRET } = require('../config/env');
 const { tools } = require('../../../mcp_server/tools/arogyaTools');
 const vertexAIService = require('../services/vertexAIService');
@@ -258,6 +259,56 @@ async function runAllUnitTests() {
     const decoded = jwt.verify(token, JWT_SECRET);
     assert.strictEqual(decoded.email, payload.email);
     assert.strictEqual(decoded.role, 'ADMIN');
+  });
+
+  function mockReqRes(body = {}) {
+    const req = { body };
+    const res = {
+      statusCode: 200,
+      data: null,
+      status(code) {
+        this.statusCode = code;
+        return this;
+      },
+      json(payload) {
+        this.data = payload;
+        return this;
+      }
+    };
+    return { req, res };
+  }
+
+  await itAsync('Should reject login with invalid password (401 INVALID_CREDENTIALS)', async () => {
+    const { req, res } = mockReqRes({ email: 'doctor.ranchi@arogyagrid.gov.in', password: 'wrongpassword' });
+    await authController.login(req, res, () => {});
+    assert.strictEqual(res.statusCode, 401);
+    assert.strictEqual(res.data.code, 'INVALID_CREDENTIALS');
+  });
+
+  await itAsync('Should reject login with non-existent email (401 INVALID_CREDENTIALS)', async () => {
+    const { req, res } = mockReqRes({ email: 'fake.unknown@notfound.org', password: 'password123' });
+    await authController.login(req, res, () => {});
+    assert.strictEqual(res.statusCode, 401);
+    assert.strictEqual(res.data.code, 'INVALID_CREDENTIALS');
+  });
+
+  await itAsync('Should successfully authenticate valid user and return JWT token', async () => {
+    const { req, res } = mockReqRes({ email: 'doctor.ranchi@arogyagrid.gov.in', password: 'password123' });
+    await authController.login(req, res, () => {});
+    assert.strictEqual(res.statusCode, 200);
+    assert(res.data.token !== undefined);
+    assert.strictEqual(res.data.user.role, 'DOCTOR');
+  });
+
+  await itAsync('Should reject registration with duplicate email (400 EMAIL_IN_USE)', async () => {
+    const { req, res } = mockReqRes({
+      name: 'Duplicate Admin',
+      email: 'admin@arogyagrid.gov.in',
+      password: 'newpassword123'
+    });
+    await authController.register(req, res, () => {});
+    assert.strictEqual(res.statusCode, 400);
+    assert.strictEqual(res.data.code, 'EMAIL_IN_USE');
   });
 
   console.log('\n🤖 [SUITE 7] Model Context Protocol (MCP) Agent Tools:');

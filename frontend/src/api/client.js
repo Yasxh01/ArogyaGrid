@@ -39,13 +39,16 @@ export async function apiRequest(endpoint, options = {}) {
       }
 
       if (!response.ok) {
-        throw new Error(data?.error || `HTTP Error ${response.status}`);
+        const error = new Error(data?.error || `HTTP Error ${response.status}`);
+        error.status = response.status;
+        error.code = data?.code;
+        throw error;
       }
 
       return data;
     } catch (err) {
-      if (err.message && !err.message.includes('Failed to fetch') && !err.message.includes('NetworkError')) {
-        // If it was a deliberate backend validation error (e.g. "Email is already registered" or "Invalid password")
+      if (err.status || (err.message && !err.message.includes('Failed to fetch') && !err.message.includes('NetworkError') && !err.message.includes('Load failed') && !err.message.includes('fetch failed'))) {
+        // If it was a deliberate backend response (e.g. 401 "Invalid email or password" or 400 "Email is already registered")
         throw err;
       }
       lastError = err;
