@@ -1,42 +1,11 @@
 import React, { useState } from 'react';
-import { Bot, Sparkles, X, MessageSquare, Zap } from 'lucide-react';
+import { Bot, X } from 'lucide-react';
 
 export default function FloatingChatBot({ isOpen, onToggle }) {
   const [isHovered, setIsHovered] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(true);
 
   return (
     <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end select-none">
-      
-      {/* Interactive 3D Speech Bubble Tooltip */}
-      {!isOpen && (
-        <div
-          className={`mb-3.5 transition-all duration-300 transform origin-bottom-right ${
-            isHovered
-              ? 'scale-105 -translate-y-1 opacity-100'
-              : 'scale-95 opacity-90 hover:opacity-100'
-          }`}
-        >
-          <div 
-            onClick={onToggle}
-            className="cursor-pointer relative bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white text-xs font-bold px-3.5 py-2 rounded-2xl shadow-[0_12px_24px_-4px_rgba(15,23,42,0.4)] border border-indigo-500/30 flex items-center space-x-2 backdrop-blur-md group"
-          >
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping absolute -top-0.5 -right-0.5" />
-            <div className="w-2 h-2 rounded-full bg-emerald-400 absolute -top-0.5 -right-0.5" />
-            
-            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-            <span className="bg-gradient-to-r from-white via-indigo-100 to-indigo-200 bg-clip-text text-transparent">
-              AI Health Copilot
-            </span>
-            <span className="text-[10px] font-black uppercase px-1.5 py-0.5 bg-indigo-500/30 text-indigo-300 rounded-md border border-indigo-400/20">
-              Ask AI
-            </span>
-
-            {/* Bubble Tail */}
-            <div className="absolute -bottom-1.5 right-6 w-3 h-3 bg-slate-900 rotate-45 border-r border-b border-indigo-500/30" />
-          </div>
-        </div>
-      )}
 
       {/* 3D Interactive Floating Button */}
       <button

@@ -19,8 +19,18 @@ class BigQueryTelemetryService {
     this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_CLOUD_API_KEY || '';
     
     // In-memory buffer simulating BigQuery table rows for instant local query & demonstration
-    this.streamBuffer = [];
-    this.droneBuffer = [];
+    const today = new Date().toISOString().split('T')[0];
+    this.streamBuffer = [
+      { event_id: 'BQ-78a9c1', transaction_uuid: 'TX-RAN-8491', phc_id: 'PHC-RAN-01', medicine_id: 'MED-001 (Paracetamol)', quantity: 250, transaction_type: 'INTAKE', created_by: 'OFFICER-PRIYA', ingested_at: new Date(Date.now() - 1000 * 60 * 12).toISOString(), bigquery_partition_date: today },
+      { event_id: 'BQ-43b2f8', transaction_uuid: 'TX-DHN-2094', phc_id: 'DH-DHN-01', medicine_id: 'MED-004 (Insulin Glargine)', quantity: 60, transaction_type: 'DISPENSE', created_by: 'DR-AMIT', ingested_at: new Date(Date.now() - 1000 * 60 * 25).toISOString(), bigquery_partition_date: today },
+      { event_id: 'BQ-99d1e4', transaction_uuid: 'TX-PAT-3829', phc_id: 'PHC-PAT-01', medicine_id: 'MED-005 (Anti-Rabies ARV)', quantity: 45, transaction_type: 'INTAKE', created_by: 'DR-ALOK', ingested_at: new Date(Date.now() - 1000 * 60 * 42).toISOString(), bigquery_partition_date: today },
+      { event_id: 'BQ-11c5a7', transaction_uuid: 'TX-PUN-7712', phc_id: 'PHC-PUN-01', medicine_id: 'MED-003 (ORS Sachets)', quantity: 180, transaction_type: 'DISPENSE', created_by: 'PHC-STAFF-01', ingested_at: new Date(Date.now() - 1000 * 60 * 68).toISOString(), bigquery_partition_date: today },
+      { event_id: 'BQ-34e8b2', transaction_uuid: 'TX-BLR-5531', phc_id: 'DH-BLR-01', medicine_id: 'MED-002 (Amoxicillin 250mg)', quantity: 400, transaction_type: 'INTAKE', created_by: 'LOGISTICS-ESCROW', ingested_at: new Date(Date.now() - 1000 * 60 * 95).toISOString(), bigquery_partition_date: today }
+    ];
+    this.droneBuffer = [
+      { flight_id: 'FLT-a81f3', transfer_id: 'TRF-RAN-01', source_phc: 'DH-RAN-01', destination_phc: 'PHC-RAN-03', payload_kg: 3.5, flight_mins: 14, time_saved_mins: 55, transport_mode: 'ICMR_DRONE_VTOL', co2_saved_kg: 1.68, ingested_at: new Date(Date.now() - 1000 * 60 * 18).toISOString() },
+      { flight_id: 'FLT-b29c4', transfer_id: 'TRF-DHN-02', source_phc: 'DH-DHN-01', destination_phc: 'HWC-DHN-01', payload_kg: 2.8, flight_mins: 18, time_saved_mins: 62, transport_mode: 'ICMR_DRONE_VTOL', co2_saved_kg: 2.16, ingested_at: new Date(Date.now() - 1000 * 60 * 45).toISOString() }
+    ];
     this.isGcpConnected = false;
 
     this.initClient();

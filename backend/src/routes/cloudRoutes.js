@@ -50,6 +50,16 @@ router.post('/vertex/predict-dts', async (req, res, next) => {
   }
 });
 
+// 4b. Google Cloud Vertex AI: Big Data Batch Evaluation (Multi-Facility & District Scale)
+router.post('/vertex/predict-batch', async (req, res, next) => {
+  try {
+    const batchPrediction = await vertexAIService.predictBatchStockout(req.body);
+    res.json(batchPrediction);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // 5. Google Cloud Vertex AI: Cold-Chain Thermal Spoilage Prediction
 router.post('/vertex/predict-spoilage', async (req, res, next) => {
   try {
