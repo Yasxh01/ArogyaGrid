@@ -28,6 +28,11 @@ services:
       USE_POSTGRES: "true"
       ML_SERVICE_URL: http://ml_service:8000
       JWT_SECRET: arogyagrid_prod_jwt_secret_2026
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT:-arogyagrid-national}
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+      VERTEX_AI_REGION: ${VERTEX_AI_REGION:-asia-south1}
+      BIGQUERY_DATASET: ${BIGQUERY_DATASET:-arogyagrid_analytics}
     depends_on:
       - postgres
       - ml_service
