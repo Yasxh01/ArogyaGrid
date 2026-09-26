@@ -87,7 +87,7 @@ export default function FacilityDetailModal({ isOpen, onClose, phcId, onNavigate
   const criticalMedsCount = stockList.filter(s => s.quantity < 50).length;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 flex flex-col max-h-[90vh] overflow-hidden">
         
         {/* Header */}

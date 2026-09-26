@@ -57,25 +57,50 @@ Return strictly JSON with schema:
     let medicine_id = null;
     let quantity = 10;
 
-    // Detect intent (Hindi & English keywords)
-    if (lower.includes('बांटी') || lower.includes('dispense') || lower.includes('distribut') || lower.includes('given') || lower.includes('out') || lower.includes('दिए') || lower.includes('दी') || lower.includes('वितरित')) {
+    // Detect intent across Hindi, Bhojpuri, Marathi, Odia, Tamil, Bengali, and English
+    if (
+      lower.includes('बांटी') || lower.includes('dispense') || lower.includes('distribut') || 
+      lower.includes('given') || lower.includes('out') || lower.includes('दिए') || 
+      lower.includes('दी') || lower.includes('वितरित') || lower.includes('बांट') || 
+      lower.includes('वाटप') || lower.includes('ବଣ୍ଟନ') || lower.includes('வழங்கப்பட்டன') || 
+      lower.includes('বিতরণ') || lower.includes('उपयोग') || lower.includes('खर्च') || 
+      lower.includes('issued') || lower.includes('consumed') || lower.includes('used')
+    ) {
       type = 'STOCK_OUT';
-    } else if (lower.includes('प्राप्त') || lower.includes('received') || lower.includes('receive') || lower.includes('intake') || lower.includes('in') || lower.includes('आए') || lower.includes('स्टॉक') || lower.includes('जमा')) {
+    } else if (
+      lower.includes('प्राप्त') || lower.includes('received') || lower.includes('receive') || 
+      lower.includes('intake') || lower.includes('in') || lower.includes('आए') || 
+      lower.includes('स्टॉक') || lower.includes('जमा') || lower.includes('मिलल') || 
+      lower.includes('मिळाले') || lower.includes('ପ୍ରାପ୍ତ') || lower.includes('ମିଳିଲା') || 
+      lower.includes('பெறப்பட்டது') || lower.includes('গ্রহণ') || lower.includes('पहुंच') || 
+      lower.includes('delivered') || lower.includes('supplied') || lower.includes('arrived')
+    ) {
       type = 'STOCK_IN';
-    } else if (lower.includes('bed') || lower.includes('बेड') || lower.includes('मरीज') || lower.includes('icu') || lower.includes('oxygen') || lower.includes('भर्ती')) {
+    } else if (
+      lower.includes('bed') || lower.includes('बेड') || lower.includes('मरीज') || 
+      lower.includes('icu') || lower.includes('oxygen') || lower.includes('भर्ती') || 
+      lower.includes('occupied') || lower.includes('भरलेले') || lower.includes('ଅକ୍ସିଜେନ') || 
+      lower.includes('படுக்கை') || lower.includes('বেড') || lower.includes('ভর্তি')
+    ) {
       type = 'BED_UPDATE';
     }
 
-    // Comprehensive Medicine Matching (Hindi Phonetics + English)
+    // Comprehensive Medicine Matching across English, Hindi, Bhojpuri, Marathi, Odia, Tamil, Bengali
     if (lower.includes('amox') || lower.includes('एमोक्सि') || lower.includes('इमोक्सी') || lower.includes('अमोक्सी') || lower.includes('सिलिन') || lower.includes('amoxicillin')) {
       medicine_id = 'MED-002'; // Amoxicillin 250mg
-    } else if (lower.includes('ors') || lower.includes('ओआरएस') || lower.includes('ओ.आर.एस') || lower.includes('घोल') || lower.includes('इलेक्ट्रोलाइट')) {
+    } else if (lower.includes('ors') || lower.includes('ओआरएस') || lower.includes('ओ.आर.एस') || lower.includes('घोल') || lower.includes('इलेक्ट्रोलाइट') || lower.includes('ଓଆରଏସ') || lower.includes('ஓஆர்எஸ்')) {
       medicine_id = 'MED-003'; // ORS Sachets
-    } else if (lower.includes('insulin') || lower.includes('इंसुलिन') || lower.includes('शुगर')) {
+    } else if (lower.includes('insulin') || lower.includes('इंसुलिन') || lower.includes('शुगर') || lower.includes('ইনসুলিন') || lower.includes('இன்சுலின்')) {
       medicine_id = 'MED-004'; // Insulin Glargine
-    } else if (lower.includes('rabies') || lower.includes('रेबीज') || lower.includes('कुत्ता') || lower.includes('antirabies')) {
+    } else if (lower.includes('rabies') || lower.includes('रेबीज') || lower.includes('कुत्ता') || lower.includes('antirabies') || lower.includes('सुई') || lower.includes('arv')) {
       medicine_id = 'MED-005'; // Anti-Rabies Vaccine
-    } else if (lower.includes('para') || lower.includes('पैरासिटामोल') || lower.includes('डोलो') || lower.includes('क्रोसिन') || lower.includes('बुखार') || lower.includes('pcm')) {
+    } else if (
+      lower.includes('para') || lower.includes('पैरासिटामोल') || lower.includes('पेरासिटामोल') || 
+      lower.includes('पॅरासिटामॉल') || lower.includes('ପାରାସିଟାମଲ') || lower.includes('பாராசிட்டமால்') || 
+      lower.includes('প্যারাসিটামল') || lower.includes('डोलो') || lower.includes('dolo') || 
+      lower.includes('क्रोसिन') || lower.includes('crocin') || lower.includes('बुखार') || 
+      lower.includes('pcm') || lower.includes('paracetamol')
+    ) {
       medicine_id = 'MED-001'; // Paracetamol 500mg
     } else if (lower.includes('azithro') || lower.includes('एजिथ्रो') || lower.includes('एज़िथ्रो')) {
       medicine_id = 'MED-006';
@@ -91,25 +116,35 @@ Return strictly JSON with schema:
       }
     }
 
-    // Hindi number words mapping
-    const hindiNumbers = {
+    // Number words mapping (Hindi & regional dialects)
+    const numberWords = {
       'एक': 1, 'दो': 2, 'तीन': 3, 'चार': 4, 'पांच': 5, 'पाँच': 5, 'छह': 6, 'सात': 7, 'आठ': 8, 'नौ': 9, 'दस': 10,
-      'पंद्रह': 15, 'बीस': 20, 'पच्चीस': 25, 'तीस': 30, 'चालीस': 40, 'पचास': 50, 'साठ': 60, 'सत्तर': 70, 'अस्सी': 80, 'नब्बे': 90, 'सौ': 100
+      'पंद्रह': 15, 'बीस': 20, 'पच्चीस': 25, 'तीस': 30, 'चालीस': 40, 'पचास': 50, 'साठ': 60, 'सत्तर': 70, 'अस्सी': 80, 'नब्बे': 90, 'सौ': 100,
+      'दहा': 10, 'वीस': 20, 'शंभर': 100
     };
 
-    // Extract Hindi word numbers
-    for (const [word, val] of Object.entries(hindiNumbers)) {
+    // Extract word numbers
+    for (const [word, val] of Object.entries(numberWords)) {
       if (lower.includes(word)) {
         quantity = val;
         break;
       }
     }
 
-    // Extract Western numbers (e.g. 50, 100) or Devanagari numerals (e.g. ५०, १००)
-    const devanagariDigits = { '०': 0, '१': 1, '२': 2, '३': 3, '४': 4, '५': 5, '६': 6, '७': 7, '८': 8, '९': 9 };
-    const devMatch = text.match(/[०-९]+/);
-    if (devMatch) {
-      const converted = devMatch[0].split('').map(d => devanagariDigits[d] ?? d).join('');
+    // Extract Indic numerals (Devanagari, Bengali, Odia, Tamil) or Western digits
+    const multiScriptDigits = {
+      // Devanagari
+      '०': 0, '१': 1, '२': 2, '३': 3, '४': 4, '५': 5, '६': 6, '७': 7, '८': 8, '९': 9,
+      // Bengali
+      '০': 0, '১': 1, '২': 2, '৩': 3, '৪': 4, '৫': 5, '৬': 6, '৭': 7, '৮': 8, '৯': 9,
+      // Odia
+      '୦': 0, '୧': 1, '୨': 2, '୩': 3, '୪': 4, '୫': 5, '୬': 6, '୭': 7, '୮': 8, '୯': 9,
+      // Tamil
+      '௦': 0, '௧': 1, '௨': 2, '௩': 3, '௪': 4, '௫': 5, '௬': 6, '௭': 7, '௮': 8, '௯': 9
+    };
+    const indicMatch = text.match(/[०-९০-৯୦-୯௦-௯]+/);
+    if (indicMatch) {
+      const converted = indicMatch[0].split('').map(d => multiScriptDigits[d] ?? d).join('');
       quantity = parseInt(converted, 10);
     } else {
       const match = text.match(/\d+/);
@@ -479,7 +514,9 @@ Return strictly JSON with schema:
    */
   async digitizeStockChallan({ imageBase64, mimeType = 'image/jpeg', phc_id = 'PHC-RAN-01' }) {
     const store = db.memoryStore;
-    const phc = store.phcs.find(p => p.id === phc_id) || store.phcs[0];
+    const phc = (store.phcs && store.phcs.find(p => p.id === phc_id)) || 
+                (store.phcs && store.phcs[0]) || 
+                { id: phc_id || 'PHC-RAN-01', name: 'Ranchi Sadar PHC' };
 
     if (this.apiKey && imageBase64) {
       try {

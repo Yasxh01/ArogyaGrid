@@ -47,55 +47,70 @@ export default function StatsBanner({ districtId = 'DIST-JH-01' }) {
   }
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 mb-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3 transition hover:shadow-md">
-        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+      {/* Monitored Facilities */}
+      <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center space-x-3 transition hover:border-slate-300">
+        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100/60">
           <Building2 className="w-5 h-5" />
         </div>
-        <div>
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Clinics Monitored</p>
-          <p className="text-lg font-extrabold text-slate-900">{stats.monitored_phcs_count} Health Centres</p>
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Facilities Monitored</p>
+          <p className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight leading-tight mt-0.5">
+            {stats.monitored_phcs_count} <span className="text-xs font-semibold text-slate-500">Centres</span>
+          </p>
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3 transition hover:shadow-md">
-        <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+      {/* Shortage Alerts */}
+      <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center space-x-3 transition hover:border-slate-300">
+        <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100/60">
           <AlertTriangle className="w-5 h-5" />
         </div>
-        <div>
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Shortage Alerts</p>
-          <p className="text-lg font-extrabold text-rose-600">{stats.critical_stockouts_count} Need Restock</p>
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Shortage Alerts</p>
+          <p className="text-base sm:text-lg font-extrabold text-rose-600 tracking-tight leading-tight mt-0.5">
+            {stats.critical_stockouts_count} <span className="text-xs font-semibold text-rose-500">Restock</span>
+          </p>
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3 transition hover:shadow-md">
-        <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+      {/* Bed Utilization */}
+      <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center space-x-3 transition hover:border-slate-300">
+        <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100/60">
           <BedDouble className="w-5 h-5" />
         </div>
-        <div>
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Hospital Beds</p>
-          <p className="text-lg font-extrabold text-slate-900">{stats.bed_utilization_percentage}% Occupied</p>
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Hospital Beds</p>
+          <p className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight leading-tight mt-0.5">
+            {stats.bed_utilization_percentage}% <span className="text-xs font-semibold text-slate-500">Occupied</span>
+          </p>
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-3 transition hover:shadow-md">
-        <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+      {/* Staff on Duty */}
+      <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center space-x-3 transition hover:border-slate-300">
+        <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 border border-teal-100/60">
           <Users2 className="w-5 h-5" />
         </div>
-        <div>
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Healthcare Staff</p>
-          <p className="text-lg font-extrabold text-slate-900">{stats.active_staff_count} on Duty</p>
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Healthcare Staff</p>
+          <p className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight leading-tight mt-0.5">
+            {stats.active_staff_count} <span className="text-xs font-semibold text-slate-500">on Duty</span>
+          </p>
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm col-span-2 lg:col-span-1 flex items-center space-x-3 transition hover:shadow-md">
-        <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+      {/* Vaccine Cold-Chain */}
+      <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs col-span-2 sm:col-span-1 lg:col-span-1 flex items-center space-x-3 transition hover:border-slate-300">
+        <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100/60">
           <ShieldCheck className="w-5 h-5" />
         </div>
-        <div>
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Vaccine Cold-Chain</p>
-          <p className="text-lg font-extrabold text-purple-700">{stats.vaccine_coldchain_status || '2°C–8°C Safe'}</p>
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Vaccine Cold-Chain</p>
+          <p className="text-base sm:text-lg font-extrabold text-purple-700 tracking-tight leading-tight mt-0.5 truncate">
+            {stats.vaccine_coldchain_status || '2°C–8°C Safe'}
+          </p>
         </div>
       </div>
 

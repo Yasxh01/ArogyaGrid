@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider, useSocket } from './context/SocketContext';
 import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import AuthPortalView from './views/AuthPortalView';
 import AdminDashboardView from './views/AdminDashboardView';
 import DistrictOfficerDashboardView from './views/DistrictOfficerDashboardView';
 import DoctorDashboardView from './views/DoctorDashboardView';
 import PHCWorkerDashboardView from './views/PHCWorkerDashboardView';
+import LandingPageView from './views/LandingPageView';
 import VoiceIntakeModal from './components/VoiceIntakeModal';
 import AICopilotDrawer from './components/AICopilotDrawer';
 import FederatedExplainerModal from './components/FederatedExplainerModal';
@@ -17,8 +19,9 @@ import { apiRequest } from './api/client';
 import { ShieldAlert, X } from 'lucide-react';
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { user, loading, login } = useAuth();
   const { alerts, dismissAlert } = useSocket();
+  const [viewMode, setViewMode] = useState('landing'); // Landing page is always the first page upon visiting
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isVoiceOpen, setIsVoiceOpen] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
@@ -65,10 +68,30 @@ function AppContent() {
     );
   }
 
-  if (!user) {
-    return <AuthPortalView />;
+  // 1. Landing Page is always the first page a person sees when visiting the website
+  if (viewMode === 'landing') {
+    return (
+      <LandingPageView 
+        onEnterPortal={() => setViewMode('portal')}
+        onSelectPreset={async (preset) => {
+          try {
+            await login(preset.email, 'password123');
+            setViewMode('portal');
+            setActiveTab('dashboard');
+          } catch (err) {
+            setViewMode('portal');
+          }
+        }}
+      />
+    );
   }
 
+  // 2. When entered into portal: show Login if not authenticated
+  if (!user) {
+    return <AuthPortalView onBackToLanding={() => setViewMode('landing')} />;
+  }
+
+  // 3. Authenticated: Render the user's 4-level role dashboard
   function renderRoleDashboard() {
     if (user.role === 'ADMIN') {
       return <AdminDashboardView activeTab={activeTab} />;
@@ -98,6 +121,14 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
+      
+      {/* Left Hover Navigation Rail (Like Unstop: w-16 resting, expands to w-64 on hover) */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
+
+      {/* Top Navbar (Shifted pl-16 so brand is never covered) */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -107,25 +138,29 @@ function AppContent() {
         onOpenCloud={() => setIsCloudOpen(true)}
         pendingCount={pendingCount}
         onSyncPending={handleSyncPending}
+        onGoToLanding={() => setActiveTab('landing')}
       />
 
       {alerts.length > 0 && (
-        <div className="bg-rose-600 text-white px-4 py-2.5 shadow-md flex items-center justify-between text-xs font-bold animate-in slide-in-from-top">
+        <div className="bg-rose-600 text-white px-4 py-2.5 shadow-md flex items-center justify-between text-xs font-bold animate-in slide-in-from-top z-20 pl-20">
           <div className="flex items-center space-x-2">
             <ShieldAlert className="w-4 h-4 animate-bounce" />
             <span>
               CRITICAL HEALTH ALERT: {alerts[0].phc_id} ({alerts[0].resource_type || 'RESOURCE'}) - {alerts[0].risk_level} Risk Level detected!
             </span>
           </div>
-          <button onClick={() => dismissAlert(0)} className="p-1 hover:bg-rose-700 rounded transition">
+          <button onClick={() => dismissAlert(0)} className="p-1 hover:bg-rose-700 rounded transition cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {renderRoleDashboard()}
-      </main>
+      {/* Main Content Area (Cleanly padded pl-16 so no content is ever blocked by resting rail) */}
+      <div className="flex-1 w-full pl-16 transition-all duration-300">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {renderRoleDashboard()}
+        </main>
+      </div>
 
       {/* Floating 3D Interactive AI Chatbot Widget */}
       <FloatingChatBot
@@ -146,7 +181,7 @@ function AppContent() {
       <FederatedExplainerModal isOpen={isExplainerOpen} onClose={() => setIsExplainerOpen(false)} />
       <GoogleCloudConsoleModal isOpen={isCloudOpen} onClose={() => setIsCloudOpen(false)} />
 
-      <footer className="border-t border-slate-200/80 bg-white py-4 text-center text-xs text-slate-500 font-medium">
+      <footer className="border-t border-slate-200/80 bg-white py-4 text-center text-xs text-slate-500 font-medium pl-16 z-10">
         ArogyaGrid Platform &bull; Role-Based Health Logistics & Resilient AI Network
       </footer>
     </div>

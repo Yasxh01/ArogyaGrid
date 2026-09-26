@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth, PRESET_USERS, ALL_DISTRICTS, ALL_FACILITIES } from '../context/AuthContext';
 import { Activity, UserPlus, LogIn, ArrowRight, UserCheck, Sparkles, Building2, AlertCircle } from 'lucide-react';
 
-export default function AuthPortalView() {
+export default function AuthPortalView({ onBackToLanding }) {
   const { login, register } = useAuth();
   const [activeTab, setActiveTab] = useState('presets');
   const [error, setError] = useState(null);
@@ -79,17 +79,27 @@ export default function AuthPortalView() {
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-6 py-4 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
-              <Activity className="w-5 h-5 stroke-[2.5]" />
-            </div>
+            <img 
+              src="/logo.jpg" 
+              alt="ArogyaGrid Logo" 
+              className="w-10 h-10 object-contain rounded-2xl shadow-sm border border-slate-200/80 bg-white p-0.5 shrink-0" 
+            />
             <div>
               <span className="font-extrabold text-xl tracking-tight text-slate-900">Arogya<span className="text-emerald-600">Grid</span></span>
               <span className="ml-2 px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-full">National PHC Portal</span>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2.5">
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <div className="flex items-center space-x-3">
+            {onBackToLanding && (
+              <button
+                onClick={onBackToLanding}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 border border-slate-200 transition cursor-pointer"
+              >
+                ← Back to Landing Page
+              </button>
+            )}
+            <span className="hidden sm:inline-flex px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
               National Health Grid
             </span>
           </div>

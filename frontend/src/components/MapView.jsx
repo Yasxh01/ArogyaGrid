@@ -156,61 +156,36 @@ export default function MapView({ districtId, onSelectPHC, onQuickTransfer }) {
   const hubCoords = hubFeature ? [hubFeature.geometry.coordinates[1], hubFeature.geometry.coordinates[0]] : null;
 
   return (
-    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col h-[520px]">
+    <div className="bg-white rounded-2xl p-4 shadow-2xs border border-slate-200/80 flex flex-col h-[560px]">
       
-      {/* Header & Controls */}
+      {/* Header & Map Controls */}
       <div className="flex flex-wrap items-center justify-between pb-3 mb-2 border-b border-slate-100 gap-2">
         <div className="flex items-center space-x-2">
-          <Activity className="w-5 h-5 text-emerald-600" />
-          <h2 className="font-bold text-slate-800 text-sm sm:text-base">Live Health Map</h2>
-          <span className="text-xs text-slate-500 font-medium">({districtData?.features?.length || 0} Centres Tracked)</span>
+          <Activity className="w-4.5 h-4.5 text-emerald-600" />
+          <h2 className="font-bold text-slate-800 text-sm sm:text-base">Geospatial Telemetry & Clinic Network</h2>
+          <span className="text-xs text-slate-500 font-medium">({districtData?.features?.length || 0} Facilities Active)</span>
         </div>
 
-        {/* District Selector & Drone Corridor Toggle */}
-        <div className="flex items-center space-x-2.5 flex-wrap">
+        {/* Drone Corridor Toggle & Map Legend */}
+        <div className="flex items-center space-x-3 flex-wrap">
           <button
             onClick={() => setShowDroneCorridors(!showDroneCorridors)}
-            className={`text-xs px-2.5 py-1 rounded-lg font-bold border transition flex items-center space-x-1 ${
+            className={`text-xs px-2.5 py-1 rounded-xl font-bold border transition flex items-center space-x-1.5 ${
               showDroneCorridors
-                ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-2xs'
                 : 'bg-slate-50 border-slate-200 text-slate-500'
             }`}
           >
             <span>🚁</span>
             <span className="hidden sm:inline">ICMR Drone Corridors</span>
-            <span className="sm:hidden">Drone</span>
+            <span className="sm:hidden">Drone Airway</span>
           </button>
 
-          <div className="flex items-center space-x-1.5">
-            <label className="text-xs font-semibold text-slate-500">District:</label>
-            <select
-              value={selectedDistrict}
-              onChange={(e) => setSelectedDistrict(e.target.value)}
-              className="text-xs font-bold bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-            >
-              {districtsList.length > 0 ? (
-                districtsList.map(d => (
-                  <option key={d.id} value={d.id}>{d.name} ({d.state})</option>
-                ))
-              ) : (
-                <>
-                  <option value="DIST-JH-01">Ranchi (Jharkhand)</option>
-                  <option value="DIST-JH-02">Dhanbad (Jharkhand)</option>
-                  <option value="DIST-BR-01">Patna (Bihar)</option>
-                  <option value="DIST-BR-02">Gaya (Bihar)</option>
-                  <option value="DIST-OD-01">Khordha (Odisha)</option>
-                  <option value="DIST-MH-01">Pune (Maharashtra)</option>
-                  <option value="DIST-KA-01">Bengaluru Urban (Karnataka)</option>
-                </>
-              )}
-            </select>
-          </div>
-
           {/* Map Legend */}
-          <div className="hidden lg:flex items-center space-x-3 text-[11px] font-medium pl-2 border-l border-slate-200">
-            <span className="flex items-center"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1"></span> Normal Stock</span>
-            <span className="flex items-center"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 mr-1"></span> Low Stock</span>
-            <span className="flex items-center"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 mr-1 animate-pulse"></span> Urgent Shortage</span>
+          <div className="hidden sm:flex items-center space-x-3 text-[11px] font-medium pl-3 border-l border-slate-200">
+            <span className="flex items-center text-slate-600"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1.5"></span> Normal Stock</span>
+            <span className="flex items-center text-slate-600"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 mr-1.5"></span> Low Stock</span>
+            <span className="flex items-center text-slate-600"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 mr-1.5 animate-pulse"></span> Urgent Shortage</span>
           </div>
         </div>
       </div>
@@ -219,7 +194,7 @@ export default function MapView({ districtId, onSelectPHC, onQuickTransfer }) {
       <div className="flex-1 w-full rounded-xl overflow-hidden relative">
 
         {/* Google Maps Layer Switcher */}
-        <div className="absolute top-3 right-3 z-[1000] bg-white/95 backdrop-blur-sm rounded-lg shadow-md border border-slate-200 p-1 flex items-center space-x-1 text-[11px] font-bold">
+        <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-sm rounded-lg shadow-md border border-slate-200 p-1 flex items-center space-x-1 text-[11px] font-bold">
           {Object.entries(GOOGLE_MAP_TYPES).map(([key, cfg]) => (
             <button
               key={key}
@@ -236,7 +211,7 @@ export default function MapView({ districtId, onSelectPHC, onQuickTransfer }) {
         </div>
 
         {/* Google Maps Platform Watermark Badge */}
-        <div className="absolute bottom-3 left-3 z-[1000] pointer-events-none select-none flex items-center space-x-1.5 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-md shadow-sm border border-slate-200 text-xs font-bold">
+        <div className="absolute bottom-3 left-3 z-10 pointer-events-none select-none flex items-center space-x-1.5 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-md shadow-sm border border-slate-200 text-xs font-bold">
           <span className="flex items-center font-extrabold tracking-tight">
             <span className="text-[#4285F4]">G</span>
             <span className="text-[#EA4335]">o</span>
@@ -249,7 +224,7 @@ export default function MapView({ districtId, onSelectPHC, onQuickTransfer }) {
         </div>
 
         {/* Attribution Notice */}
-        <div className="absolute bottom-3 right-3 z-[1000] pointer-events-none select-none text-[10px] text-slate-600 bg-white/90 backdrop-blur-xs px-2 py-0.5 rounded shadow-xs border border-slate-200/60">
+        <div className="absolute bottom-3 right-3 z-10 pointer-events-none select-none text-[10px] text-slate-600 bg-white/90 backdrop-blur-xs px-2 py-0.5 rounded shadow-xs border border-slate-200/60">
           Map data &copy; Google &bull; ICMR Drone Airway Telemetry
         </div>
 

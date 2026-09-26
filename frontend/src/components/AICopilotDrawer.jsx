@@ -156,7 +156,14 @@ export default function AICopilotDrawer({ isOpen, onClose, districtId = 'DIST-JH
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 max-w-lg w-full bg-white shadow-2xl z-50 flex flex-col border-l border-slate-200 animate-in slide-in-from-right duration-200">
+    <>
+      {/* Backdrop to prevent click-through and stop underlying map layers from showing */}
+      <div 
+        onClick={onClose}
+        className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-[9998] animate-in fade-in duration-150"
+      />
+      
+      <div className="fixed inset-y-0 right-0 max-w-lg w-full bg-white shadow-2xl z-[9999] flex flex-col border-l border-slate-200 animate-in slide-in-from-right duration-200">
       
       {/* Header */}
       <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -320,5 +327,6 @@ export default function AICopilotDrawer({ isOpen, onClose, districtId = 'DIST-JH
 
 
     </div>
+    </>
   );
 }
