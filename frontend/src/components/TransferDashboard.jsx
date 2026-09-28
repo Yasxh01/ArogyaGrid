@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
-import { useAuth, ALL_FACILITIES } from '../context/AuthContext';
+import { useAuth, ALL_FACILITIES, getFacilityName, getMedicineName, ALL_MEDICINES } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { Truck, ArrowRight, CheckCircle, Clock, ShieldCheck, MapPin, Zap } from 'lucide-react';
 
@@ -79,7 +79,7 @@ export default function TransferDashboard({ initialDestination, initialSource, i
       fetchTransfers();
       setSuccessBanner(
         autoApprove
-          ? `⚡ Stock transferred & emergency restock completed for ${destPHC}! Shortage mitigated.`
+          ? `⚡ Stock transferred & emergency restock completed for ${getFacilityName(destPHC)}! Shortage mitigated.`
           : `✓ Transfer request queued for approval.`
       );
       if (onTransferSuccess) onTransferSuccess();
@@ -136,7 +136,7 @@ export default function TransferDashboard({ initialDestination, initialSource, i
               list="donor-phc-options"
               value={sourcePHC}
               onChange={(e) => setSourcePHC(e.target.value)}
-              placeholder="e.g. DH-RAN-01, District Hospital"
+              placeholder="e.g. Ranchi District Civil Hospital"
               className="w-full font-semibold bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
               required
             />
@@ -156,7 +156,7 @@ export default function TransferDashboard({ initialDestination, initialSource, i
               list="dest-phc-options"
               value={destPHC}
               onChange={(e) => setDestPHC(e.target.value)}
-              placeholder="e.g. PHC-RAN-03, Namkum PHC"
+              placeholder="e.g. Namkum PHC"
               className="w-full font-semibold bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
               required
             />
@@ -171,31 +171,24 @@ export default function TransferDashboard({ initialDestination, initialSource, i
 
           <div>
             <label className="font-semibold text-slate-600 block mb-1">Medicine & Quantity</label>
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="text"
-                list="transfer-med-options"
+            <div className="grid grid-cols-3 gap-2">
+              <select
                 value={medicineId}
                 onChange={(e) => setMedicineId(e.target.value)}
-                placeholder="e.g. MED-003, ORS"
-                className="font-semibold bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
+                className="col-span-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
                 required
-              />
-              <datalist id="transfer-med-options">
-                <option value="MED-001">Paracetamol 500mg</option>
-                <option value="MED-002">Amoxicillin 250mg</option>
-                <option value="MED-003">ORS Sachets (Diarrheal / Cholera)</option>
-                <option value="MED-004">Insulin Glargine (Cold-Chain)</option>
-                <option value="MED-005">Anti-Rabies Vaccine (Cold-Chain)</option>
-                <option value="MED-006">Azithromycin 500mg</option>
-                <option value="MED-007">Cetirizine 10mg</option>
-                <option value="MED-008">Rotavirus Vaccine</option>
-              </datalist>
+              >
+                {ALL_MEDICINES.map((med) => (
+                  <option key={med.id} value={med.id}>
+                    {med.name}
+                  </option>
+                ))}
+              </select>
               <input
                 type="number"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                className="font-semibold bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-800 outline-none"
+                className="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-800 outline-none"
                 placeholder="Qty"
                 required
               />
@@ -291,11 +284,11 @@ export default function TransferDashboard({ initialDestination, initialSource, i
                   </div>
 
                   <div className="flex items-center space-x-2 text-slate-600 font-semibold">
-                    <span className="text-slate-800">{t.source_phc_id}</span>
+                    <span className="text-slate-800">{getFacilityName(t.source_phc_id)}</span>
                     <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="text-slate-800">{t.destination_phc_id}</span>
+                    <span className="text-slate-800">{getFacilityName(t.destination_phc_id)}</span>
                     <span className="text-slate-400">|</span>
-                    <span className="text-emerald-700 font-bold">{t.quantity} units ({t.medicine_id})</span>
+                    <span className="text-emerald-700 font-bold">{t.quantity} units &bull; {getMedicineName(t.medicine_id)}</span>
                   </div>
                 </div>
 

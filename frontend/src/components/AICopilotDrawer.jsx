@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
+import { getFacilityName } from '../context/AuthContext';
 import { Bot, X, Send, Sparkles, FileText, AlertTriangle } from 'lucide-react';
 
 export default function AICopilotDrawer({ isOpen, onClose, districtId = 'DIST-JH-01' }) {
@@ -96,7 +97,7 @@ export default function AICopilotDrawer({ isOpen, onClose, districtId = 'DIST-JH
           ...prev,
           {
             sender: 'bot',
-            text: `✔ Transfer ${transferId} Authorized & Queued! Route: ${actionCard.source_name || actionCard.source_phc_id} ➔ ${actionCard.destination_name || actionCard.destination_phc_id} (${actionCard.quantity} units, Mode: ${modeLabel}, ETA: ${actionCard.eta_mins || 20} mins). Status: PENDING logistics escrow.`
+            text: `✔ Transfer ${transferId} Authorized & Queued! Route: ${actionCard.source_name || getFacilityName(actionCard.source_phc_id)} ➔ ${actionCard.destination_name || getFacilityName(actionCard.destination_phc_id)} (${actionCard.quantity} units, Mode: ${modeLabel}, ETA: ${actionCard.eta_mins || 20} mins). Status: PENDING logistics escrow.`
           }
         ]);
       } else if (actionCard.card_type === 'COLD_CHAIN_ALERT') {
@@ -129,8 +130,8 @@ export default function AICopilotDrawer({ isOpen, onClose, districtId = 'DIST-JH
               recipient_role: 'COMMUNITY_HEALTH_OFFICER',
               channel: 'WHATSAPP',
               type: 'IDSP_EPIDEMIC_SURGE',
-              message_hi: `🚨 IDSP अलर्ट: ${actionCard.phc_id} में आपातकालीन ओआरएस बफर तैयार करें।`,
-              message_en: `🚨 IDSP Alert: Pre-position 500 sachets ORS buffer at ${actionCard.phc_id}.`
+              message_hi: `🚨 IDSP अलर्ट: ${actionCard.phc_name || getFacilityName(actionCard.phc_id)} में आपातकालीन ओआरएस बफर तैयार करें।`,
+              message_en: `🚨 IDSP Alert: Pre-position 500 sachets ORS buffer at ${actionCard.phc_name || getFacilityName(actionCard.phc_id)}.`
             })
           });
         } catch (e) {
@@ -140,7 +141,7 @@ export default function AICopilotDrawer({ isOpen, onClose, districtId = 'DIST-JH
           ...prev,
           {
             sender: 'bot',
-            text: `✔ IDSP Outbreak Advisory broadcasted to ${actionCard.phc_name || actionCard.phc_id || 'PHC'} Medical Officer via WhatsApp!`
+            text: `✔ IDSP Outbreak Advisory broadcasted to ${actionCard.phc_name || getFacilityName(actionCard.phc_id) || 'PHC'} Medical Officer via WhatsApp!`
           }
         ]);
       }
@@ -242,7 +243,7 @@ export default function AICopilotDrawer({ isOpen, onClose, districtId = 'DIST-JH
 
                 {m.action_card.card_type === 'COLD_CHAIN_ALERT' && (
                   <div className="text-slate-600 space-y-1">
-                    <p><strong>Unit:</strong> {m.action_card.unit_id} ({m.action_card.phc_id})</p>
+                    <p><strong>Unit:</strong> {m.action_card.unit_id} ({m.action_card.phc_name || getFacilityName(m.action_card.phc_id)})</p>
                     <p><strong>Temperature:</strong> <span className="font-bold text-rose-600">{m.action_card.temperature}°C</span></p>
                     <button
                       onClick={() => handleExecuteAction(m.action_card, i)}
@@ -256,7 +257,7 @@ export default function AICopilotDrawer({ isOpen, onClose, districtId = 'DIST-JH
                 {m.action_card.card_type === 'EPIDEMIC_SURGE_ALERT' && (
                   <div className="text-slate-600 space-y-1">
                     <p><strong>Pathogen / Cluster:</strong> {m.action_card.outbreak_type}</p>
-                    <p><strong>Location:</strong> {m.action_card.phc_id}</p>
+                    <p><strong>Location:</strong> {m.action_card.phc_name || getFacilityName(m.action_card.phc_id)}</p>
                     <button
                       onClick={() => handleExecuteAction(m.action_card, i)}
                       className="w-full mt-2 py-2 bg-rose-600 hover:bg-rose-700 text-white font-extrabold rounded-lg text-xs transition shadow-sm"

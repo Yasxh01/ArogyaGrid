@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
 import { Users, UserCheck, Clock, PlusCircle } from 'lucide-react';
+import { getFacilityName } from '../context/AuthContext';
 
 export default function StaffRoster({ selectedPHC }) {
   const [staff, setStaff] = useState([]);
@@ -54,7 +55,7 @@ export default function StaffRoster({ selectedPHC }) {
         </div>
         <div>
           <h3 className="font-bold text-slate-900 text-sm sm:text-base">Medical Personnel Attendance</h3>
-          <p className="text-xs text-slate-500">Active Duty Roster for {selectedPHC || 'PHC-RAN-01'}</p>
+          <p className="text-xs text-slate-500">Active Duty Roster for {getFacilityName(selectedPHC || 'PHC-RAN-01')}</p>
         </div>
       </div>
 

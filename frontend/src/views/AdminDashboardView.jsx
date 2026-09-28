@@ -159,7 +159,7 @@ export default function AdminDashboardView({ activeTab }) {
             </button>
 
             <h3 className="font-black text-lg text-slate-900 mb-1">Add Custom Medicine to Catalog</h3>
-            <p className="text-xs text-slate-500 mb-4 font-medium">This drug will immediately be provisioned to all PHC inventory records.</p>
+            <p className="text-xs text-slate-500 mb-4 font-medium">This medicine will be added to the catalog across all health centres.</p>
 
             <form onSubmit={handleAddMedicine} className="space-y-3 text-xs">
               <div>
@@ -207,7 +207,7 @@ export default function AdminDashboardView({ activeTab }) {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Min Threshold</label>
+                  <label className="font-bold text-slate-700 block mb-1">Minimum Stock</label>
                   <input
                     type="number"
                     value={minStock}
@@ -218,7 +218,7 @@ export default function AdminDashboardView({ activeTab }) {
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Daily Base Consumption</label>
+                  <label className="font-bold text-slate-700 block mb-1">Daily Usage (Average)</label>
                   <input
                     type="number"
                     value={dailyBurn}
@@ -234,7 +234,7 @@ export default function AdminDashboardView({ activeTab }) {
                 disabled={submitting}
                 className="w-full mt-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition shadow-md disabled:opacity-50"
               >
-                {submitting ? 'Creating...' : 'Provision Medicine to All PHCs'}
+                {submitting ? 'Adding...' : 'Add Medicine to All Health Centres'}
               </button>
             </form>
           </div>

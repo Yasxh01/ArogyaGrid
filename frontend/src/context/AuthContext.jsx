@@ -64,6 +64,37 @@ export const ALL_FACILITIES = [
   { id: 'HWC-BLR-01', name: 'Nelamangala Ayushman Arogya Mandir', district_id: 'DIST-KA-01', facility_type: 'SUB_CENTRE_HWC' }
 ];
 
+export function getFacilityName(id) {
+  if (!id) return '';
+  const fac = ALL_FACILITIES.find(f => f.id === id);
+  return fac ? fac.name : id;
+}
+
+export function getDistrictName(id, withState = true) {
+  if (!id) return '';
+  const dist = ALL_DISTRICTS.find(d => d.id === id);
+  if (!dist) return id;
+  return withState ? `${dist.name}, ${dist.state}` : dist.name;
+}
+
+export const ALL_MEDICINES = [
+  { id: 'MED-001', name: 'Paracetamol 500mg Tablets' },
+  { id: 'MED-002', name: 'Amoxicillin 250mg Capsules' },
+  { id: 'MED-003', name: 'Oral Rehydration Salts (ORS)' },
+  { id: 'MED-004', name: 'Insulin Glargine 100IU/ml' },
+  { id: 'MED-005', name: 'Anti-Rabies Vaccine (ARV)' },
+  { id: 'MED-006', name: 'Azithromycin 500mg Tablets' },
+  { id: 'MED-007', name: 'Cetirizine 10mg Tablets' },
+  { id: 'MED-008', name: 'Rotavirus Oral Vaccine' }
+];
+
+export function getMedicineName(id) {
+  if (!id) return '';
+  // If it already looks like a medicine name (e.g. contains words rather than just MED-00X)
+  const med = ALL_MEDICINES.find(m => m.id === id || m.name.toLowerCase() === id.toLowerCase());
+  return med ? med.name : id;
+}
+
 export const PRESET_USERS = [
   { 
     role: 'ADMIN', 
@@ -71,8 +102,8 @@ export const PRESET_USERS = [
     email: 'admin@arogyagrid.gov.in', 
     label: 'National Admin', 
     badge: 'National Portal',
-    scope: 'All India PHC Formulary & National Grid',
-    description: 'Manage national medicine catalog, inter-district resource distribution, and system-wide audits'
+    scope: 'All India Formulary & National Grid',
+    description: 'Supply distribution & system audits'
   },
   { 
     role: 'DISTRICT_OFFICER', 
@@ -81,8 +112,8 @@ export const PRESET_USERS = [
     district_id: 'DIST-JH-01',
     label: 'District Health Officer', 
     badge: 'Ranchi District',
-    scope: 'District Command Map & Logistics Escrow',
-    description: 'Monitor PHC health status across Ranchi, approve inter-PHC drug transfers'
+    scope: 'Command Map & Logistics Escrow',
+    description: 'Real-time PHC tracking & transfer approvals'
   },
   { 
     role: 'DOCTOR', 
@@ -92,8 +123,8 @@ export const PRESET_USERS = [
     phc_id: 'PHC-RAN-01', 
     label: 'Medical Officer / Doctor', 
     badge: 'Sadar PHC (Clinical)',
-    scope: 'PHC Beds & Medical Staff Console',
-    description: 'Admit/discharge ICU & Oxygen patients, log medical officer shift attendance'
+    scope: 'Ward Beds & Clinical Console',
+    description: 'ICU/Oxygen bed triage & duty shifts'
   },
   { 
     role: 'PHC_STAFF', 
@@ -103,8 +134,8 @@ export const PRESET_USERS = [
     phc_id: 'PHC-RAN-01', 
     label: 'PHC Staff / Worker', 
     badge: 'Sadar PHC Kiosk',
-    scope: 'Daily Dispensing & Hindi Voice Intake',
-    description: 'Frontline touch kiosk for patient dispensing, voice intake, and offline sync'
+    scope: 'Frontline Kiosk & Voice Intake',
+    description: 'Touch dispensing & offline sync'
   }
 ];
 

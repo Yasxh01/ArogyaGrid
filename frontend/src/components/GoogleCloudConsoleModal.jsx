@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
+import { getFacilityName, getMedicineName } from '../context/AuthContext';
 import { 
   Cloud, 
   Database, 
@@ -159,13 +160,13 @@ CLUSTER BY phc_id, medicine_id;`;
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="font-extrabold text-lg text-slate-900">Google Cloud Vertex AI & BigQuery Console</h3>
+                <h3 className="font-extrabold text-lg text-slate-900">AI Demand & Supply Intelligence Console</h3>
                 <span className="px-2 py-0.5 text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
-                  asia-south1
+                  India-South
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                Code for Communities 2.0 &bull; Live Vertex AI Serving & BigQuery Streaming Telemetry
+                Regional Medicine Forecasting & Logistics Telemetry
               </p>
             </div>
           </div>
@@ -215,7 +216,7 @@ CLUSTER BY phc_id, medicine_id;`;
                       inferenceMode === 'single' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-900 hover:bg-indigo-100'
                     }`}
                   >
-                    🩺 Facility Tier Inference
+                    🏥 Single Facility Forecast
                   </button>
                   <button
                     onClick={() => { setInferenceMode('batch'); if (!batchResult) runBatchPredict(); }}
@@ -227,10 +228,6 @@ CLUSTER BY phc_id, medicine_id;`;
                     <span className="text-[10px] bg-amber-400 text-slate-900 px-1.5 py-0.2 rounded-full font-black">50K+ SKUs</span>
                   </button>
                 </div>
-
-                <span className="text-[11px] font-semibold text-indigo-700 hidden sm:inline">
-                  Google Cloud Vertex AI &bull; {scaleTier === 'warehouse' ? '1,000,000+ Scale' : TIER_CONFIG[scaleTier].label}
-                </span>
               </div>
 
               {inferenceMode === 'single' ? (
@@ -239,9 +236,6 @@ CLUSTER BY phc_id, medicine_id;`;
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-slate-800">Facility Scale & Data Size</span>
-                      <span className="text-[10px] text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-full">
-                        RF Regressor
-                      </span>
                     </div>
 
                     {/* Scale Tier Selector */}
@@ -428,13 +422,6 @@ CLUSTER BY phc_id, medicine_id;`;
                           ))}
                         </div>
                       </div>
-
-                      {/* Vertex Endpoint Metadata Footer */}
-                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-[10px] font-mono text-slate-500 flex flex-wrap items-center justify-between gap-2">
-                        <span><strong>Endpoint:</strong> {vertexPrediction.vertex_ai?.endpoint}</span>
-                        <span><strong>Serving:</strong> {vertexPrediction.vertex_ai?.serving_environment}</span>
-                      </div>
-
                     </div>
                   ) : null}
                 </div>
@@ -548,8 +535,7 @@ CLUSTER BY phc_id, medicine_id;`;
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1 text-[11px] text-slate-400 font-mono">
-                      <span><strong>Serving Engine:</strong> projects/arogyagrid-national/locations/asia-south1/endpoints/arogyagrid-dts-batch</span>
+                    <div className="flex items-center justify-end pt-1">
                       <button
                         onClick={() => runBatchPredict()}
                         disabled={batchPredicting}
@@ -610,7 +596,7 @@ CLUSTER BY phc_id, medicine_id;`;
                     <thead className="bg-slate-50 text-[10px] font-extrabold uppercase text-slate-400 sticky top-0">
                       <tr>
                         <th className="px-3 py-2">Event ID</th>
-                        <th className="px-3 py-2">PHC</th>
+                        <th className="px-3 py-2">Health Facility</th>
                         <th className="px-3 py-2">Medicine</th>
                         <th className="px-3 py-2">Qty</th>
                         <th className="px-3 py-2">Type</th>
@@ -622,8 +608,8 @@ CLUSTER BY phc_id, medicine_id;`;
                         bqData.rows.map((r, i) => (
                           <tr key={i} className="hover:bg-slate-50/60 font-mono text-[11px]">
                             <td className="px-3 py-2 text-blue-600 font-bold">{r.event_id || r.flight_id}</td>
-                            <td className="px-3 py-2 font-sans font-semibold text-slate-800">{r.phc_id || r.source_phc}</td>
-                            <td className="px-3 py-2 font-sans text-slate-600">{r.medicine_id || r.transport_mode}</td>
+                            <td className="px-3 py-2 font-sans font-semibold text-slate-800">{getFacilityName(r.phc_id || r.source_phc)}</td>
+                            <td className="px-3 py-2 font-sans text-slate-600">{getMedicineName(r.medicine_id) || r.transport_mode}</td>
                             <td className="px-3 py-2 font-bold text-slate-900">{r.quantity || r.payload_kg}</td>
                             <td className="px-3 py-2">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${

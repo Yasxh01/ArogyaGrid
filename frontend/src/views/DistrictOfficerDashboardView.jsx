@@ -14,7 +14,6 @@ import { useSocket } from '../context/SocketContext';
 import { apiRequest } from '../api/client';
 import { 
   Map, 
-  ShieldCheck, 
   Smartphone, 
   Flame, 
   ArrowRight, 
@@ -200,12 +199,6 @@ export default function DistrictOfficerDashboardView({ activeTab, setActiveTab, 
             <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
             <span>ASHA Alerts</span>
           </button>
-
-          {/* DPDP Privacy Badge */}
-          <span className="hidden md:inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200/70 shrink-0">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 mr-1" />
-            <span>DPDP Protected</span>
-          </span>
 
           {/* Return to Map shortcut if on another tab */}
           {effectiveTab !== 'map' && effectiveTab !== 'dashboard' && (

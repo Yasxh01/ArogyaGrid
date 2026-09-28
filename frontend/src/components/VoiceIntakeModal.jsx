@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { apiRequest } from '../api/client';
+import { getFacilityName } from '../context/AuthContext';
 import { 
   Mic, 
   MicOff, 
@@ -372,7 +373,7 @@ export default function VoiceIntakeModal({ isOpen, onClose, phcId = 'PHC-RAN-01'
           </div>
           <h3 className="font-extrabold text-xl text-slate-900">Google Cloud Speech & Translation</h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Vernacular Voice Intake &bull; Cloud Speech-to-Text v2 &bull; Facility: <span className="font-bold text-slate-700">{phcId}</span>
+            Vernacular Voice Intake &bull; Cloud Speech-to-Text v2 &bull; Facility: <span className="font-bold text-slate-700">{getFacilityName(phcId)}</span>
           </p>
         </div>
 
@@ -499,7 +500,7 @@ export default function VoiceIntakeModal({ isOpen, onClose, phcId = 'PHC-RAN-01'
         {translation && (
           <div className="mb-3 p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs">
             <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">
-              🌐 Google Cloud Translation (English):
+              🌐 English Translation:
             </span>
             <span className="text-slate-800 font-medium">{translation}</span>
           </div>
@@ -513,12 +514,12 @@ export default function VoiceIntakeModal({ isOpen, onClose, phcId = 'PHC-RAN-01'
           {processing ? (
             <>
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              <span>Processing with Vernacular NLP...</span>
+              <span>Extracting Details from Voice Note...</span>
             </>
           ) : (
             <>
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Parse & Extract Structured Telemetry</span>
+              <span>Extract Entry Details</span>
             </>
           )}
         </button>
@@ -527,9 +528,9 @@ export default function VoiceIntakeModal({ isOpen, onClose, phcId = 'PHC-RAN-01'
         {result && (
           <div className="p-4 rounded-2xl bg-indigo-50/90 border border-indigo-200 mb-2 text-xs space-y-2 animate-in fade-in zoom-in-95 duration-150">
             <div className="font-bold text-indigo-900 flex items-center justify-between">
-              <span className="text-xs font-black">Structured Telemetry Detected:</span>
+              <span className="text-xs font-black">Extracted Details:</span>
               <span className="text-[10px] bg-indigo-200 text-indigo-900 font-black px-2.5 py-0.5 rounded-full">
-                {result.source || 'NLP Engine'}
+                {result.source === 'GEMINI_FLASH_API' ? 'AI Verified' : result.source ? result.source.replace(/_/g, ' ') : 'Auto-Detected'}
               </span>
             </div>
             
@@ -543,7 +544,7 @@ export default function VoiceIntakeModal({ isOpen, onClose, phcId = 'PHC-RAN-01'
                     ? 'bg-sky-100 text-sky-800' 
                     : 'bg-amber-100 text-amber-800'
                 }`}>
-                  {result.type}
+                  {result.type === 'STOCK_OUT' ? 'Stock Out (Dispensed)' : result.type === 'STOCK_IN' ? 'Stock In (Received)' : result.type === 'BED_UPDATE' ? 'Bed Status Update' : (result.type?.replace(/_/g, ' ') || 'Update')}
                 </span>
               </div>
               
@@ -570,17 +571,21 @@ export default function VoiceIntakeModal({ isOpen, onClose, phcId = 'PHC-RAN-01'
 
               {result.detected_intent && (
                 <div className="text-[11px] text-slate-500 italic pt-1 border-t border-slate-100">
-                  {result.detected_intent}
+                  {result.detected_intent
+                    .replace(/STOCK_OUT/gi, 'Stock Out')
+                    .replace(/STOCK_IN/gi, 'Stock In')
+                    .replace(/distributed\/stock out/gi, 'Distributed to patients (Stock Out)')
+                    .replace(/_/g, ' ')}
                 </div>
               )}
             </div>
 
             <button
               onClick={applyParsedTransaction}
-              className="w-full mt-2 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs transition shadow-md flex items-center justify-center space-x-1.5"
+              className="w-full mt-2 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs transition shadow-md flex items-center justify-center space-x-1.5 cursor-pointer"
             >
               <Check className="w-4 h-4 stroke-[3]" />
-              <span>Confirm & Save to Ledger</span>
+              <span>Confirm & Save Entry</span>
             </button>
           </div>
         )}

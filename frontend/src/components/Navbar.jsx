@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, getDistrictName } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { 
   Activity, 
@@ -30,7 +30,7 @@ export default function Navbar({
   function getRoleBadge() {
     switch (user?.role) {
       case 'ADMIN':
-        return { label: 'National Admin', icon: '🇮🇳', color: 'bg-purple-50 text-purple-800 border-purple-200' };
+        return { label: 'National Admin', icon: null, color: 'bg-purple-50 text-purple-800 border-purple-200' };
       case 'DOCTOR':
         return { label: 'Medical Officer', icon: '🩺', color: 'bg-sky-50 text-sky-800 border-sky-200' };
       case 'DISTRICT_OFFICER':
@@ -76,7 +76,7 @@ export default function Navbar({
                   
                   {/* Role Pill */}
                   <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 text-xs font-black uppercase tracking-wider rounded-lg border shadow-2xs ${roleInfo.color}`}>
-                    <span>{roleInfo.icon}</span>
+                    {roleInfo.icon && <span>{roleInfo.icon}</span>}
                     <span>{roleInfo.label}</span>
                   </span>
                 </div>
@@ -85,7 +85,7 @@ export default function Navbar({
                   <span className="hidden sm:inline">National Health Logistics & Resilient AI Network</span>
                   {user?.district_id && (
                     <span className="hidden md:inline-flex items-center text-slate-600 font-bold bg-slate-100 px-2 py-0.2 rounded-md border border-slate-200/70">
-                      📍 {user.district_id}
+                      📍 {getDistrictName(user.district_id)}
                     </span>
                   )}
                 </div>
@@ -123,15 +123,15 @@ export default function Navbar({
                 </button>
               )}
 
-              {/* Google Cloud & BigQuery Telemetry Modal Button */}
+              {/* Demand & Supply Intelligence Modal Button */}
               <button
                 onClick={onOpenCloud}
                 className="flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-blue-700 border border-blue-200/90 shadow-2xs transition cursor-pointer"
-                title="Inspect Google Cloud Vertex AI & BigQuery Telemetry"
+                title="Inspect AI Demand & Supply Intelligence Console"
               >
                 <Cloud className="w-4 h-4 text-blue-600 shrink-0" />
-                <span className="hidden sm:inline font-black">Google Cloud</span>
-                <span className="hidden xl:inline text-blue-500 font-semibold">& BigQuery</span>
+                <span className="hidden sm:inline font-black">Demand & Supply</span>
+                <span className="hidden xl:inline text-blue-500 font-semibold">Intelligence</span>
               </button>
 
               {/* User Profile Capsule */}
@@ -180,7 +180,7 @@ export default function Navbar({
             </h3>
             
             <p className="text-xs text-slate-500 font-medium mb-6 leading-relaxed">
-              Are you sure you want to end your <span className="font-bold text-slate-700">{roleInfo.label}</span> session? You will be returned to the main landing portal.
+              Are you sure you want to end your <span className="font-bold text-slate-700">{roleInfo.label}</span> session?
             </p>
 
             <div className="flex items-center space-x-3">
@@ -194,7 +194,6 @@ export default function Navbar({
                 onClick={() => {
                   setShowLogoutConfirm(false);
                   logout();
-                  if (onGoToLanding) onGoToLanding();
                 }}
                 className="flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-white bg-rose-600 hover:bg-rose-700 shadow-md shadow-rose-600/25 transition cursor-pointer flex items-center justify-center space-x-1.5"
               >

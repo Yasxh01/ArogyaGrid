@@ -3,7 +3,7 @@ import { apiRequest } from '../api/client';
 import { HeartPulse, Bed, UserPlus, UserMinus, PlusCircle, AlertTriangle, ShieldCheck, Clock, Users, Pill } from 'lucide-react';
 import StaffRoster from '../components/StaffRoster';
 import StockManager from '../components/StockManager';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, getFacilityName } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 
 export default function DoctorDashboardView({ activeTab }) {
@@ -13,6 +13,7 @@ export default function DoctorDashboardView({ activeTab }) {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState(null);
   const phcId = user?.phc_id || 'PHC-RAN-01';
+  const facilityName = getFacilityName(phcId);
 
   useEffect(() => {
     fetchBeds();
@@ -79,7 +80,7 @@ export default function DoctorDashboardView({ activeTab }) {
             </div>
             <div>
               <h2 className="font-black text-lg text-slate-900">Medical & Nursing Duty Roster</h2>
-              <p className="text-xs text-slate-500 font-medium">Facility: {phcId} &bull; Check-in active shifts and duty verification</p>
+              <p className="text-xs text-slate-500 font-medium">Facility: {facilityName} &bull; Check-in active shifts and duty verification</p>
             </div>
           </div>
           <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -101,7 +102,7 @@ export default function DoctorDashboardView({ activeTab }) {
             </div>
             <div>
               <h2 className="font-black text-lg text-slate-900">Clinical Emergency Drug Reserves</h2>
-              <p className="text-xs text-slate-500 font-medium">Facility: {phcId} &bull; Emergency life-saving stocks and reorder levels</p>
+              <p className="text-xs text-slate-500 font-medium">Facility: {facilityName} &bull; Emergency life-saving stocks and reorder levels</p>
             </div>
           </div>
         </div>
@@ -127,7 +128,7 @@ export default function DoctorDashboardView({ activeTab }) {
                 👤 {user?.name || 'Dr. Priya Sharma'}
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-medium">Facility: {phcId} &bull; Logged in as <span className="font-semibold text-slate-700">{user?.email || 'doctor.ranchi@arogyagrid.gov.in'}</span></p>
+            <p className="text-xs text-slate-500 font-medium">Facility: {facilityName} &bull; Logged in as <span className="font-semibold text-slate-700">{user?.email || 'doctor.ranchi@arogyagrid.gov.in'}</span></p>
           </div>
         </div>
         <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-auto">
@@ -148,9 +149,9 @@ export default function DoctorDashboardView({ activeTab }) {
         <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
           <div>
             <h3 className="font-extrabold text-base text-slate-900 flex items-center">
-              <Bed className="w-5 h-5 mr-2 text-indigo-600" /> Dynamic Patient Bed Admitting & Discharge Console
+              <Bed className="w-5 h-5 mr-2 text-indigo-600" /> Patient Bed Management
             </h3>
-            <p className="text-xs text-slate-500 font-medium">Admit patients in real time to update district triage gauges and emergency escalation.</p>
+            <p className="text-xs text-slate-500 font-medium">Admit or discharge patients to track real-time bed availability.</p>
           </div>
         </div>
 

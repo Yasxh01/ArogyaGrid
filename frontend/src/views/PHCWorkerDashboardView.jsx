@@ -5,12 +5,13 @@ import ChallanScannerModal from '../components/ChallanScannerModal';
 import VoiceIntakeModal from '../components/VoiceIntakeModal';
 import { Pill, Mic, WifiOff, Bed, Camera } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, getFacilityName } from '../context/AuthContext';
 
 export default function PHCWorkerDashboardView({ activeTab, onOpenVoice, pendingCount, onSyncPending }) {
   const { isOnline } = useSocket();
   const { user } = useAuth();
   const phcId = user?.phc_id || 'PHC-RAN-01';
+  const facilityName = getFacilityName(phcId);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isVoiceOpen, setIsVoiceOpen] = useState(false);
 
@@ -23,8 +24,8 @@ export default function PHCWorkerDashboardView({ activeTab, onOpenVoice, pending
               <Pill className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="font-black text-lg text-slate-900">Frontline Stock Dispense & Inventory</h2>
-              <p className="text-xs text-slate-500 font-medium">Assigned Facility: {phcId} &bull; Log daily medicine consumption & patient dispensing</p>
+              <h2 className="font-black text-lg text-slate-900">Stock Dispense & Inventory</h2>
+              <p className="text-xs text-slate-500 font-medium">Assigned Facility: {facilityName}</p>
             </div>
           </div>
         </div>
@@ -43,7 +44,7 @@ export default function PHCWorkerDashboardView({ activeTab, onOpenVoice, pending
             </div>
             <div>
               <h2 className="font-black text-lg text-slate-900">PHC Bed Capacity & Occupancy Status</h2>
-              <p className="text-xs text-slate-500 font-medium">Assigned Facility: {phcId} &bull; Monitor real-time ward availability</p>
+              <p className="text-xs text-slate-500 font-medium">Assigned Facility: {facilityName} &bull; Monitor real-time ward availability</p>
             </div>
           </div>
         </div>
@@ -61,10 +62,10 @@ export default function PHCWorkerDashboardView({ activeTab, onOpenVoice, pending
         <div>
           <div className="flex items-center space-x-2 mb-2 flex-wrap gap-y-1">
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-sm inline-block">
-              🏥 {phcId} Frontline Touch Kiosk
+              🏥 {facilityName} Touch Kiosk
             </span>
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-900/40 text-emerald-100 border border-emerald-400/30">
-              👤 {user?.name || 'Frontline Staff'}
+              👤 {user?.name || 'Staff Member'}
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-black">Daily Medicine & Patient Intake</h2>

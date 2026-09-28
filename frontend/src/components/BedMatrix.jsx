@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
 import { Bed, AlertTriangle, ShieldCheck, HeartPulse, Building2 } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
+import { getFacilityName } from '../context/AuthContext';
 
 export default function BedMatrix({ selectedPHC: initialPHC, districtId = 'DIST-JH-01' }) {
   const { on, off } = useSocket();
@@ -79,7 +80,7 @@ export default function BedMatrix({ selectedPHC: initialPHC, districtId = 'DIST-
           <div>
             <h3 className="font-bold text-slate-900 text-sm sm:text-base">Hospital Bed Availability</h3>
             <p className="text-xs text-slate-500">
-              Live beds for <span className="font-bold text-slate-800">{activeFacilityObj ? activeFacilityObj.name : currentPHC}</span> ({currentPHC})
+              Live beds for <span className="font-bold text-slate-800">{activeFacilityObj ? activeFacilityObj.name : getFacilityName(currentPHC)}</span>
             </p>
           </div>
         </div>
@@ -95,11 +96,11 @@ export default function BedMatrix({ selectedPHC: initialPHC, districtId = 'DIST-
             {facilities.length > 0 ? (
               facilities.map(f => (
                 <option key={f.id} value={f.id}>
-                  {f.id} ({f.name})
+                  {f.name}
                 </option>
               ))
             ) : (
-              <option value={currentPHC}>{currentPHC || 'Loading facilities...'}</option>
+              <option value={currentPHC}>{getFacilityName(currentPHC) || 'Loading facilities...'}</option>
             )}
           </select>
         </div>

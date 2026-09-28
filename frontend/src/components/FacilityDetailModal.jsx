@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
-import { ALL_FACILITIES } from '../context/AuthContext';
+import { ALL_FACILITIES, getFacilityName, getMedicineName } from '../context/AuthContext';
 import { 
   Building2, 
   X, 
@@ -99,15 +99,15 @@ export default function FacilityDetailModal({ isOpen, onClose, phcId, onNavigate
             <div>
               <div className="flex items-center space-x-2">
                 <h3 className="font-extrabold text-slate-900 text-base sm:text-lg">
-                  {facilityInfo?.name || phcId}
+                  {facilityInfo?.name || getFacilityName(phcId)}
                 </h3>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-teal-50 text-teal-800 border border-teal-200">
-                  {phcId}
+                  {facilityInfo?.type || 'PHC'}
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium flex items-center mt-0.5">
                 <MapPin className="w-3.5 h-3.5 mr-1 text-slate-400" />
-                <span>{facilityInfo?.type || 'Healthcare Facility'} &bull; Public Grid Verified</span>
+                <span>Public Grid Verified &bull; Real-time Telemetry Active</span>
               </p>
             </div>
           </div>
@@ -250,7 +250,7 @@ export default function FacilityDetailModal({ isOpen, onClose, phcId, onNavigate
                       <div className="space-y-1 pl-6">
                         {stockList.filter(s => s.quantity < 50).map(s => (
                           <div key={s.id} className="flex items-center justify-between text-rose-800">
-                            <span>&bull; {s.medicine_name || s.medicine_id}</span>
+                            <span>&bull; {s.medicine_name || getMedicineName(s.medicine_id)}</span>
                             <span className="font-extrabold">{s.quantity} units left</span>
                           </div>
                         ))}
@@ -280,7 +280,7 @@ export default function FacilityDetailModal({ isOpen, onClose, phcId, onNavigate
                           return (
                             <tr key={s.id} className="hover:bg-slate-50/60">
                               <td className="py-2 px-3 font-semibold text-slate-900">
-                                {s.medicine_name || s.medicine_id}
+                                {s.medicine_name || getMedicineName(s.medicine_id)}
                               </td>
                               <td className="py-2 px-3 font-extrabold text-slate-800">
                                 {s.quantity} {s.unit || 'units'}

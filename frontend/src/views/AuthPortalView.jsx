@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAuth, PRESET_USERS, ALL_DISTRICTS, ALL_FACILITIES } from '../context/AuthContext';
 import { 
   ShieldCheck, 
-  Truck, 
   Mic, 
   ThermometerSnowflake, 
   Sparkles, 
@@ -27,6 +26,7 @@ export default function AuthPortalView() {
   const [activeTab, setActiveTab] = useState('presets'); // 'presets' | 'login' | 'register'
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [enteringRole, setEnteringRole] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
 
   // Manual Login Form
@@ -53,6 +53,7 @@ export default function AuthPortalView() {
   const availablePHCs = ALL_FACILITIES.filter(f => !regDistrict || f.district_id === regDistrict);
 
   async function handlePresetLogin(preset) {
+    setEnteringRole(preset.role);
     setLoading(true);
     setError(null);
     try {
@@ -60,6 +61,7 @@ export default function AuthPortalView() {
     } catch (err) {
       setError(err.message);
       setLoading(false);
+      setEnteringRole(null);
     }
   }
 
@@ -121,9 +123,6 @@ export default function AuthPortalView() {
                   <span className="font-black text-2xl tracking-tight text-white">
                     Arogya<span className="text-emerald-400">Grid</span>
                   </span>
-                  <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-full">
-                    PUBLIC HEALTH
-                  </span>
                 </div>
                 <p className="text-[11px] text-emerald-200/70 font-medium">
                   National Supply Chain & Telemetry Grid
@@ -136,16 +135,15 @@ export default function AuthPortalView() {
           <div className="relative z-10 py-6 sm:py-8 space-y-5">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-emerald-300 text-xs font-semibold">
               <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Resilient Healthcare for India</span>
+              <span>National Primary Health Logistics Platform</span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-snug">
-              Eliminating Medicine Stockouts Across 1,50,000+ PHCs
+              Preventing Medicine Shortages Across 1,50,000+ PHCs
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
-              ArogyaGrid bridges rural physical paper registers with advanced Google Cloud intelligence. 
-              Connecting Primary Health Centres with real-time stock availability, vernacular voice intake, and autonomous emergency airways.
+              An intelligent supply network that tracks essential medicines in real time, predicts shortages 7 days in advance, and coordinates fast restocks between nearby health centres.
             </p>
 
             {/* Feature Pills */}
@@ -155,18 +153,8 @@ export default function AuthPortalView() {
                   <ShieldCheck className="w-4 h-4" />
                 </div>
                 <div className="text-xs">
-                  <span className="font-bold text-white block">99.4% Drug Availability</span>
-                  <span className="text-slate-400 text-[11px]">Vertex AI 14-day predictive stockout prevention</span>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3 p-2.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                <div className="w-8 h-8 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-300 shrink-0">
-                  <Truck className="w-4 h-4" />
-                </div>
-                <div className="text-xs">
-                  <span className="font-bold text-white block">14-Min Drone Airway Transit</span>
-                  <span className="text-slate-400 text-[11px]">ICMR BVLOS emergency antivenom escrow</span>
+                  <span className="font-bold text-white block">7-Day Shortage Forecasting</span>
+                  <span className="text-slate-400 text-[11px]">AI flags low stock before shelves run empty using daily consumption data</span>
                 </div>
               </div>
 
@@ -175,8 +163,8 @@ export default function AuthPortalView() {
                   <Mic className="w-4 h-4" />
                 </div>
                 <div className="text-xs">
-                  <span className="font-bold text-white block">Vernacular Voice Telemetry</span>
-                  <span className="text-slate-400 text-[11px]">7 Indian regional languages for frontline ASHA workers</span>
+                  <span className="font-bold text-white block">Voice-Based Medicine Dispensing</span>
+                  <span className="text-slate-400 text-[11px]">Frontline workers speak in 7 Indian regional languages to log patient dispensing</span>
                 </div>
               </div>
 
@@ -185,8 +173,8 @@ export default function AuthPortalView() {
                   <ThermometerSnowflake className="w-4 h-4" />
                 </div>
                 <div className="text-xs">
-                  <span className="font-bold text-white block">IoT Cold-Chain Guardian</span>
-                  <span className="text-slate-400 text-[11px]">2°C–8°C active vaccine thermal monitoring</span>
+                  <span className="font-bold text-white block">Real-Time Vaccine Thermal Alerts</span>
+                  <span className="text-slate-400 text-[11px]">Continuous 2°C–8°C sensor tracking alerts field officers before heatwaves spoil vaccines</span>
                 </div>
               </div>
             </div>
@@ -194,14 +182,9 @@ export default function AuthPortalView() {
           </div>
 
           {/* Bottom Security & Compliance Footer */}
-          <div className="relative z-10 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-400">
-            <div className="flex items-center space-x-1.5">
-              <Shield className="w-3.5 h-3.5 text-emerald-400" />
-              <span>ABDM & DPDP Act 2023 Compliant</span>
-            </div>
-            <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded text-slate-300">
-              Zero-Trust Architecture
-            </span>
+          <div className="relative z-10 pt-4 border-t border-white/10 flex items-center space-x-1.5 text-[11px] text-slate-400">
+            <Shield className="w-3.5 h-3.5 text-emerald-400" />
+            <span>ABDM & DPDP Act 2023 Compliant</span>
           </div>
 
         </div>
@@ -217,7 +200,7 @@ export default function AuthPortalView() {
                 Sign in to your Portal
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-                Select your designated healthcare echelon or enter credentials to access live telemetry.
+                Select a role below for instant demo access, or sign in with your credentials.
               </p>
             </div>
 
@@ -273,45 +256,49 @@ export default function AuthPortalView() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs text-slate-500 font-semibold px-1">
                   <span>SELECT PRESET ROLE FOR DEMO ACCESS</span>
-                  <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">
-                    Instant 1-Click
-                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {PRESET_USERS.map((preset) => (
-                    <div
-                      key={preset.role}
-                      onClick={() => handlePresetLogin(preset)}
-                      className="bg-slate-50 hover:bg-emerald-50/50 rounded-2xl p-4 border border-slate-200/90 hover:border-emerald-500/80 transition-all cursor-pointer flex flex-col justify-between group shadow-xs hover:shadow-md transform hover:-translate-y-0.5"
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-white text-emerald-800 border border-emerald-200 shadow-2xs">
-                            {preset.badge}
-                          </span>
-                          <span className="text-[11px] font-bold text-slate-400 group-hover:text-emerald-700">
-                            {preset.role === 'ADMIN' ? 'National' : preset.role === 'DISTRICT_OFFICER' ? 'District' : preset.role === 'DOCTOR' ? 'Clinical' : 'Frontline'}
-                          </span>
+                  {PRESET_USERS.map((preset) => {
+                    const isCurrentEntering = enteringRole === preset.role;
+
+                    return (
+                      <div
+                        key={preset.role}
+                        onClick={() => !loading && handlePresetLogin(preset)}
+                        className={`bg-slate-50 hover:bg-emerald-50/50 rounded-2xl p-4 border border-slate-200/90 hover:border-emerald-500/80 transition-all cursor-pointer flex flex-col justify-between group shadow-xs hover:shadow-md transform hover:-translate-y-0.5 ${
+                          loading && !isCurrentEntering ? 'opacity-60 pointer-events-none' : ''
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-white text-emerald-800 border border-emerald-200 shadow-2xs">
+                              {preset.badge}
+                            </span>
+                          </div>
+
+                          <h3 className="font-extrabold text-slate-900 text-sm mb-0.5 group-hover:text-emerald-800 transition">
+                            {preset.label}
+                          </h3>
+                          <p className="text-[11px] font-bold text-emerald-600 mb-1">
+                            {preset.scope}
+                          </p>
+                          <p className="text-[11px] text-slate-500 font-medium leading-relaxed line-clamp-2">
+                            {preset.description}
+                          </p>
                         </div>
 
-                        <h3 className="font-extrabold text-slate-900 text-sm mb-0.5 group-hover:text-emerald-800 transition">
-                          {preset.label}
-                        </h3>
-                        <p className="text-[11px] font-bold text-emerald-600 mb-1">
-                          {preset.scope}
-                        </p>
-                        <p className="text-[11px] text-slate-500 font-medium leading-relaxed line-clamp-2">
-                          {preset.description}
-                        </p>
+                        <div className="pt-3 mt-2 border-t border-slate-200/60 flex items-center justify-between text-xs font-bold text-slate-700 group-hover:text-emerald-700">
+                          <span>{isCurrentEntering ? 'Entering...' : 'Enter Dashboard'}</span>
+                          {isCurrentEntering ? (
+                            <span className="w-3.5 h-3.5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></span>
+                          ) : (
+                            <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition" />
+                          )}
+                        </div>
                       </div>
-
-                      <div className="pt-3 mt-2 border-t border-slate-200/60 flex items-center justify-between text-xs font-bold text-slate-700 group-hover:text-emerald-700">
-                        <span>{loading ? 'Entering...' : 'Enter Dashboard'}</span>
-                        <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition" />
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -492,7 +479,7 @@ export default function AuthPortalView() {
                         >
                           {availablePHCs.map((f) => (
                             <option key={f.id} value={f.id}>
-                              {f.name} [{f.facility_type === 'DISTRICT_HOSPITAL' ? 'DH' : f.facility_type}] ({f.id})
+                              {f.name} ({f.facility_type === 'DISTRICT_HOSPITAL' ? 'District Hospital' : f.facility_type === 'CHC' ? 'Community Health Centre' : 'PHC'})
                             </option>
                           ))}
                         </select>
@@ -512,15 +499,6 @@ export default function AuthPortalView() {
               </div>
             )}
 
-          </div>
-
-          {/* Bottom Security Capsule */}
-          <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-slate-400 text-[11px] gap-2">
-            <div className="flex items-center space-x-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>Cloud SQL & BigQuery Encrypted Connection</span>
-            </div>
-            <span>ABDM Ayushman Bharat Digital Mission Ready</span>
           </div>
 
         </div>

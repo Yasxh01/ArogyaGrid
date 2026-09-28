@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth, getFacilityName } from './context/AuthContext';
 import { SocketProvider, useSocket } from './context/SocketContext';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
@@ -127,7 +127,7 @@ function AppContent() {
           <div className="flex items-center space-x-2">
             <ShieldAlert className="w-4 h-4 animate-bounce" />
             <span>
-              CRITICAL HEALTH ALERT: {alerts[0].phc_id} ({alerts[0].resource_type || 'RESOURCE'}) - {alerts[0].risk_level} Risk Level detected!
+              CRITICAL HEALTH ALERT: {getFacilityName(alerts[0].phc_id)} ({alerts[0].resource_type || 'RESOURCE'}) - {alerts[0].risk_level} Risk Level detected!
             </span>
           </div>
           <button onClick={() => dismissAlert(0)} className="p-1 hover:bg-rose-700 rounded transition cursor-pointer">

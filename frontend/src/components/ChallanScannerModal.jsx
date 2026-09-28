@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { apiRequest } from '../api/client';
+import { getFacilityName } from '../context/AuthContext';
 import { 
   FileText, 
   UploadCloud, 
@@ -321,7 +322,7 @@ export default function ChallanScannerModal({ isOpen, onClose, phcId = 'PHC-RAN-
 
                     <div className="sm:text-right">
                       <span className="text-[10px] font-black uppercase text-emerald-800 tracking-wider">Recipient Facility</span>
-                      <p className="font-extrabold text-slate-900">{result.recipient_facility || phcId}</p>
+                      <p className="font-extrabold text-slate-900">{getFacilityName(result.recipient_facility || phcId)}</p>
                       <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-white text-emerald-700 font-bold border border-emerald-200 text-[10px] shadow-sm">
                         Confidence: {Math.round(result.confidence_score * 100)}% ({result.source})
                       </span>

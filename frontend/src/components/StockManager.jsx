@@ -15,6 +15,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
+import { getFacilityName, getMedicineName, ALL_MEDICINES } from '../context/AuthContext';
 import { queueOfflineTransaction } from '../api/offlineQueue';
 import ChallanScannerModal from './ChallanScannerModal';
 
@@ -166,7 +167,7 @@ export default function StockManager({ selectedPHC: initialPHC, districtId = 'DI
           </div>
           <div>
             <h3 className="font-extrabold text-base text-slate-900">Essential Medicines & Formulary</h3>
-            <p className="text-xs text-slate-500 font-medium">National List of Essential Medicines (NLEM-2022) &bull; {currentPHC}</p>
+            <p className="text-xs text-slate-500 font-medium">National List of Essential Medicines (NLEM-2022) &bull; {getFacilityName(currentPHC)}</p>
           </div>
         </div>
 
@@ -189,11 +190,11 @@ export default function StockManager({ selectedPHC: initialPHC, districtId = 'DI
             {facilities.length > 0 ? (
               facilities.map(f => (
                 <option key={f.id} value={f.id}>
-                  {f.id} ({f.name})
+                  {f.name}
                 </option>
               ))
             ) : (
-              <option value={currentPHC}>{currentPHC || 'Loading...'}</option>
+              <option value={currentPHC}>{getFacilityName(currentPHC) || 'Loading...'}</option>
             )}
           </select>
 
@@ -260,7 +261,7 @@ export default function StockManager({ selectedPHC: initialPHC, districtId = 'DI
               >
                 <div className="flex items-start justify-between mb-1.5">
                   <div>
-                    <span className="font-extrabold text-xs text-slate-900 block">{item.medicine_name || item.medicine_id}</span>
+                    <span className="font-extrabold text-xs text-slate-900 block">{item.medicine_name || getMedicineName(item.medicine_id)}</span>
                     {isColdChain && (
                       <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
                         ❄️ Refrigerator (2°C–8°C)
@@ -396,25 +397,18 @@ export default function StockManager({ selectedPHC: initialPHC, districtId = 'DI
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-3">
           <div>
             <label className="text-[11px] font-semibold text-slate-600 block mb-1">Medicine Name</label>
-            <input
-              type="text"
-              list="stock-med-options"
+            <select
               value={medicineId}
               onChange={(e) => setMedicineId(e.target.value)}
-              className="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
-              placeholder="e.g. Paracetamol"
+              className="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
               required
-            />
-            <datalist id="stock-med-options">
-              <option value="MED-001">Paracetamol 500mg Tablets</option>
-              <option value="MED-002">Amoxicillin 250mg Capsules</option>
-              <option value="MED-003">Oral Rehydration Salts (ORS)</option>
-              <option value="MED-004">Insulin Glargine 100IU/ml</option>
-              <option value="MED-005">Anti-Rabies Vaccine (ARV)</option>
-              <option value="MED-006">Azithromycin 500mg Tablets</option>
-              <option value="MED-007">Cetirizine 10mg Tablets</option>
-              <option value="MED-008">Rotavirus Oral Vaccine</option>
-            </datalist>
+            >
+              {ALL_MEDICINES.map((med) => (
+                <option key={med.id} value={med.id}>
+                  {med.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>

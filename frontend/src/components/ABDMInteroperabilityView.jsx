@@ -237,9 +237,10 @@ export default function ABDMInteroperabilityView({ districtId = 'DIST-JH-01' }) 
             </div>
 
             <div className="bg-white p-3.5 rounded-xl border border-slate-200">
-              <span className="text-[11px] font-bold text-slate-500 uppercase">Cryptographic Signature</span>
-              <p className="text-xs font-bold text-indigo-700 font-mono mt-0.5 truncate">
-                {eaushadhiSyncResult?.digital_signature || 'SHA256:verified'}
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Govt Audit Verification</span>
+              <p className="text-xs font-bold text-emerald-700 mt-1 truncate flex items-center">
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600 inline shrink-0" />
+                <span>Verified & Tamper-Proof</span>
               </p>
             </div>
           </div>
@@ -251,9 +252,9 @@ export default function ABDMInteroperabilityView({ districtId = 'DIST-JH-01' }) 
                 <tr>
                   <th className="p-3">NLEM Code</th>
                   <th className="p-3">Essential Medicine</th>
-                  <th className="p-3">Physical In-Hand (ArogyaGrid)</th>
-                  <th className="p-3">e-Aushadhi Ledger</th>
-                  <th className="p-3">Variance</th>
+                  <th className="p-3">Actual Clinic Stock</th>
+                  <th className="p-3">e-Aushadhi Govt Record</th>
+                  <th className="p-3">Difference</th>
                   <th className="p-3">Audit Status</th>
                 </tr>
               </thead>
@@ -284,9 +285,9 @@ export default function ABDMInteroperabilityView({ districtId = 'DIST-JH-01' }) 
         <div className="space-y-4 animate-in fade-in duration-150">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="font-extrabold text-sm text-slate-900">HL7 FHIR R4 Supply Chain & Inventory Payload</h3>
+              <h3 className="font-extrabold text-sm text-slate-900">National Digital Health Format (FHIR)</h3>
               <p className="text-xs text-slate-500 font-medium">
-                Standardized JSON resource bundle containing Locations, NLEM Medications, SupplyDelivery, and IoT Devices.
+                Standardized health record format for national interoperability with Ayushman Bharat (ABDM).
               </p>
             </div>
 

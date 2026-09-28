@@ -165,12 +165,6 @@ export default function NotificationSimulatorModal({ isOpen, onClose }) {
             </div>
           ))}
         </div>
-
-        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-          <span>Integrates with Government NIC SMS Gateway & WhatsApp Business Cloud API</span>
-          <span className="font-bold text-emerald-600">✔ Encrypted & DPDP Verified</span>
-        </div>
-
       </div>
     </div>
   );

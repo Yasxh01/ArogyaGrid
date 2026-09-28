@@ -352,8 +352,7 @@ export default function MLModelExplainabilityView({ districtId = 'DIST-JH-01' })
             )}
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-200/70 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Method: Normalized Gini Impurity Gain</span>
+          <div className="mt-4 pt-3 border-t border-slate-200/70 flex items-center justify-end text-[11px] text-slate-500">
             <span className="font-bold text-slate-700">Validated against NLEM-2022</span>
           </div>
         </div>
@@ -458,8 +457,7 @@ export default function MLModelExplainabilityView({ districtId = 'DIST-JH-01' })
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Algorithm: Vertex AI / Random Forest</span>
+          <div className="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-end text-[11px] text-slate-500">
             <span className="text-emerald-700 font-bold">✔ Live Dynamic DB Query</span>
           </div>
         </div>
