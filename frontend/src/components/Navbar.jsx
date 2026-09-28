@@ -43,10 +43,8 @@ export default function Navbar({
   const roleInfo = getRoleBadge();
 
   function handleLogoClick() {
-    if (onGoToLanding) {
-      onGoToLanding();
-    } else if (setActiveTab) {
-      setActiveTab('landing');
+    if (setActiveTab) {
+      setActiveTab('dashboard');
     }
   }
 

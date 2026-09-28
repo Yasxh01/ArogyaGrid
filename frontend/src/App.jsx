@@ -21,7 +21,6 @@ import { ShieldAlert, X } from 'lucide-react';
 function AppContent() {
   const { user, loading, login } = useAuth();
   const { alerts, dismissAlert } = useSocket();
-  const [viewMode, setViewMode] = useState('landing'); // Landing page is always the first page upon visiting
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isVoiceOpen, setIsVoiceOpen] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
@@ -68,27 +67,9 @@ function AppContent() {
     );
   }
 
-  // 1. Landing Page is always the first page a person sees when visiting the website
-  if (viewMode === 'landing') {
-    return (
-      <LandingPageView 
-        onEnterPortal={() => setViewMode('portal')}
-        onSelectPreset={async (preset) => {
-          try {
-            await login(preset.email, 'password123');
-            setViewMode('portal');
-            setActiveTab('dashboard');
-          } catch (err) {
-            setViewMode('portal');
-          }
-        }}
-      />
-    );
-  }
-
-  // 2. When entered into portal: show Login if not authenticated
+  // When not authenticated: directly display modern Split Login & Auth Portal
   if (!user) {
-    return <AuthPortalView onBackToLanding={() => setViewMode('landing')} />;
+    return <AuthPortalView />;
   }
 
   // 3. Authenticated: Render the user's 4-level role dashboard
