@@ -263,7 +263,7 @@ export default function FacilityDetailModal({ isOpen, onClose, phcId, onNavigate
               {/* Medicines List Tab */}
               {activeSubTab === 'stock' && (
                 <div className="space-y-2">
-                  <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                  <div className="border border-slate-200 rounded-2xl overflow-hidden overflow-x-auto">
                     <table className="w-full text-left text-xs">
                       <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
                         <tr>

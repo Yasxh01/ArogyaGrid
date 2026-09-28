@@ -591,8 +591,8 @@ CLUSTER BY phc_id, medicine_id;`;
                   </button>
                 </div>
 
-                <div className="max-h-64 overflow-y-auto">
-                  <table className="w-full text-left text-xs">
+                <div className="max-h-64 overflow-y-auto overflow-x-auto border border-slate-100 rounded-xl">
+                  <table className="w-full text-left text-xs min-w-[500px]">
                     <thead className="bg-slate-50 text-[10px] font-extrabold uppercase text-slate-400 sticky top-0">
                       <tr>
                         <th className="px-3 py-2">Event ID</th>

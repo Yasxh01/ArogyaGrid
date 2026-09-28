@@ -97,13 +97,13 @@ export default function AuthPortalView() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100/90 text-slate-800 flex items-center justify-center p-3 sm:p-6 lg:p-10 font-sans selection:bg-emerald-500 selection:text-white">
+    <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-slate-100/90 text-slate-800 flex items-center justify-center p-3 sm:p-6 lg:p-5 xl:p-8 font-sans selection:bg-emerald-500 selection:text-white">
       
       {/* Outer Card with Split Design (Pinterest Reference Style) */}
-      <div className="w-full max-w-6xl bg-white rounded-3xl sm:rounded-[2.5rem] shadow-2xl border border-slate-200/90 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[720px] transition-all">
+      <div className="w-full max-w-6xl bg-white rounded-3xl sm:rounded-[2.5rem] shadow-2xl border border-slate-200/90 overflow-hidden grid grid-cols-1 lg:grid-cols-12 lg:h-[calc(100vh-2.5rem)] lg:max-h-[820px] transition-all">
         
         {/* LEFT PANEL: ArogyaGrid Brand Showcase (Replaces the picture with ArogyaGrid information) */}
-        <div className="lg:col-span-5 bg-gradient-to-br from-emerald-900 via-teal-950 to-slate-950 text-white p-8 sm:p-10 flex flex-col justify-between relative overflow-hidden">
+        <div className="lg:col-span-5 bg-gradient-to-br from-emerald-900 via-teal-950 to-slate-950 text-white p-6 sm:p-8 lg:p-7 xl:p-9 flex flex-col justify-between relative overflow-hidden">
           
           {/* Decorative fluid abstract shapes & glow */}
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none" />
@@ -132,13 +132,13 @@ export default function AuthPortalView() {
           </div>
 
           {/* Middle Story & Information */}
-          <div className="relative z-10 py-6 sm:py-8 space-y-5">
+          <div className="relative z-10 py-4 sm:py-6 lg:py-3 xl:py-5 space-y-4">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-emerald-300 text-xs font-semibold">
               <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
               <span>National Primary Health Logistics Platform</span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-snug">
+            <h1 className="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-black text-white tracking-tight leading-snug">
               Preventing Medicine Shortages Across 1,50,000+ PHCs
             </h1>
 
@@ -147,7 +147,7 @@ export default function AuthPortalView() {
             </p>
 
             {/* Feature Pills */}
-            <div className="space-y-2.5 pt-2">
+            <div className="space-y-2 pt-1">
               <div className="flex items-center space-x-3 p-2.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
                 <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-300 shrink-0">
                   <ShieldCheck className="w-4 h-4" />
@@ -190,7 +190,7 @@ export default function AuthPortalView() {
         </div>
 
         {/* RIGHT PANEL: Sign In / Role Selection Interface */}
-        <div className="lg:col-span-7 bg-white p-6 sm:p-10 lg:p-12 flex flex-col justify-between">
+        <div className="lg:col-span-7 bg-white p-6 sm:p-8 lg:p-8 xl:p-10 flex flex-col justify-between lg:overflow-y-auto">
           
           <div>
             

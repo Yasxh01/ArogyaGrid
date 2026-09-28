@@ -162,7 +162,7 @@ export default function MapView({ districtId, onSelectPHC, onQuickTransfer }) {
       <div className="flex flex-wrap items-center justify-between pb-3 mb-2 border-b border-slate-100 gap-2">
         <div className="flex items-center space-x-2">
           <Activity className="w-4.5 h-4.5 text-emerald-600" />
-          <h2 className="font-bold text-slate-800 text-sm sm:text-base">Geospatial Telemetry & Clinic Network</h2>
+          <h2 className="font-bold text-slate-800 text-sm sm:text-base">Live Health Centres & Clinic Map</h2>
           <span className="text-xs text-slate-500 font-medium">({districtData?.features?.length || 0} Facilities Active)</span>
         </div>
 
