@@ -137,15 +137,16 @@ class SpeechAndTranslationService {
 
   _callGoogleSpeechAPI(audioBase64, languageCode, encoding, sampleRateHertz) {
     return new Promise((resolve, reject) => {
+      const config = {
+        encoding: encoding === 'WEBM_OPUS' ? 'WEBM_OPUS' : 'LINEAR16',
+        sampleRateHertz: sampleRateHertz || 48000,
+        languageCode: languageCode || 'hi-IN',
+        alternativeLanguageCodes: ['hi-IN', 'en-IN', 'bho-IN'],
+        enableAutomaticPunctuation: true
+      };
+
       const postData = JSON.stringify({
-        config: {
-          encoding: encoding === 'WEBM_OPUS' ? 'WEBM_OPUS' : 'LINEAR16',
-          sampleRateHertz: sampleRateHertz || 48000,
-          languageCode: languageCode || 'hi-IN',
-          alternativeLanguageCodes: ['hi-IN', 'en-IN', 'bho-IN'],
-          enableAutomaticPunctuation: true,
-          model: 'medical_conversation'
-        },
+        config,
         audio: {
           content: audioBase64
         }
@@ -191,61 +192,52 @@ class SpeechAndTranslationService {
     });
   }
 
-  _callGeminiAudioTranscription(audioBase64, languageCode) {
-    return new Promise((resolve, reject) => {
-      const prompt = `Transcribe this audio recording accurately. The speaker is speaking in ${languageCode} (Indian regional health context). Return only the raw transcription text, no extra markdown or labels.`;
-      const postData = JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            {
-              inline_data: {
-                mime_type: 'audio/webm',
-                data: audioBase64
-              }
-            }
-          ]
-        }]
-      });
+  async _callGeminiAudioTranscription(audioBase64, languageCode) {
+    const prompt = `Transcribe this audio recording accurately. The speaker is speaking in ${languageCode} (Indian regional health context). Return only the raw transcription text, no extra markdown or labels.`;
+    const candidateModels = [
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-flash-latest',
+      'gemini-2.5-flash'
+    ];
 
-      const options = {
-        hostname: 'generativelanguage.googleapis.com',
-        path: `/v1beta/models/gemini-2.5-flash:generateContent?key=${this.geminiApiKey}`,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(postData)
-        }
-      };
-
-      const req = https.request(options, (res) => {
-        let body = '';
-        res.on('data', chunk => body += chunk);
-        res.on('end', () => {
-          try {
-            const data = JSON.parse(body);
-            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-            if (text) {
-              resolve({
-                transcript: text,
-                confidence: 0.97
-              });
-            } else {
-              resolve(null);
-            }
-          } catch (e) {
-            reject(e);
-          }
+    for (const model of candidateModels) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.geminiApiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(6000),
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: prompt },
+                {
+                  inline_data: {
+                    mime_type: 'audio/webm',
+                    data: audioBase64
+                  }
+                }
+              ]
+            }]
+          })
         });
-      });
 
-      req.on('error', reject);
-      req.setTimeout(8000, () => {
-        req.destroy(new Error('Gemini Audio API timeout'));
-      });
-      req.write(postData);
-      req.end();
-    });
+        if (res.ok) {
+          const data = await res.json();
+          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          if (text) {
+            return {
+              transcript: text,
+              confidence: 0.96,
+              model
+            };
+          }
+        }
+      } catch (err) {
+        // Continue to next candidate model
+      }
+    }
+    return null;
   }
 
   _makeHttpsRequest(options, postData) {
@@ -279,6 +271,7 @@ class SpeechAndTranslationService {
       engine: 'GOOGLE_CLOUD_SPEECH_CALIBRATED_ENGINE',
       languageCode,
       isLiveGCP: false,
+      isFallback: true,
       sample_rate_hertz: 48000
     };
   }

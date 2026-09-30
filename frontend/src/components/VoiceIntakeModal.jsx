@@ -77,6 +77,7 @@ export default function VoiceIntakeModal({ isOpen, onClose, phcId = 'PHC-RAN-01'
   const audioChunksRef = useRef([]);
   const recognitionRef = useRef(null);
   const timerRef = useRef(null);
+  const transcriptRef = useRef('');
 
   // Clean up recording on unmount or close
   useEffect(() => {
@@ -104,6 +105,7 @@ export default function VoiceIntakeModal({ isOpen, onClose, phcId = 'PHC-RAN-01'
   async function startRecording() {
     setNotice('');
     setResult(null);
+    transcriptRef.current = '';
     setTranscript('');
     setTranslation('');
     setIsRecording(true);
@@ -126,7 +128,7 @@ export default function VoiceIntakeModal({ isOpen, onClose, phcId = 'PHC-RAN-01'
         stream.getTracks().forEach(t => t.stop());
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         // Only process audio with backend if client-side recognition didn't catch text
-        if (!transcript.trim() && audioChunksRef.current.length > 0) {
+        if (!transcriptRef.current.trim() && audioChunksRef.current.length > 0) {
           await processAudioWithCloudSpeech(audioBlob);
         }
       };
@@ -151,6 +153,7 @@ export default function VoiceIntakeModal({ isOpen, onClose, phcId = 'PHC-RAN-01'
             liveText += e.results[i][0].transcript;
           }
           if (liveText.trim()) {
+            transcriptRef.current = liveText.trim();
             setTranscript(liveText.trim());
           }
         };
@@ -183,23 +186,23 @@ export default function VoiceIntakeModal({ isOpen, onClose, phcId = 'PHC-RAN-01'
     stopAllRecording();
 
     setTimeout(() => {
-      setTranscript((currentTranscript) => {
-        const text = currentTranscript.trim();
-        if (text) {
-          handleParse(text);
+      const text = (transcriptRef.current || transcript || '').trim();
+      if (text) {
+        handleParse(text);
+      } else {
+        // If silence or still processing audio from cloud, notify the user cleanly without injecting dummy text
+        if (audioChunksRef.current && audioChunksRef.current.length > 0) {
+          setNotice('Transcribing recorded audio...');
         } else {
-          // If silence, use dialect default sample prompt to demonstrate parse capability
-          const sample = (SAMPLE_PROMPTS[language] && SAMPLE_PROMPTS[language][0]) || '५० ओआरएस पैकेट बांटी गई';
-          setNotice(`No speech detected in audio stream. Loaded sample dialect phrase for ${language}:`);
-          setTranscript(sample);
-          handleParse(sample);
+          setNotice('No speech detected. Please speak clearly or choose a dialect test prompt below.');
         }
-        return currentTranscript;
-      });
+      }
     }, 400);
   }
 
   async function processAudioWithCloudSpeech(audioBlob) {
+    if (transcriptRef.current.trim()) return;
+
     setProcessing(true);
     try {
       const reader = new FileReader();
@@ -215,32 +218,38 @@ export default function VoiceIntakeModal({ isOpen, onClose, phcId = 'PHC-RAN-01'
             })
           });
 
-          if (res && res.transcript) {
-            setTranscript(res.transcript);
-            setCloudEngine(res.engine || 'Google Cloud Speech v2');
-            
-            // Translate if not English
-            if (language !== 'en-IN') {
-              try {
-                const transRes = await apiRequest('/cloud/voice/translate', {
-                  method: 'POST',
-                  body: JSON.stringify({ text: res.transcript, targetLanguage: 'en' })
-                });
-                if (transRes?.translatedText) {
-                  setTranslation(transRes.translatedText);
+          // Only apply if user hasn't already received client-side speech in the meantime
+          if (res && res.transcript && !transcriptRef.current.trim()) {
+            if (!res.isFallback) {
+              transcriptRef.current = res.transcript;
+              setTranscript(res.transcript);
+              setCloudEngine(res.engine || 'Google Cloud Speech v2');
+              
+              // Translate if not English
+              if (language !== 'en-IN') {
+                try {
+                  const transRes = await apiRequest('/cloud/voice/translate', {
+                    method: 'POST',
+                    body: JSON.stringify({ text: res.transcript, targetLanguage: 'en' })
+                  });
+                  if (transRes?.translatedText) {
+                    setTranslation(transRes.translatedText);
+                  }
+                } catch (e) {
+                  console.warn('Translation call skipped:', e);
                 }
-              } catch (e) {
-                console.warn('Translation call skipped:', e);
               }
-            }
 
-            handleParse(res.transcript);
+              handleParse(res.transcript);
+            } else {
+              setNotice('No speech detected in audio. Please speak clearly or click one of the test prompts below.');
+            }
           }
         } catch (err) {
           console.error('Cloud Speech API failed:', err);
-          const sample = (SAMPLE_PROMPTS[language] && SAMPLE_PROMPTS[language][0]) || '५० ओआरएस पैकेट बांटी गई';
-          setTranscript(sample);
-          handleParse(sample);
+          if (!transcriptRef.current.trim()) {
+            setNotice('Could not recognize speech. Please try speaking again or click a test prompt.');
+          }
         } finally {
           setProcessing(false);
         }
@@ -299,6 +308,7 @@ export default function VoiceIntakeModal({ isOpen, onClose, phcId = 'PHC-RAN-01'
   async function handleSampleClick(sampleText) {
     stopAllRecording();
     setNotice('');
+    transcriptRef.current = sampleText;
     setTranscript(sampleText);
     setResult(null);
     setTranslation('');
@@ -490,7 +500,10 @@ export default function VoiceIntakeModal({ isOpen, onClose, phcId = 'PHC-RAN-01'
           <textarea
             rows="2"
             value={transcript}
-            onChange={(e) => setTranscript(e.target.value)}
+            onChange={(e) => {
+              transcriptRef.current = e.target.value;
+              setTranscript(e.target.value);
+            }}
             placeholder="Recognized speech will appear here..."
             className="w-full text-xs font-medium p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
           />
