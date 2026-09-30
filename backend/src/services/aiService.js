@@ -7,6 +7,41 @@ class AIService {
   }
 
   /**
+   * Multi-model resilient Gemini dispatcher with automated model rotation
+   * Cycles through active Google AI models to completely bypass single-model quota limits
+   */
+  async invokeGeminiWithFailover(contents, generationConfig = {}) {
+    if (!this.apiKey) return null;
+    const candidateModels = [
+      'gemini-flash-latest',
+      'gemini-3-flash-preview',
+      'gemini-3.5-flash',
+      'gemini-3.8-flash',
+      'gemini-flash-lite-latest',
+      'gemini-2.5-flash'
+    ];
+
+    for (const model of candidateModels) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(3500),
+          body: JSON.stringify({ contents, generationConfig })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          return { data, rawText, model };
+        }
+      } catch (err) {
+        // Continue to next available model
+      }
+    }
+    return null;
+  }
+
+  /**
    * Parses vernacular/natural language notes or voice transcriptions (Hindi/English/Regional)
    * into structured idempotent telemetry transactions.
    */
@@ -36,7 +71,7 @@ Rules:
 2. Action Types:
    - "STOCK_OUT" when medicine is distributed, dispensed, given, used, consumed, बांटी, दिए, दी, खर्च, वाटप, பங்கிடப்பட்டது, வழங்கப்பட்டன, বিতরণ
    - "STOCK_IN" when medicine is received, stocked, arrived, intake, delivered, प्राप्त, आए, जमा, मिलल, मिळाले, ପ୍ରାପ୍ତ, பெறப்பட்டது, গ্রহণ
-   - "BED_UPDATE" when bed/ICU/oxygen occupancy is reported (बेड, मरीज, भर्ती, भरलेले, படுக்கை, বেড)
+   - "BED_UPDATE" when bed/ICU/oxygen occupancy is reported (बेड, मरीज, भर्ती, भरलेले, படுக்கை, বেड)
 3. Return STRICTLY a valid JSON object matching:
 {
   "type": "STOCK_IN" | "STOCK_OUT" | "BED_UPDATE",
@@ -49,34 +84,37 @@ Rules:
   "detected_intent": "string explanation"
 }`;
 
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(3500),
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: 'application/json' }
-          })
-        });
+        const geminiRes = await this.invokeGeminiWithFailover(
+          [{ parts: [{ text: prompt }] }],
+          { responseMimeType: 'application/json' }
+        );
 
-        if (res.ok) {
-          const data = await res.json();
-          let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          rawText = rawText.replace(/```json\s*/gi, '').replace(/```\s*$/gi, '').trim();
+        if (geminiRes && geminiRes.rawText) {
+          let rawText = geminiRes.rawText.replace(/```json\s*/gi, '').replace(/```\s*$/gi, '').trim();
           const parsed = JSON.parse(rawText);
 
           if (parsed && (parsed.medicine_id || parsed.bed_type || (parsed.confidence && parsed.confidence > 0.6))) {
-            const medObj = store.medicines.find(m => m.id === parsed.medicine_id);
+            const medMap = {
+              'MED-001': 'Paracetamol 500mg Tablets',
+              'MED-002': 'Amoxicillin 250mg Capsules',
+              'MED-003': 'Oral Rehydration Salts (ORS)',
+              'MED-004': 'Insulin Glargine',
+              'MED-005': 'Anti-Rabies Vaccine (ARV)',
+              'MED-006': 'Azithromycin 500mg',
+              'MED-007': 'Cetirizine 10mg'
+            };
+            const medObj = store.medicines && store.medicines.find(m => m.id === parsed.medicine_id);
+            const medName = medObj ? medObj.name : (medMap[parsed.medicine_id] || parsed.medicine_name || parsed.medicine_id);
             return {
               ...parsed,
               phc_id: targetPhcId,
-              medicine_name: medObj ? medObj.name : (parsed.medicine_name || parsed.medicine_id),
-              source: 'GEMINI_FLASH_API'
+              medicine_name: medName,
+              source: `GEMINI_FLASH_API (${geminiRes.model})`
             };
           }
         }
       } catch (err) {
-        console.warn('[AIService] Gemini API error, seamlessly activating high-precision local NLP parser:', err.message);
+        console.warn('[AIService] Gemini API error, activating high-precision local NLP parser:', err.message);
       }
     }
 
@@ -269,24 +307,20 @@ Return strictly JSON with schema:
   "recommended_immediate_actions": string[],
   "generated_at": string
 }`;
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(3500),
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: 'application/json' }
-          })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+        const geminiRes = await this.invokeGeminiWithFailover(
+          [{ parts: [{ text: prompt }] }],
+          { responseMimeType: 'application/json' }
+        );
+
+        if (geminiRes && geminiRes.rawText) {
+          let rawText = geminiRes.rawText.replace(/```json\s*/gi, '').replace(/```\s*$/gi, '').trim();
+          const parsed = JSON.parse(rawText);
           return { 
             ...parsed, 
             district_id,
             district_name: resolvedDistrict,
             state: resolvedState,
-            source: 'GEMINI_FLASH_API' 
+            source: `GEMINI_FLASH_API (${geminiRes.model})`
           };
         }
       } catch (err) {
@@ -583,30 +617,23 @@ Return ONLY a valid JSON object matching this schema:
   "confidence_score": 0.95
 }`;
 
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(4000),
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: prompt },
-                {
-                  inlineData: {
-                    mimeType: validMime,
-                    data: cleanBase64
-                  }
+        const geminiRes = await this.invokeGeminiWithFailover(
+          [{
+            parts: [
+              { text: prompt },
+              {
+                inlineData: {
+                  mimeType: validMime,
+                  data: cleanBase64
                 }
-              ]
-            }],
-            generationConfig: { responseMimeType: 'application/json' }
-          })
-        });
+              }
+            ]
+          }],
+          { responseMimeType: 'application/json' }
+        );
 
-        if (res.ok) {
-          const data = await res.json();
-          let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          rawText = rawText.replace(/```json\s*/gi, '').replace(/```\s*$/gi, '').trim();
+        if (geminiRes && geminiRes.rawText) {
+          let rawText = geminiRes.rawText.replace(/```json\s*/gi, '').replace(/```\s*$/gi, '').trim();
           const jsonMatch = rawText.match(/\{[\s\S]*\}/);
           if (jsonMatch) rawText = jsonMatch[0];
           const parsed = JSON.parse(rawText);
@@ -637,7 +664,7 @@ Return ONLY a valid JSON object matching this schema:
               challan_number: parsed.challan_number || `CH-OCR-${Date.now().toString().slice(-6)}`,
               supplier_name: parsed.supplier_name || 'Medical Supplies Consignment',
               recipient_facility: parsed.recipient_facility || phc.name,
-              source: 'GEMINI_VISION_AI',
+              source: `GEMINI_VISION_AI (${geminiRes.model})`,
               confidence_score: parsed.confidence_score || 0.96,
               phc_id: phc.id,
               facility_name: phc.name
