@@ -89,8 +89,11 @@ export default function PHCWorkerDashboardView({ activeTab, onOpenVoice, pending
           <button
             type="button"
             onClick={() => {
-              setIsVoiceOpen(true);
-              if (onOpenVoice) onOpenVoice();
+              if (onOpenVoice) {
+                onOpenVoice();
+              } else {
+                setIsVoiceOpen(true);
+              }
             }}
             className="px-5 py-3.5 bg-white hover:bg-emerald-50 text-emerald-800 font-black rounded-2xl text-xs sm:text-sm transition shadow-md flex items-center space-x-2.5 transform active:scale-95 cursor-pointer"
             title="Log medicine dispensing or bed admissions using Hindi/Vernacular speech"
@@ -135,15 +138,17 @@ export default function PHCWorkerDashboardView({ activeTab, onOpenVoice, pending
         }}
       />
 
-      {/* Vernacular Voice Intake Modal */}
-      <VoiceIntakeModal
-        isOpen={isVoiceOpen}
-        onClose={() => setIsVoiceOpen(false)}
-        phcId={phcId}
-        onTransactionParsed={() => {
-          window.dispatchEvent(new Event('stock:updated'));
-        }}
-      />
+      {/* Vernacular Voice Intake Modal (Fallback if not mounted at root) */}
+      {!onOpenVoice && (
+        <VoiceIntakeModal
+          isOpen={isVoiceOpen}
+          onClose={() => setIsVoiceOpen(false)}
+          phcId={phcId}
+          onTransactionParsed={() => {
+            window.dispatchEvent(new Event('stock:updated'));
+          }}
+        />
+      )}
     </div>
   );
 }
