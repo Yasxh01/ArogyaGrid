@@ -7,31 +7,48 @@ class AIService {
   }
 
   /**
-   * Parses vernacular/natural language notes or voice transcriptions (Hindi/English)
+   * Parses vernacular/natural language notes or voice transcriptions (Hindi/English/Regional)
    * into structured idempotent telemetry transactions.
    */
   async parseNaturalLanguageIntake({ text, phc_id, language = 'hi' }) {
+    const store = db.memoryStore;
+    const targetPhcId = phc_id || 'PHC-RAN-01';
+
     if (this.apiKey) {
       try {
-        const prompt = `You are a medical data parser for India's Primary Health Centres. 
-Convert the following healthcare worker note into structured JSON:
-"${text}"
-Default PHC: "${phc_id || 'PHC-RAN-01'}"
+        const prompt = `You are a specialized clinical AI data parser for India's National Health Mission (NHM) and Primary Health Centres (PHCs).
+Translate and parse the following vernacular healthcare worker voice note or memo into structured inventory/telemetry JSON.
+Voice Note: "${text}"
+Target PHC: "${targetPhcId}"
+Reported Language: "${language}"
 
-Available Medicines: MED-001 (Paracetamol 500mg), MED-002 (Amoxicillin 250mg), MED-003 (ORS), MED-004 (Insulin), MED-005 (Anti-Rabies Vaccine).
-Available Bed Types: GENERAL, OXYGEN, ICU, PEDIATRIC.
+Medicine Catalog:
+- MED-001: Paracetamol 500mg Tablets (PCM, Dolo, Crocin, बुखार की दवा, पैरासिटामोल, पॅरासिटामॉल, பாராசிட்டமால், প্যারাসিটামল)
+- MED-002: Amoxicillin 250mg Capsules (Amox, इमोक्सी सिलिन, अमोक्सीसिलिन, एमोक्सिसिलिन)
+- MED-003: Oral Rehydration Salts (ORS) (ओआरएस, ओ.आर.एस., ओआरएस घोल, ଓଆରଏସ, ஓஆர்எஸ், ওআরএস)
+- MED-004: Insulin Glargine (इंसुलिन, शुगर की दवा, இன்சுலின், ইনসুলিন)
+- MED-005: Anti-Rabies Vaccine (ARV) (रेबीज, रैबीज, कुत्ते के काटने का इंजेक्शन, ARV, एंटी-रेबीज)
+- MED-006: Azithromycin 500mg (एजिथ्रोमाइसिन)
+- MED-007: Cetirizine 10mg (सिट्रीजिन)
 
-Return strictly JSON with schema:
+Rules:
+1. Detect numbers accurately including Devanagari numerals (०,१,२,३,४,५,६,७,८,९), word numbers (बीस=20, पचास=50, सौ=100, दहा=10, etc.), and Bengali/Tamil/Odia digits.
+2. Action Types:
+   - "STOCK_OUT" when medicine is distributed, dispensed, given, used, consumed, बांटी, दिए, दी, खर्च, वाटप, பங்கிடப்பட்டது, வழங்கப்பட்டன, বিতরণ
+   - "STOCK_IN" when medicine is received, stocked, arrived, intake, delivered, प्राप्त, आए, जमा, मिलल, मिळाले, ପ୍ରାପ୍ତ, பெறப்பட்டது, গ্রহণ
+   - "BED_UPDATE" when bed/ICU/oxygen occupancy is reported (बेड, मरीज, भर्ती, भरलेले, படுக்கை, বেড)
+3. Return STRICTLY a valid JSON object matching:
 {
-  "type": "STOCK_IN" | "STOCK_OUT" | "BED_UPDATE" | "STAFF_LOG",
-  "phc_id": string,
-  "medicine_id": string | null,
+  "type": "STOCK_IN" | "STOCK_OUT" | "BED_UPDATE",
+  "phc_id": "${targetPhcId}",
+  "medicine_id": "MED-001" | "MED-002" | "MED-003" | "MED-004" | "MED-005" | null,
   "quantity": number | null,
-  "bed_type": string | null,
+  "bed_type": "GENERAL" | "OXYGEN" | "ICU" | "PEDIATRIC" | null,
   "occupied_beds": number | null,
   "confidence": number,
-  "detected_intent": string
+  "detected_intent": "string explanation"
 }`;
+
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -40,19 +57,30 @@ Return strictly JSON with schema:
             generationConfig: { responseMimeType: 'application/json' }
           })
         });
+
         if (res.ok) {
           const data = await res.json();
-          const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
-          return { ...parsed, source: 'GEMINI_FLASH_API' };
+          let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          rawText = rawText.replace(/```json\s*/gi, '').replace(/```\s*$/gi, '').trim();
+          const parsed = JSON.parse(rawText);
+
+          if (parsed && (parsed.medicine_id || parsed.bed_type || (parsed.confidence && parsed.confidence > 0.6))) {
+            const medObj = store.medicines.find(m => m.id === parsed.medicine_id);
+            return {
+              ...parsed,
+              phc_id: targetPhcId,
+              medicine_name: medObj ? medObj.name : (parsed.medicine_name || parsed.medicine_id),
+              source: 'GEMINI_FLASH_API'
+            };
+          }
         }
       } catch (err) {
-        console.warn('[AIService] Gemini API error, falling back to local NLP parser:', err.message);
+        console.warn('[AIService] Gemini API error, seamlessly activating high-precision local NLP parser:', err.message);
       }
     }
 
     // High-precision Local Heuristic & Vernacular NLP Parser (Zero-dependency Fallback)
     const lower = text.toLowerCase();
-    const store = db.memoryStore;
     let type = 'STOCK_OUT';
     let medicine_id = null;
     let quantity = 10;
@@ -518,10 +546,11 @@ Return strictly JSON with schema:
                 (store.phcs && store.phcs[0]) || 
                 { id: phc_id || 'PHC-RAN-01', name: 'Ranchi Sadar PHC' };
 
-    if (this.apiKey && imageBase64) {
+    const cleanBase64 = imageBase64 ? imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '').trim() : '';
+    const isSvg = (mimeType && mimeType.includes('svg')) || (imageBase64 && imageBase64.includes('image/svg'));
+
+    if (this.apiKey && cleanBase64 && !isSvg && cleanBase64.length > 50) {
       try {
-        const cleanBase64 = imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '').trim();
-        
         let validMime = (mimeType || 'image/jpeg').toLowerCase();
         if (validMime.includes('png')) validMime = 'image/png';
         else if (validMime.includes('webp')) validMime = 'image/webp';
@@ -611,12 +640,9 @@ Return ONLY a valid JSON object matching this schema:
               facility_name: phc.name
             };
           }
-        } else {
-          const errBody = await res.text();
-          console.warn('[AIService] Gemini API non-200 response:', res.status, errBody);
         }
       } catch (err) {
-        console.warn('[AIService] Gemini Vision OCR error, falling back to heuristic parser:', err.message);
+        console.warn('[AIService] Gemini Vision OCR error, seamlessly activating local OCR engine:', err.message);
       }
     }
 
