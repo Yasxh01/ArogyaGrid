@@ -1,9 +1,37 @@
+import os
+import joblib
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from app.schemas.models import PredictionRequest, PredictionResponse
 
 class StockoutPredictor:
     def __init__(self):
+        self.risk_labels = {0: "LOW", 1: "MODERATE", 2: "HIGH", 3: "CRITICAL"}
+        self._load_or_train_models()
+
+    def _load_or_train_models(self):
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        model_path = os.path.join(base_dir, "models", "stockout_rf.joblib")
+
+        if os.path.exists(model_path):
+            try:
+                saved = joblib.load(model_path)
+                if isinstance(saved, dict):
+                    self.regressor = saved.get("regressor")
+                    self.classifier = saved.get("classifier")
+                elif isinstance(saved, (tuple, list)) and len(saved) >= 2:
+                    self.regressor = saved[0]
+                    self.classifier = saved[1]
+                else:
+                    raise ValueError(f"Unexpected artifact format in {model_path}")
+
+                if self.regressor is not None and self.classifier is not None:
+                    print(f"[StockoutPredictor] Loaded pre-trained model artifact from {model_path}")
+                    return
+            except Exception as e:
+                print(f"[StockoutPredictor] Could not load {model_path}: {e}. Falling back to in-memory training.")
+
+        print("[StockoutPredictor] Pre-trained model artifact not found. Initializing fast in-memory baseline...")
         self._train_models()
 
     def _train_models(self):
@@ -12,17 +40,17 @@ class StockoutPredictor:
         X = []
         y_dts = []
         y_risk = []
-        
+
         for _ in range(n_samples):
             stock = np.random.randint(10, 800)
             consumption = np.random.uniform(5, 45)
             pop = np.random.randint(3000, 35000)
             weather = np.random.uniform(0.0, 1.0)
             surge = np.random.uniform(0.8, 2.5)
-            
+
             eff_consumption = consumption * surge * (1.0 + 0.3 * weather)
             dts = max(0.1, stock / eff_consumption)
-            
+
             if dts < 2.0:
                 risk = 3
             elif dts < 7.0:
@@ -31,22 +59,20 @@ class StockoutPredictor:
                 risk = 1
             else:
                 risk = 0
-                
+
             X.append([stock, consumption, pop, weather, surge])
             y_dts.append(dts)
             y_risk.append(risk)
-            
+
         X = np.array(X)
         y_dts = np.array(y_dts)
         y_risk = np.array(y_risk)
-        
+
         self.regressor = RandomForestRegressor(n_estimators=30, random_state=42)
         self.regressor.fit(X, y_dts)
-        
+
         self.classifier = RandomForestClassifier(n_estimators=30, random_state=42)
         self.classifier.fit(X, y_risk)
-        
-        self.risk_labels = {0: "LOW", 1: "MODERATE", 2: "HIGH", 3: "CRITICAL"}
 
     def predict(self, req: PredictionRequest) -> PredictionResponse:
         features = np.array([[
@@ -56,16 +82,16 @@ class StockoutPredictor:
             req.weather_risk,
             req.footfall_surge_factor
         ]])
-        
+
         dts = float(self.regressor.predict(features)[0])
         risk_idx = int(self.classifier.predict(features)[0])
         risk_probs = self.classifier.predict_proba(features)[0]
         confidence = float(np.max(risk_probs))
-        
+
         daily_rate = max(1.0, req.daily_consumption * req.footfall_surge_factor)
         target_stock = int(daily_rate * 30)
         restock_qty = max(0, target_stock - req.current_stock)
-        
+
         return PredictionResponse(
             phc_id=req.phc_id,
             medicine_id=req.medicine_id,
